@@ -364,7 +364,7 @@ body {
 .card-value {
   font-size: 2rem; /* 32px */
   font-weight: 700;
-  color: #111827; /* Darker text for value */
+  color: #2A6AA6;
   margin: 0;
 }
 
@@ -408,7 +408,6 @@ body {
   height: auto;           /* allow to grow when content wraps */
 }
 .card-inmates .icon.person { background-image: url('icon-person-blue.svg'); } /* Assuming a blue version */
-.card-inmates .card-value { color: #3B82F6; } /* Blue value for inmates */
 .mini-graph {
   width: 84px;
   height: auto;
@@ -417,7 +416,6 @@ body {
 }
 
 .card-vacancy .icon.bed { background-image: url('icon-bed-blue.svg'); }
-.card-vacancy .card-value { color: #3B82F6; } /* Blue value for vacancy */
 .card-bar-container {
     flex-grow: 1;
     display: flex;
@@ -444,7 +442,6 @@ body {
 }
 
 .card-nutrition .icon.nutrition { background-image: url('icon-pill-blue.svg'); } /* Pill icon */
-.card-nutrition .card-value { color: #3B82F6; }
 .card-nutrition .card-header { 
     /* justify-content: flex-start; Already handled by space-between on .card-header */
 }
@@ -539,7 +536,7 @@ body {
 
 .card-location .icon.location { background-image: url('icon-pin-blue.svg'); }
 .card-location .icon.snow { background-image: url('icon-snow-blue.svg'); margin-left: 12px; }
-.card-location .card-main { gap: 4px; } /* Tighter gap for location values */
+.card-location .card-main { gap: 12px; } /* Tighter gap for location values */
 .card-location .card-value { font-size: 1.75rem; } /* Smaller for two values */
 
 .location-map-container { /* New container for map + selector */
