@@ -139,7 +139,7 @@ body {
 /* PNG icon assignments for GNB buttons */
 .gnb-btn .dashboard { background-image: url('assets/dashboard_icon.png'); }
 .gnb-btn.active .dashboard { background-image: url('assets/dashboard_icon_on.png'); }
-.gnb-btn .status { background-image: url('assets/_status_graph_icon.png'); }
+.gnb-btn .status { background-image: url('assets/status_graph_icon.png'); }
 .gnb-btn .guardian { background-image: url('assets/p_icon.png'); }
 .gnb-btn .record { background-image: url('assets/report_icon.png'); }
 .gnb-btn.active .record { background-image: url('assets/p_icon_on.png'); }
