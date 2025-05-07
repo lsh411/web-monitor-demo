@@ -139,10 +139,10 @@ body {
 /* PNG icon assignments for GNB buttons */
 .gnb-btn .dashboard { background-image: url('assets/dashboard_icon.png'); }
 .gnb-btn.active .dashboard { background-image: url('assets/dashboard_icon_on.png'); }
-.gnb-btn .status { background-image: url('assets/cross_icon.png'); }
-.gnb-btn .guardian { background-image: url('assets/cross_icon.png'); }
+.gnb-btn .status { background-image: url('assets/status_graph_icon.png'); }
+.gnb-btn .guardian { background-image: url('assets/p_icon.png'); }
 .gnb-btn .record { background-image: url('assets/report_icon.png'); }
-.gnb-btn.active .record { background-image: url('assets/record_icon_on.png'); }
+.gnb-btn.active .record { background-image: url('assets/report_icon_on.png'); }
 .gnb-btn .disease { background-image: url('assets/cross_icon.png'); }
 /* If active icons are just color changes, CSS filter on the .icon itself in .active state might be enough */
 /* For example, if icons are blue and need to be white on active:
