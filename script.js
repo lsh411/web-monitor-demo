@@ -1301,35 +1301,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const dashboardView = document.getElementById('dashboard-view'); // Assuming index.html's main content area has this ID or similar
   if (document.querySelector('.dashboard-main')) { // Check if we are on a page with dashboard elements
 
-    // Simulate live updates to bio data every second (IF resident table exists)
-    const residentTableForVitals = document.querySelector('.resident-table tbody');
-    if (residentTableForVitals) {
-      function updateResidentVitals() {
-        const rows = residentTableForVitals.querySelectorAll('tr');
-        rows.forEach(row => {
-            if (row.classList.contains('detail-row')) return;
-            const heartRateCell = row.children[4];
-            const spo2Cell = row.children[5];
-            const stepsCell = row.children[7];
-            if (!heartRateCell || !spo2Cell || !stepsCell) return;
-
-            let heartRate = parseInt(heartRateCell.textContent.replace('bpm', '').trim());
-            let spo2 = parseInt(spo2Cell.textContent.replace('%', '').trim());
-            let steps = parseInt(stepsCell.textContent.replace(/,/g, '').trim());
-            heartRate = Math.round(heartRate * (1 + (Math.random() * 0.2 - 0.1)));
-            spo2 = Math.round(spo2 * (1 + (Math.random() * 0.2 - 0.1)));
-            steps = Math.round(steps * (1 + (Math.random() * 0.2 - 0.1)));
-            heartRate = Math.max(40, Math.min(heartRate, 180));
-            spo2 = Math.max(85, Math.min(spo2, 100));
-            heartRateCell.textContent = `${heartRate}bpm`;
-            spo2Cell.textContent = `${spo2}%`;
-            stepsCell.textContent = steps.toLocaleString();
-        });
-      }
-      setInterval(updateResidentVitals, 1000); // Keep this interval
-    }
-
-
     // ----- Floor 1 occupancy cycling (IF floor plan exists) -----
     const floor1PlanElement = document.getElementById('floor-1-plan');
     if (floor1PlanElement) {
@@ -1361,7 +1332,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       setInterval(updateFloor1Occupancy, 1000); // Keep this interval
     }
-
 
     // Nutrition card swipe logic (IF nutrition wrapper exists)
     const nutritionWrapper = document.querySelector('.card-nutrition-wrapper');
