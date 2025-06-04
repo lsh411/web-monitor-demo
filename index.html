@@ -570,10 +570,17 @@ window.API_CONFIG = {
     ENABLE_MOCK_DATA: false // true로 설정하면 목업 데이터 사용
 };
 
+// HTTPS 환경에서는 자동으로 목업 데이터 사용
+if (window.location.protocol === 'https:') {
+    console.warn('HTTPS 환경에서 HTTP API 호출이 차단됩니다. 목업 데이터 모드로 전환합니다.');
+    console.log('로컬에서 테스트하려면 http://localhost:8000 으로 접속하세요.');
+    window.API_CONFIG.ENABLE_MOCK_DATA = true;
+}
+
 // CORS 이슈 해결을 위한 프록시 설정 (개발 환경용)
 // 예: http://localhost:3000/api -> https://your-api-endpoint.com
 if (window.location.hostname === 'localhost') {
-    window.API_CONFIG.BASE_URL = '/api'; // 로컬 프록시 사용
+    // window.API_CONFIG.BASE_URL = '/api'; // 로컬 프록시 사용
 }
 </script>
 
