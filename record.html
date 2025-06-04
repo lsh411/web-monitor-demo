@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>헬로온 관리기록</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="main-bg">
+    <header class="main-header">
+      <div class="logo-nav">
+        <img src="assets/hello-on_logotype.png" alt="헬로온 로고" class="hello-logo" />
+        <nav class="gnb">
+          <button class="gnb-btn" data-page="index.html" onclick="window.location.href='index.html'"><span class="icon dashboard"></span>대시보드</button>
+          <button class="gnb-btn active" data-page="record.html"><span class="icon record"></span>관리기록</button>
+          <button class="gnb-btn" data-page="status.html"><span class="icon status"></span>전체상태</button>
+          <button class="gnb-btn" data-page="guardian.html"><span class="icon guardian"></span>보호자</button>
+          <button class="gnb-btn" data-page="disease.html"><span class="icon disease"></span>유병확률</button>
+        </nav>
+      </div>
+      <div class="header-actions">
+        <button class="alarm-btn"><span class="icon alarm"></span></button>
+        <div class="user-menu">
+          <span class="user-role">근무자 계정 1</span>
+          <span class="user-name">admin</span>
+        </div>
+      </div>
+    </header>
+    <main class="record-main" id="main-content">
+      <section class="record-status-bar">
+        <span class="record-title">관리기록</span>
+        <span class="record-desc">입소인의 상태 변경, 담당자 호출 등의 관리 기록을 확인하는 페이지입니다.</span>
+        <span class="record-date">5월 8일 목요일</span>
+      </section>
+      <div class="record-workspace">
+        <aside class="record-sidebar">
+          <h3 class="sidebar-title"><span class="toggle-icon"></span>위험 신호 <span class="badge">6</span></h3>
+          <ul class="sidebar-menu">
+            <li class="sidebar-item active" data-type="unconfirmed">미확인 위험 신호 <span class="sub-count">3</span></li>
+            <li class="sidebar-item" data-type="confirmed">확인된 위험 신호 <span class="sub-count">1</span></li>
+            <li class="sidebar-item" data-type="resolved">해결 완료된 신호 <span class="sub-count">2</span></li>
+          </ul>
+
+          <h3 class="sidebar-title disabled">수면시간 부족</h3>
+          <h3 class="sidebar-title disabled">영양 부족</h3>
+          <h3 class="sidebar-title disabled">운동 부족</h3>
+
+          <div class="sidebar-separator"></div>
+
+          <h3 class="sidebar-title disabled">입소인 기록</h3>
+          <h3 class="sidebar-title disabled">기록 보관</h3>
+        </aside>
+
+        <div class="record-panel">
+
+          <div class="record-list-detail">
+            <section class="record-list-pane">
+              <div class="record-list-box">
+                <div class="record-list-header">
+                  <input type="checkbox" id="select-all" class="select-all-checkbox" />
+
+                  <div class="list-action-group">
+                    <button id="bulk-action-btn" class="list-action-btn">
+                      <span class="triangle-icon"></span>
+                    </button>
+                    <div id="bulk-action-menu" class="bulk-menu hidden">
+                      <button data-action="select-all">전체 선택</button>
+                      <button data-action="mark-read">읽음</button>
+                      <button data-action="mark-unread">읽지않음</button>
+                    </div>
+
+                    <button id="refresh-btn" class="list-action-btn">
+                      <span class="refresh-icon"></span>
+                    </button>
+                  </div>
+                </div>
+
+                <section class="record-list-body" id="record-list-body">
+                  <!-- Dynamic rows injected by script.js -->
+                </section>
+              </div>
+            </section>
+
+            <section class="record-detail-pane">
+              <div class="record-detail-header">
+                <button class="detail-back-btn"><</button>
+                <span class="detail-time">2025.5.7 WED PM2:43</span>
+              </div>
+              <h4 class="detail-title"></h4>
+              <div class="detail-body"></div>
+            </section>
+          </div><!-- .record-list-detail -->
+        </div><!-- .record-panel -->
+      </div><!-- .record-workspace -->
+    </main>
+  </div>
+
+<!-- Modals (copied from index.html for consistency, can be refactored later if needed) -->
+<div id="inmate-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <button id="inmate-modal-close" class="modal-close">✕</button>
+    <h2 class="modal-title">입소 인원 상세</h2>
+    <button class="modal-edit-btn" onclick="alert('편집 기능은 아직 지원되지 않습니다.')">편집</button>
+    <div class="modal-table-wrapper">
+      <table class="modal-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>프로필</th>
+            <th>성함</th>
+            <th>나이</th>
+            <th>호실</th>
+            <th>입소일</th>
+            <th>특이사항</th>
+            <th>보호자</th>
+            <th>연락처</th>
+          </tr>
+        </thead>
+        <tbody id="inmate-modal-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="vacancy-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <button id="vacancy-modal-close" class="modal-close">✕</button>
+    <h2 class="modal-title">공실 상세</h2>
+    <button class="modal-edit-btn" onclick="alert('편집 기능은 아직 지원되지 않습니다.')">편집</button>
+    <div class="modal-table-wrapper">
+      <table class="modal-table">
+        <thead>
+          <tr>
+            <th>호실</th>
+            <th>침대 1</th>
+            <th>침대 2</th>
+            <th>침대 3</th>
+            <th>침대 4</th>
+            <th>침대 5</th>
+          </tr>
+        </thead>
+        <tbody id="vacancy-modal-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="call-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <button id="call-modal-close" class="modal-close">✕</button>
+    <h2 class="modal-title">담당자 호출</h2>
+    <p id="call-modal-message" class="call-message"></p>
+    <button id="call-phone-btn" class="call-phone-btn">관리인에게 전화하기</button>
+  </div>
+</div>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    renderTable('미확인 위험 신호');
+  });
+</script>
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>헬로온 대시보드</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="main-bg">
+    <header class="main-header">
+      <div class="logo-nav">
+        <img src="assets/hello-on_logotype.png" alt="헬로온 로고" class="hello-logo" />
+        <nav class="gnb">
+          <button class="gnb-btn active" data-page="index.html"><span class="icon dashboard"></span>대시보드</button>
+          <button class="gnb-btn" data-page="record.html" onclick="window.location.href='record.html'"><span class="icon record"></span>관리기록</button>
+          <button class="gnb-btn" data-page="status.html"><span class="icon status"></span>전체상태</button>
+          <button class="gnb-btn" data-page="guardian.html"><span class="icon guardian"></span>보호자</button>
+          <button class="gnb-btn" data-page="disease.html"><span class="icon disease"></span>유병확률</button>
+        </nav>
+      </div>
+      <div class="header-actions">
+        <button class="alarm-btn"><span class="icon alarm"></span></button>
+        <div class="user-menu">
+          <span class="user-role">근무자 계정 1</span>
+          <span class="user-name">admin</span>
+        </div>
+      </div>
+    </header>
+    <main class="dashboard-main" id="main-content">
+      <section class="dashboard-status-bar">
+        <span class="dashboard-title">대시보드</span>
+        <span class="dashboard-desc">시설의 전체 현황을 한눈에 볼 수 있는 페이지 입니다. 필요사항을 보기 쉽게 변경/추가할 수 있습니다.</span>
+        <span class="dashboard-date">5월 8일 목요일</span>
+      </section>
+      <section class="alert-section hidden">
+        <div class="alert-card">
+          <img src="assets/status_01.png" class="alert-profile">
+          <span class="alert-name">김영수</span>
+          <img src="assets/caution_icon.png" class="alert-icon">
+          <span class="alert-title">높은 심박수 감지</span>
+          <span class="alert-desc">심박수가 107bpm 이상 입니다.<br>도움이 필요하신지 확인이 필요합니다.</span>
+          <button class="alert-btn">담당자 호출</button>
+        </div>
+        <div class="alert-card">
+          <img src="assets/status_02.png" class="alert-profile">
+          <span class="alert-name">김순자</span>
+          <img src="assets/caution_icon.png" class="alert-icon">
+          <span class="alert-title">낙상 감지</span>
+          <span class="alert-desc">넘어짐이 스마트 위치로 확인 되었습니다.<br>도움이 필요하신지 확인이 필요합니다.</span>
+          <button class="alert-btn">담당자 호출</button>
+        </div>
+      </section>
+      <section class="dashboard-content">
+        <div class="dashboard-cards">
+          <div class="cards-top-section">
+            <div class="cards-top-left-stack">
+              <div class="card card-inmates">
+                <div class="card-header">
+                <div class="card-title-group">
+                <span class="card-title">입소 인원</span>
+                <button class="info-btn"><span class="icon info"></span></button>
+              </div>
+              <button class="card-detail top-right">자세히 보기</button>
+            </div>
+              <div class="card-main">
+                <span class="icon person" style="background-image: url('assets/card_1.png');"></span>
+                <span class="card-value">26</span>
+              </div>
+              <div class="card-desc">
+                지난주 대비 3명 증가
+                <img src="assets/card1_graph.png" alt="입소 인원 그래프" class="mini-graph" />
+              </div>
+            <!-- Removed link from here -->
+          </div>
+          <div class="card card-vacancy">
+            <div class="card-header">
+              <div class="card-title-group">
+                <span class="card-title">공실</span>
+                <button class="info-btn"><span class="icon info"></span></button>
+              </div>
+              <button class="card-detail top-right">자세히 보기</button>
+            </div>
+            <div class="card-main">
+              <span class="icon bed" style="background-image: url('assets/card_2.png');"></span>
+              <span class="card-value">19</span>
+            </div>
+            <div class="card-desc">
+              입소 26 / 전체 45
+              <img src="assets/card2_graph.png" alt="공실 그래프" class="mini-graph" />
+            </div>
+            <!-- Removed link from here -->
+          </div>
+        </div>
+        <!-- BEGIN nutrition wrapper -->
+        <div class="card-nutrition-wrapper">
+          <div class="card card-nutrition">
+            <div class="card-header">
+              <div class="card-title-group">
+                <span class="card-title" id="nutrition-title">영양 부족</span>
+                <button class="info-btn"><span class="icon info"></span></button>
+              </div>
+              <div class="nutrition-arrows">
+                <button class="arrow-btn left" id="slide-left"></button>
+                <button class="arrow-btn right" id="slide-right"></button>
+              </div>
+            </div>
+            <div class="card-main">
+              <span class="icon nutrition" id="nutrition-icon" style="background-image: url('assets/card3_1.png');"></span>
+              <span class="card-value" id="nutrition-value">2</span>
+            </div>
+            <div class="card-desc" id="nutrition-desc">최근 3일 일일 평균 섭취 1000kcal 미만</div>
+            <ul class="nutrition-list" id="nutrition-list">
+              <li>
+                <img src="assets/sleep_01.png" alt="김순자" class="profile-img-sm">
+                <span class="resident-name">김순자</span>
+                <span class="sleep-summary">평균 835kcal</span>
+                <span class="room">101호</span>
+              </li>
+              <li>
+                <img src="assets/sleep_02.png" alt="이경숙" class="profile-img-sm">
+                <span class="resident-name">이경숙</span>
+                <span class="sleep-summary">평균 920kcal</span>
+                <span class="room">105호</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <!-- END nutrition wrapper -->
+        </div>
+          <div class="card card-location">
+            <div class="card-header">
+              <div class="card-title-group">
+                <span class="card-title">위치 정보</span>
+                <button class="info-btn"><span class="icon info"></span></button>
+              </div>
+              <!-- <button class="card-detail top-right">자세히 보기</button> -->
+            </div>
+            <div class="card-main">
+              <span class="icon location" style="background-image: url('assets/card4.png');"></span>
+              <span class="card-value">17</span>
+              <span class="icon snow" style="background-image: url('assets/card4_2.png'); margin-left: 12px;"></span>
+              <span class="card-value">9</span>
+            </div>
+            <div class="card-desc">입소 인원 26명 중 17명 재실, 9명 외부 활동 (9명 중 1명 반경 1km외부지역)</div>
+            <div class="location-map-container">
+              <div class="floor-selector-wrapper">
+                <button id="floor-selector-btn" class="floor-selector map-top-right">
+                  <span id="selected-floor">1층</span>
+                  <span class="arrow-down-char">▼</span> <!-- Replaced icon with text -->
+                </button>
+                <div id="floor-options" class="floor-options hidden">
+                  <button class="floor-option" data-floor="1">1층</button>
+                  <button class="floor-option" data-floor="2">2층</button>
+                </div>
+              </div>
+              <div id="floor-1-plan" class="location-map floor-plan active">
+                <!-- Floor 1 Layout -->
+                <div class="room-grid">
+                  <div class="room placeholder"></div>
+                  <div class="room"><span class="room-name">102</span><span class="occupancy">3</span></div>
+                  <div class="room common-area"><span class="room-name">화장실</span><span class="occupancy">2</span></div>
+                  <div class="room"><span class="room-name">104</span><span class="occupancy">2</span></div>
+                  <div class="room placeholder"></div>
+
+                  <div class="room"><span class="room-name">101</span><span class="occupancy">3</span></div>
+                  <div class="room"><span class="room-name">103</span><span class="occupancy">3</span></div>
+                  <div class="room common-area"><span class="room-name">식당</span></div>
+                  <div class="room"><span class="room-name">105</span><span class="occupancy">1</span></div>
+                  <div class="room"><span class="room-name">106</span></div>
+                </div>
+              </div>
+              <div id="floor-2-plan" class="location-map floor-plan hidden">
+                <!-- Floor 2 Layout -->
+                 <div class="room-grid floor-2">
+                   <div class="room"><span class="room-name">201</span><span class="occupancy">2</span></div>
+                   <div class="room"><span class="room-name">202</span><span class="occupancy">1</span></div>
+                   <div class="room"><span class="room-name">203</span><span class="occupancy">3</span></div>
+                 </div>
+              </div>
+            </div>
+            <!-- Removed button from here, it's now in header -->
+          </div>
+        </div>
+        <div class="resident-status-card">
+          <div class="resident-header">
+            <span class="card-title">입소인 상태 목록</span>
+            <button class="info-btn"><span class="icon info"></span></button>
+          </div>
+          <div class="resident-table-wrapper">
+            <table class="resident-table">
+              <thead>
+                <tr>
+                <th>성함</th>
+                <th>나이</th>
+                <th>상태</th>
+                <th>호실</th>
+                <th>심박수</th>
+                <th>산소포화도</th>
+                <th>수면</th>
+                <th>걸음수</th>
+                <th></th> <!-- For ... actions -->
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><img src="assets/status_01.png" alt="김영수 프로필" class="profile-img"> 김영수</td>
+                <td>77세</td>
+                <td><span class="status-label daily">일상생활</span></td>
+                <td>101호</td>
+                <td>68bpm</td>
+                <td>95%</td>
+                <td>7.5h</td>
+                <td>3,482</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_02.png" alt="김순자 프로필" class="profile-img"> 김순자</td>
+                <td>84세</td>
+                <td><span class="status-label exercise">운동</span></td>
+                <td>101호</td>
+                <td>68bpm</td>
+                <td>95%</td>
+                <td>7.5h</td>
+                <td>3,482</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_03.png" alt="신영자 프로필" class="profile-img"> 신영자</td>
+                <td>82세</td>
+                <td><span class="status-label exercise">운동</span></td>
+                <td>101호</td>
+                <td>68bpm</td>
+                <td>95%</td>
+                <td>7.5h</td>
+                <td>3,482</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_04.png" alt="김정석 프로필" class="profile-img"> 김정석</td>
+                <td>78세</td>
+                <td><span class="status-label sleep">수면</span></td>
+                <td>102호</td>
+                <td>68bpm</td>
+                <td>95%</td>
+                <td>7.5h</td>
+                <td>3,482</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_05.png" alt="서영숙 프로필" class="profile-img"> 서영숙</td>
+                <td>84세</td>
+                <td><span class="status-label daily">일상생활</span></td>
+                <td>102호</td>
+                <td>68bpm</td>
+                <td>95%</td>
+                <td>7.5h</td>
+                <td>3,482</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_06.png" alt="프로필 이미지" class="profile-img"> 박영철</td>
+                <td>86세</td>
+                <td><span class="status-label moving">이동</span></td>
+                <td>103호</td>
+                <td>70bpm</td>
+                <td>96%</td>
+                <td>6.5h</td>
+                <td>2,100</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_07.png" alt="프로필 이미지" class="profile-img"> 김경숙</td>
+                <td>87세</td>
+                <td><span class="status-label sleep">수면</span></td>
+                <td>103호</td>
+                <td>65bpm</td>
+                <td>97%</td>
+                <td>8.0h</td>
+                <td>1,250</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_08.png" alt="프로필 이미지" class="profile-img"> 이경미</td>
+                <td>88세</td>
+                <td><span class="status-label exercise">운동</span></td>
+                <td>103호</td>
+                <td>72bpm</td>
+                <td>95%</td>
+                <td>7.0h</td>
+                <td>4,500</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_09.png" alt="프로필 이미지" class="profile-img"> 서영숙</td>
+                <td>90세</td>
+                <td><span class="status-label daily">일상생활</span></td>
+                <td>103호</td>
+                <td>67bpm</td>
+                <td>98%</td>
+                <td>7.2h</td>
+                <td>3,300</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_10.png" alt="프로필 이미지" class="profile-img"> 이송자</td>
+                <td>79세</td>
+                <td><span class="status-label exercise">운동</span></td>
+                <td>104호</td>
+                <td>75bpm</td>
+                <td>94%</td>
+                <td>6.8h</td>
+                <td>5,200</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_11.png" alt="프로필 이미지" class="profile-img"> 추순자</td>
+                <td>88세</td>
+                <td><span class="status-label daily">일상생활</span></td>
+                <td>104호</td>
+                <td>66bpm</td>
+                <td>96%</td>
+                <td>7.1h</td>
+                <td>3,100</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_12.png" alt="프로필 이미지" class="profile-img"> 정기숙</td>
+                <td>86세</td>
+                <td><span class="status-label daily">일상생활</span></td>
+                <td>105호</td>
+                <td>69bpm</td>
+                <td>95%</td>
+                <td>7.3h</td>
+                <td>3,800</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_13.png" alt="프로필 이미지" class="profile-img"> 최민준</td>
+                <td>72세</td>
+                <td><span class="status-label sleep">수면</span></td>
+                <td>105호</td>
+                <td>64bpm</td>
+                <td>98%</td>
+                <td>8.2h</td>
+                <td>980</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_01.png" alt="프로필 이미지" class="profile-img"> 강지우</td>
+                <td>75세</td>
+                <td><span class="status-label moving">이동</span></td>
+                <td>106호</td>
+                <td>71bpm</td>
+                <td>96%</td>
+                <td>6.7h</td>
+                <td>2,500</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_02.png" alt="프로필 이미지" class="profile-img"> 윤서아</td>
+                <td>81세</td>
+                <td><span class="status-label exercise">운동</span></td>
+                <td>106호</td>
+                <td>73bpm</td>
+                <td>95%</td>
+                <td>7.0h</td>
+                <td>4,800</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_03.png" alt="프로필 이미지" class="profile-img"> 임하윤</td>
+                <td>77세</td>
+                <td><span class="status-label daily">일상생활</span></td>
+                <td>107호</td>
+                <td>68bpm</td>
+                <td>97%</td>
+                <td>7.4h</td>
+                <td>3,600</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_04.png" alt="프로필 이미지" class="profile-img"> 한지호</td>
+                <td>83세</td>
+                <td><span class="status-label sleep">수면</span></td>
+                <td>107호</td>
+                <td>66bpm</td>
+                <td>98%</td>
+                <td>7.9h</td>
+                <td>1,500</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_05.png" alt="프로필 이미지" class="profile-img"> 오은서</td>
+                <td>74세</td>
+                <td><span class="status-label exercise">운동</span></td>
+                <td>108호</td>
+                <td>74bpm</td>
+                <td>94%</td>
+                <td>6.9h</td>
+                <td>5,000</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_06.png" alt="프로필 이미지" class="profile-img"> 서예준</td>
+                <td>89세</td>
+                <td><span class="status-label daily">일상생활</span></td>
+                <td>108호</td>
+                <td>67bpm</td>
+                <td>96%</td>
+                <td>7.1h</td>
+                <td>3,000</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_07.png" alt="프로필 이미지" class="profile-img"> 권도윤</td>
+                <td>71세</td>
+                <td><span class="status-label moving">이동</span></td>
+                <td>109호</td>
+                <td>70bpm</td>
+                <td>95%</td>
+                <td>6.6h</td>
+                <td>2,300</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_08.png" alt="프로필 이미지" class="profile-img"> 황시우</td>
+                <td>78세</td>
+                <td><span class="status-label sleep">수면</span></td>
+                <td>109호</td>
+                <td>65bpm</td>
+                <td>97%</td>
+                <td>8.1h</td>
+                <td>1,100</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_09.png" alt="프로필 이미지" class="profile-img"> 송지아</td>
+                <td>85세</td>
+                <td><span class="status-label exercise">운동</span></td>
+                <td>110호</td>
+                <td>72bpm</td>
+                <td>95%</td>
+                <td>7.0h</td>
+                <td>4,700</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_10.png" alt="프로필 이미지" class="profile-img"> 정수빈</td>
+                <td>73세</td>
+                <td><span class="status-label daily">일상생활</span></td>
+                <td>110호</td>
+                <td>69bpm</td>
+                <td>96%</td>
+                <td>7.3h</td>
+                <td>3,700</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_11.png" alt="프로필 이미지" class="profile-img"> 조하준</td>
+                <td>80세</td>
+                <td><span class="status-label sleep">수면</span></td>
+                <td>111호</td>
+                <td>66bpm</td>
+                <td>98%</td>
+                <td>7.8h</td>
+                <td>1,300</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_12.png" alt="프로필 이미지" class="profile-img"> 유채원</td>
+                <td>76세</td>
+                <td><span class="status-label moving">이동</span></td>
+                <td>111호</td>
+                <td>71bpm</td>
+                <td>95%</td>
+                <td>6.7h</td>
+                <td>2,600</td>
+                <td>...</td>
+              </tr>
+              <tr>
+                <td><img src="assets/status_01.png" alt="이하준 프로필" class="profile-img"> 이하준</td>
+                <td>79세</td>
+                <td><span class="status-label daily">일상생활</span></td>
+                <td>112호</td>
+                <td>68bpm</td>
+                <td>95%</td>
+                <td>7.2h</td>
+                <td>3,300</td>
+                <td>...</td>
+              </tr>
+            </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<!-- Inmate detail modal -->
+<div id="inmate-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <button id="inmate-modal-close" class="modal-close">✕</button>
+    <h2 class="modal-title">입소 인원 상세</h2>
+    <button class="modal-edit-btn" onclick="alert('편집 기능은 아직 지원되지 않습니다.')">편집</button>
+    <div class="modal-table-wrapper">
+      <table class="modal-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>프로필</th>
+            <th>성함</th>
+            <th>나이</th>
+            <th>호실</th>
+            <th>입소일</th>
+            <th>특이사항</th>
+            <th>보호자</th>
+            <th>연락처</th>
+          </tr>
+        </thead>
+        <tbody id="inmate-modal-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Vacancy detail modal -->
+<div id="vacancy-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <button id="vacancy-modal-close" class="modal-close">✕</button>
+    <h2 class="modal-title">공실 상세</h2>
+    <button class="modal-edit-btn" onclick="alert('편집 기능은 아직 지원되지 않습니다.')">편집</button>
+    <div class="modal-table-wrapper">
+      <table class="modal-table">
+        <thead>
+          <tr>
+            <th>호실</th>
+            <th>침대 1</th>
+            <th>침대 2</th>
+            <th>침대 3</th>
+            <th>침대 4</th>
+            <th>침대 5</th>
+          </tr>
+        </thead>
+        <tbody id="vacancy-modal-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Call‑alert modal -->
+<div id="call-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <button id="call-modal-close" class="modal-close">✕</button>
+    <h2 class="modal-title">담당자 호출</h2>
+    <p id="call-modal-message" class="call-message"></p>
+    <button id="call-phone-btn" class="call-phone-btn">관리인에게 전화하기</button>
+  </div>
+</div>
+
+<!-- API Configuration -->
+<script>
+// AWS API 설정 - 실제 환경에 맞게 수정하세요
+window.API_CONFIG = {
+    BASE_URL: 'http://ec2-52-78-169-124.ap-northeast-2.compute.amazonaws.com:8080', // 실제 API 엔드포인트
+    WATCHER_USER_ID: '3743690826', // 실제 보호자 ID
+    UPDATE_INTERVAL: 5000, // 업데이트 주기 (밀리초)
+    ENABLE_MOCK_DATA: true // true로 설정하면 목업 데이터 사용
+};
+
+// CORS 이슈 해결을 위한 프록시 설정 (개발 환경용)
+// 예: http://localhost:3000/api -> https://your-api-endpoint.com
+if (window.location.hostname === 'localhost') {
+    window.API_CONFIG.BASE_URL = '/api'; // 로컬 프록시 사용
+}
+</script>
+
+<script src="script.js"></script>
+</body>
+</html>

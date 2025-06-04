@@ -1,0 +1,1675 @@
+
+.reply-block{
+  background:#F3F4F6;
+  border-radius:8px;
+  padding:12px 16px;
+  margin-bottom:16px;
+}
+.reply-header{
+  display:flex;align-items:center;gap:12px;margin-bottom:8px;
+}
+.reply-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;}
+.reply-author{font-weight:600;font-size:0.875rem;color:#111827;}
+
+.reply-editor{margin-bottom:16px;}
+.reply-text{
+  width:100%;min-height:80px;border:1px solid #D1D5DB;border-radius:8px;padding:8px;font-size:0.875rem;font-family:inherit;resize:vertical;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+.reply-actions{display:flex;gap:12px;margin-top:8px;}
+.reply-submit,.reply-cancel{
+  flex:1;padding:10px 0;border:none;border-radius:8px;font-size:0.9375rem;font-weight:600;cursor:pointer;
+}
+.reply-submit{background:#2A6AA6;color:#FFFFFF;}
+.reply-cancel{background:#E5E7EB;color:#374151;}
+
+/* === Record list header === */
+.record-list-header{
+  display:flex;
+  align-items:center;
+  padding:0 16px 8px 16px;   /* left/right 16px to match record rows */
+  border-bottom:1px solid #E5E7EB;
+  gap:0;
+}
+
+.select-all-checkbox{
+  flex:0 0 24px;
+  cursor:pointer;
+}
+
+.list-action-group{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  position: relative;        /* anchor for absolute dropdown */
+}
+
+.list-action-btn{
+  background:none;
+  border:none;
+  cursor:pointer;
+  width:24px;height:24px;
+  position:relative;
+}
+
+#bulk-action-btn{
+  padding-top:15px;
+}
+
+.triangle-icon{
+  width:0;height:0;
+  border-left:6px solid transparent;
+  border-right:6px solid transparent;
+  border-top:6px solid #374151;
+}
+.refresh-icon{
+  width:24px;height:24px;
+}
+.refresh-icon::before{
+  content:'🔄';
+  font-size:18px;
+  line-height:24px;
+  display:block;
+  text-align:center;
+}
+
+/* bulk dropdown */
+.bulk-menu{
+  position:absolute;
+  top:24px;                  /* sits right under header controls */
+  left:0;
+  background:#FFFFFF;
+  border:1px solid #D1D5DB;
+  border-radius:6px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.1);
+  display:flex;
+  flex-direction:column;
+  min-width:120px;
+  z-index:100;
+}
+.bulk-menu button{
+  background:none;
+  border:none;
+  padding:8px 12px;
+  text-align:left;
+  font-size:0.8125rem;
+  cursor:pointer;
+}
+.bulk-menu button:hover{
+  background:#F3F4F6;
+}
+
+.record-row.read .rec-name-title{ color:#9CA3AF; }
+
+/* === Record workspace layout === */
+.record-workspace {
+  display: flex;
+  gap: 24px;
+}
+
+.record-sidebar{
+  width:180px;
+  background:transparent;   /* remove white box */
+  padding:12px 8px;
+  font-size:0.875rem;
+}
+
+/* === New/updated sidebar styles === */
+.sidebar-title{
+  display:flex;
+  align-items:center;
+  gap:5px;          /* icon‑text gap */
+  font-weight:700;
+  margin:0;         /* reset – spacing handled below */
+}
+
+/* 30px vertical gap between top‑level menu titles */
+.sidebar-title + .sidebar-title,
+.sidebar-menu + .sidebar-title{
+  margin-top:30px;
+}
+
+/* 40px gap above/below grey separator bar */
+.sidebar-separator{
+  height:1px;
+  background:#D1D5DB;
+  margin:30px 0;
+}
+
+/* collapse/expand chevron */
+.toggle-icon{
+  width:8px;
+  height:8px;
+  border-left:2px solid #6B7280;
+  border-bottom:2px solid #6B7280;
+  transform:rotate(-45deg);
+  margin-right: 5px;
+}
+
+.badge{
+  margin-left:auto;
+  background:none;        /* remove red pill */
+  color:#2A6AA6;          /* blue text */
+  padding:0;
+  font-size:0.875rem;     /* slightly larger */
+  font-weight:700;
+  padding-right: 5px;
+}
+
+.sidebar-menu{
+  list-style:none;
+  padding-left:12px;              /* indent */
+  margin:15px 0 12px 4px; /* top 15px, right 0, bottom 12px, left 4px */
+  border-left:2px solid #D1D5DB;  /* vertical line */
+}
+
+.sidebar-menu li{
+  display:flex;
+  justify-content:space-between;
+  padding:6px 6px 6px 12px;
+  border-radius:6px;
+  cursor:pointer;
+  margin-bottom: 12px;
+}
+
+.sub-count{
+  color:#9CA3AF;  /* grey numbers */
+  font-weight:600;
+}
+
+/* hover & selected states */
+.sidebar-menu li.active,
+.sidebar-menu li:hover{
+  background:#FFFFFF;
+  color:#2A6AA6;
+  font-weight:700;
+}
+
+.sidebar-menu li.active .sub-count{
+  color:#2A6AA6;
+}
+
+.sidebar-separator{
+  height:1px;
+  background:#D1D5DB;
+  margin:30px 0;
+}
+
+.record-panel {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+.record-list-detail {
+  display:grid;
+  grid-template-columns: 1fr 420px; /* list | detail */
+  gap:24px;
+  height:calc(100vh - 300px); /* rough fit */
+}
+
+.record-list-pane {
+  display:flex;
+  flex-direction:column;
+}
+
+.record-detail-pane {
+  background:#FFFFFF;
+  border-radius:12px;
+  box-shadow:0 2px 4px rgba(0,0,0,0.03),0 4px 12px rgba(0,0,0,0.05);
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+.record-detail-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:8px;
+}
+
+.detail-back-btn {
+  background:none;
+  border:none;
+  font-size:1.25rem;
+  cursor:pointer;
+}
+
+.detail-title {
+  font-size:1rem;
+  font-weight:600;
+  margin:8px 0 12px;
+}
+
+.detail-body {
+  flex:1;
+  overflow-y:auto;
+}
+
+@media(max-width:992px){
+  .record-list-detail{
+    grid-template-columns:1fr; /* stack on tablet */
+  }
+  .record-detail-pane{
+    display:none; /* could swap to overlay on click */
+  }
+}
+
+.alert-section {
+  display: grid; /* Using grid for overall layout */
+  grid-template-columns: 1fr 1fr; /* Equal width for left and right columns */
+  gap: 24px;
+  align-items: stretch; /* MODIFIED: Make grid items stretch to fill height */
+}
+
+.alert-card {
+  display: flex;
+  align-items: center;
+  background-color: #EF4444; /* Red background */
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  flex: 0 0 calc(50% - 20px); /* two cards, 40px gap -> each card width (50% - 20px) */
+}
+
+.alert-profile {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.alert-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.alert-name {
+  font-weight: 400;
+  font-size: 22px;
+}
+
+.alert-title {
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.alert-desc {
+  padding-left: 10px;
+  font-weight: 400;
+  flex-grow: 1;
+  font-size: 12px;
+  white-space: pre-line;
+}
+
+.alert-btn {
+  background-color: #ffffff;
+  color: #EF4444;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.hidden {
+  display: none !important;
+}
+body {
+  font-family: 'Pretendard', 'Apple SD Gothic Neo', Arial, sans-serif;
+  background: #EBEEF0; /* Lighter page background */
+  margin: 0;
+  padding: 0;
+  color: #1F2937; /* Default dark text */
+  letter-spacing: -0.01em;
+  font-size: 16px; /* Base font size */
+}
+
+.main-bg {
+  min-height: 100vh;
+  width: 100%; /* Changed from vw to % for better responsiveness */
+}
+
+/* Header Styles */
+.main-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #E9EDF2;
+  padding: 24px 48px 10px 48px; /* 하단 패딩을 10px로 변경 */
+  /* border-bottom: 1.5px solid #D6DEE8; */ /* border 제거 */
+}
+
+.logo-nav {
+  display: flex;
+  align-items: center;
+  gap: 24px; /* Adjusted gap */
+}
+
+.hello-logo {
+  height: 32px;
+  width: auto;
+}
+
+.gnb {
+  display: flex;
+  gap: 8px; /* Smaller gap between buttons */
+}
+
+.gnb-btn {
+  background: #FFFFFF;
+  border: none;
+  border-radius: 9999px; /* Pill shape */
+  padding: 8px 20px;
+  font-size: 0.9375rem; /* 15px */
+  font-weight: 600;
+  color: #2A6AA6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  box-shadow: none;
+}
+.gnb-btn.active {
+  background: #2A6AA6; /* Updated blue for active */
+  color: #FFFFFF;
+  /* box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15); */ /* Optional: subtle shadow for active */
+}
+.gnb-btn .icon {
+  width: 18px; /* Slightly smaller icons */
+  height: 18px;
+  display: inline-block;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+.gnb-btn.active .icon {
+  filter: none; /* Active icons in full color (assuming SVGs are colored or white) */
+}
+/* Icon paths - assuming these are correct and SVGs handle active/inactive states if needed via CSS filter or different files */
+/* PNG icon assignments for GNB buttons */
+.gnb-btn .dashboard { background-image: url('assets/dashboard_icon.png'); }
+.gnb-btn.active .dashboard { background-image: url('assets/dashboard_icon_on.png'); }
+.gnb-btn .status { background-image: url('assets/status_graph_icon.png'); }
+.gnb-btn .guardian { background-image: url('assets/p_icon.png'); }
+.gnb-btn .record { background-image: url('assets/report_icon.png'); }
+.gnb-btn.active .record { background-image: url('assets/report_icon_on.png'); }
+.gnb-btn .disease { background-image: url('assets/cross_icon.png'); }
+/* If active icons are just color changes, CSS filter on the .icon itself in .active state might be enough */
+/* For example, if icons are blue and need to be white on active:
+.gnb-btn.active .icon { filter: brightness(0) invert(1); }
+*/
+
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.alarm-btn {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB; /* Added border */
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.alarm-btn .icon {
+  width: 20px;
+  height: 20px;
+  background-image: url('assets/alarm_icon.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+.alarm-btn::after { /* Notification dot */
+  content: '';
+  display: block;
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 8px;
+  height: 8px;
+  background: #EF4444; /* Red for notification */
+  border-radius: 50%;
+  border: 2px solid #FFFFFF;
+}
+
+.user-menu {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB; /* Added border */
+  border-radius: 9999px; /* Pill shape */
+  padding: 6px 12px 6px 16px; /* Adjusted padding */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem; /* 14px */
+  font-weight: 500;
+  color: #374151;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.user-role {
+  font-weight: 600;
+  color: #111827; /* Darker text */
+}
+.user-name {
+  background: #F3F4F6; /* Light gray background */
+  color: #4B5563; /* Medium gray text */
+  border-radius: 9999px;
+  padding: 4px 10px;
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 500;
+}
+
+/* Dashboard Main Area */
+.dashboard-main {
+  max-width: 100%; /* Allow full width */
+  padding: 10px 32px; /* 상단 패딩을 10px로 변경 */
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dashboard-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 16px 24px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.03), 0 4px 12px rgba(0,0,0,0.05);
+}
+.dashboard-title {
+  font-size: 1.5rem; /* 24px */
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0;
+}
+.dashboard-desc {
+  color: #6B7280; /* Lighter text for description */
+  font-size: 0.875rem; /* 14px */
+  font-weight: 400;
+  line-height: 1.5;
+}
+/* Inline description spans the available space */
+.dashboard-desc {
+  flex: 1;
+}
+/* Blue date text with no box */
+.dashboard-date {
+  font-size: 1.375rem; /* 22px */
+  font-weight: 500;
+  color: #3B82F6;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+
+/* Dashboard Content Layout */
+.dashboard-content {
+  display: grid; /* Using grid for overall layout */
+  grid-template-columns: 1fr 1fr; /* Equal width for left and right columns */
+  gap: 24px;
+  align-items: stretch; /* MODIFIED: Make grid items stretch to fill height */
+}
+
+.dashboard-cards { /* This will be the left column for cards */
+  display: flex; /* Changed to flex for overall column layout */
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.cards-top-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Left stack and nutrition card */
+  gap: 24px;
+  align-items: stretch; /* Make items in this grid stretch to fill height */
+}
+
+.cards-top-left-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.card.card-nutrition {
+  /* height: 100%; Ensure it stretches. This is handled by align-items: stretch on .cards-top-section */
+}
+
+.card.card-location {
+  min-height: 280px; /* Adjusted based on image proportions */
+  display: flex; /* To make location-map grow */
+  flex-direction: column;
+}
+
+
+/* General Card Styling */
+.card {
+  background: #FFFFFF;
+  border-radius: 12px; /* Softer corners */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.03), 0 4px 12px rgba(0,0,0,0.05); /* Softer shadow */
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Reduced gap inside card */
+  /* min-height: 180px; Will be overridden or determined by content/flex */
+  position: relative;
+  box-sizing: border-box; /* Prevent overflow when absolute within wrapper */
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; 
+  gap: 8px;
+  margin-bottom: 4px; /* Reduced margin */
+}
+.card-title-group { /* Wrapper for title and info icon */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.card-title {
+  font-size: 1rem; /* 16px */
+  font-weight: 600;
+  color: #1F2937;
+}
+.info-btn, .arrow-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.info-btn .icon, .arrow-btn .icon {
+  width: 16px;
+  height: 16px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.7;
+}
+.info-btn .icon { background-image: url('icon-info.svg'); }
+/* Removed rules for .arrow-btn .icon and .arrow-btn.right .icon as they are now text */
+
+
+.card-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.card-main .icon { /* General icon in card main area */
+  width: 28px;
+  height: 28px;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+.card-value {
+  font-size: 2rem; /* 32px */
+  font-weight: 700;
+  color: #2A6AA6;
+  margin: 0;
+}
+
+.card-desc {
+  color: #7B7B7B;
+  font-size: 1rem; /* 16px */
+  font-weight: 400;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+/* Align graph image with description text for Inmates & Vacancy cards */
+.card-inmates .card-desc,
+.card-vacancy .card-desc {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-detail {
+  background: #FFFFFF;
+  color: #374151;
+  border: 1px solid #C3C3C3;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.card-detail.top-right {
+  /* Positioned by flex in card-header */
+}
+.card-detail:hover {
+  background: #E5E7EB;
+}
+
+/* Specific Card Styles */
+.card-inmates, .card-vacancy {
+  min-height: 160px;      /* keeps minimum visual size */
+  height: auto;           /* allow to grow when content wraps */
+}
+.card-inmates .icon.person { background-image: url('icon-person-blue.svg'); } /* Assuming a blue version */
+.mini-graph {
+  width: 84px;
+  height: auto;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.card-vacancy .icon.bed { background-image: url('icon-bed-blue.svg'); }
+.card-bar-container {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    margin-left: 8px;
+}
+.card-bar {
+  width: 100%; /* Full width within its container */
+  height: 8px;
+  background: #E5E7EB; /* Lighter background for bar */
+  border-radius: 4px;
+  position: relative;
+}
+.card-bar::after { /* Progress fill */
+  content: '';
+  display: block;
+  width: 60%; /* Example fill */
+  height: 100%;
+  background: #3B82F6; /* Blue fill */
+  border-radius: 4px;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.card-nutrition .icon.nutrition { background-image: url('icon-pill-blue.svg'); } /* Pill icon */
+.card-nutrition .card-header { 
+    /* justify-content: flex-start; Already handled by space-between on .card-header */
+}
+/* Wrapper to enable sliding-in/out of nutrition cards */
+.card-nutrition-wrapper {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  min-height: 0;         /* allow JS to set explicit height */
+}
+
+/* Each nutrition card occupies full width and will slide */
+.card-nutrition-wrapper .card-nutrition {
+  width: 100%;
+  flex-shrink: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.card-nutrition {
+  transition: transform 0.35s ease, opacity 0.35s ease;
+}
+.nutrition-arrows {
+    /* margin-left: auto;  Handled by space-between on .card-header */
+    display: flex;
+    gap: 8px; /* Revert gap or adjust as needed */
+    /* Removed background/border/padding from container */
+}
+/* Nutrition arrows with image buttons */
+.nutrition-arrows .arrow-btn {
+  width: 32px;
+  height: 32px;
+  background-color: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 16px 16px;
+  cursor: pointer;
+}
+.nutrition-arrows .arrow-btn.left {
+  background-image: url('assets/arrow_left.png');
+}
+.nutrition-arrows .arrow-btn.right {
+  background-image: url('assets/arrow_right.png');
+}
+/* Removed rule for .nutrition-arrows .arrow-btn .icon */
+.nutrition-list {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0 0;
+  font-size: 0.875rem; /* 14px */
+  color: #374151;
+}
+.nutrition-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #E5E7EB;
+}
+.nutrition-list li:last-child {
+  border-bottom: none;
+}
+.nutrition-list .profile-img-sm { /* Small profile image for nutrition list */
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.nutrition-list .resident-name {
+  flex: 1;
+  font-weight: 600;
+  color: #111827;
+  font-size: 0.9375rem;
+}
+.nutrition-list .room {
+  color: #6B7280;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1;
+  height: auto;
+  display: inline;
+  align-self: center;
+  padding: 0;
+  margin: 0;
+  min-height: auto;
+  max-height: none;
+  border: none;
+}
+
+.card-location .icon.location { background-image: url('icon-pin-blue.svg'); }
+.card-location .icon.snow { background-image: url('icon-snow-blue.svg'); margin-left: 12px; }
+.card-location .card-main { gap: 12px; } /* Tighter gap for location values */
+.card-location .card-value { font-size: 1.75rem; } /* Smaller for two values */
+
+.location-map-container { /* New container for map + selector */
+  margin-top: 8px;
+  background: #F3F4F6;
+  border-radius: 8px;
+  min-height: 150px; /* Adjusted height */
+  position: relative; /* For positioning floor selector wrapper */
+  flex-grow: 1;
+  padding: 24px 40px; /* Increased L/R padding */
+  display: flex; /* Use flex to manage content */
+  flex-direction: column;
+  overflow: hidden; /* Ensure grid doesn't overflow padding */
+}
+
+.floor-selector-wrapper {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10; /* Ensure dropdown is above map content */
+}
+
+.floor-selector { /* Styling for the button itself */
+  display: flex;
+  align-items: center;
+  background-color: #FFFFFF; /* White background as per image */
+  padding: 6px 12px; /* Slightly more padding */
+  border-radius: 6px;
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 500;
+  color: #374151;
+  border: 1px solid #E5E7EB;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  cursor: pointer; /* Make it look clickable */
+}
+.arrow-down-char { /* Style the text arrow */
+    margin-left: 6px;
+    font-size: 0.7rem; /* Adjust size */
+    line-height: 1;
+    color: #6B7280; /* Match icon color */
+}
+/* Removed rule for .floor-selector .icon.arrow-down */
+
+.floor-options {
+  position: absolute;
+  top: 100%; /* Position below the button */
+  right: 0;
+  background-color: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  min-width: 80px; /* Ensure minimum width */
+}
+
+.floor-option {
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 0.8125rem;
+  color: #374151;
+  cursor: pointer;
+}
+.floor-option:hover {
+  background-color: #F3F4F6;
+}
+
+.floor-plan {
+  width: 100%;
+  flex-grow: 1; /* Allow plan to take space */
+}
+
+.room-grid {
+  display: grid;
+  gap: 12px; /* Increased gap between rooms */
+  padding-top: 30px; /* Space below floor selector */
+  height: 100%;
+  width: 100%; /* Ensure grid uses container width */
+  box-sizing: border-box; /* Include padding in width calculation */
+  grid-template-columns: repeat(5, 1fr); /* 5 columns for floor 1 */
+  grid-template-rows: repeat(2, 1fr); /* 2 rows for floor 1 */
+  align-items: stretch;
+  justify-items: stretch;
+}
+.room-grid.floor-2 {
+  grid-template-columns: repeat(3, 1fr); /* 3 columns for floor 2 */
+  grid-template-rows: auto; /* Let content determine row height */
+  width: 60%; /* Further reduced width */
+  margin: 30px auto 0 auto; /* Center it */
+  align-items: start; /* Prevent rooms from stretching vertically */
+}
+
+.room {
+  background-color: #FFFFFF;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  padding: 4px; /* Reduced padding */
+  display: flex; /* Use flex for positioning */
+  flex-direction: column; /* Stack name and occupancy */
+  justify-content: space-between; /* Push name up, occupancy down (initially) */
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 500;
+  color: #374151;
+  position: relative; /* Keep for absolute positioning if needed, but flex might be better */
+  min-height: 70px; /* Adjusted minimum room height */
+  max-height: 70px;
+  box-sizing: border-box;
+}
+.room.placeholder { /* Empty grid cells */
+  background-color: transparent;
+  border: none;
+}
+.room-name {
+  align-self: flex-start; /* Position top-left */
+  padding: 4px 6px; /* Add some padding */
+  font-weight: 600;
+}
+.occupancy {
+  /* position: absolute; Remove absolute positioning */
+  /* bottom: 8px; */
+  /* right: 8px; */
+  background-color: #3B82F6;
+  color: #FFFFFF;
+  border-radius: 50%;
+  width: 30px; /* Increased size */
+  height: 30px; /* Increased size */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem; /* 14px */
+  font-weight: 600;
+  margin: auto; /* Center horizontally and vertically within flex item space */
+  /* Add margin-bottom if needed to push it up slightly from bottom */
+  margin-bottom: 8px;
+}
+/* Hide occupancy if room is a placeholder */
+.room.placeholder .occupancy {
+    display: none;
+}
+/* Hide room name if it's just a placeholder */
+.room.placeholder .room-name {
+    display: none;
+}
+
+
+.hidden {
+  display: none !important; /* Ensure hidden elements are not visible */
+}
+.floor-plan.active {
+  display: block; /* Or flex/grid depending on internal structure */
+}
+
+
+/* Resident Status Card (Right Column) */
+.resident-status-card {
+  background: #FFFFFF;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.03), 0 4px 12px rgba(0,0,0,0.05);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* Gap inside the card */
+  min-width: 0; /* Prevent overflow */
+  /* Set max-height to prevent overflow, adjust calc value as needed */
+  max-height: calc(100vh - 250px); /* Estimated height of header, padding, status bar etc. */
+  overflow: hidden; /* Keep this to ensure content respects padding */
+}
+
+.resident-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Title left, info icon right */
+  margin-bottom: 4px;
+}
+.resident-header .card-title { /* Re-use card-title style */
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1F2937;
+}
+.resident-table-wrapper { /* New wrapper for scrollability */
+  flex-grow: 1; /* Allows the wrapper to take available space */
+  overflow-y: auto; /* Enables vertical scrolling */
+  min-height: 0; /* Important for flex item with overflow */
+}
+.resident-table {
+  width: 100%;
+  border-collapse: collapse; /* Use collapse for cleaner lines */
+  font-size: 0.8125rem; /* 13px */
+}
+.resident-table thead th { /* Sticky header for table */
+  position: sticky;
+  top: 0;
+  z-index: 1; /* Ensures header stays above scrolling content */
+  background: #F9FAFB; /* Match existing header background */
+}
+.resident-table th, .resident-table td {
+  padding: 10px 8px; /* Consistent padding */
+  text-align: left;
+  border-bottom: 1px solid #F3F4F6; /* Very light border between rows */
+  white-space: nowrap; /* Prevent text wrapping */
+}
+
+.resident-table .selected-row td {
+  border-bottom: 0;
+}
+.resident-table th {
+  background: #F9FAFB; /* Very light gray for header */
+  color: #6B7280; /* Gray text for header */
+  font-weight: 500;
+  font-size: 0.75rem; /* 12px */
+  text-transform: uppercase; /* Optional: uppercase headers */
+  border-bottom: 1px solid #E5E7EB; /* Stronger border below header */
+}
+.resident-table td {
+  color: #374151;
+  font-weight: 500;
+}
+.resident-table tr:last-child td {
+  border-bottom: none;
+}
+.resident-table tr:not(.selected-row) td:first-child {
+    font-weight: 600;
+    color: #111827;
+}
+.profile-img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+.status-label {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 9999px; /* Pill shape */
+  font-size: 0.75rem; /* 12px */
+  font-weight: 500; /* Bolder status text */
+  line-height: 1.2;
+}
+/* Status Label Colors from Image */
+.status-label.daily { background: #D1FAE5; color: #065F46; } /* 일상생활 - Light Green */
+.status-label.exercise { background: #DBEAFE; color: #1E40AF; } /* 운동 - Light Blue */
+.status-label.sleep { background: #E5E7EB; color: #374151; } /* 수면 - Light Gray */
+.status-label.moving { background: #FEE2E2; color: #991B1B; } /* 이동 - Light Pink/Red */
+.status-label.warning { background: #EF4444; color: #DBEAFE; } /* 경고 */
+
+/* Responsive Adjustments */
+@media (max-width: 1200px) { /* Adjust breakpoint as needed */
+  .dashboard-content {
+    grid-template-columns: 1.5fr 1fr; /* Adjust ratio for medium screens */
+  }
+}
+
+@media (max-width: 992px) { /* Tablet breakpoint */
+  .dashboard-content {
+    grid-template-columns: 1fr; /* Stack cards and resident list */
+  }
+  .dashboard-cards {
+    grid-template-columns: repeat(2, 1fr); /* Keep two cards per row if space allows */
+  }
+  .resident-status-card {
+    max-width: none; /* Allow full width when stacked */
+  }
+  .main-header {
+    padding: 12px 24px;
+  }
+  .dashboard-main {
+    padding: 16px 24px;
+  }
+}
+
+@media (max-width: 768px) { /* Smaller tablets / large phones */
+  .main-header {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+  .logo-nav {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .gnb {
+    flex-wrap: wrap; /* Allow GNB buttons to wrap */
+    gap: 6px;
+  }
+  .gnb-btn {
+    padding: 6px 12px;
+    font-size: 0.875rem;
+  }
+  .dashboard-status-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .status-bar-right {
+    align-self: flex-start; /* Date to left on mobile */
+  }
+  .dashboard-cards {
+    grid-template-columns: 1fr; /* Single card per row */
+  }
+  .dashboard-main {
+    padding: 16px;
+  }
+  .resident-table th, .resident-table td {
+    padding: 8px 6px;
+    font-size: 0.75rem; /* Smaller font in table for mobile */
+  }
+  .profile-img {
+    width: 24px;
+    height: 24px;
+    margin-right: 6px;
+  }
+  .status-label {
+    padding: 2px 8px;
+    font-size: 0.6875rem; /* 11px */
+  }
+}
+
+@media (max-width: 480px) { /* Small phones */
+    .gnb-btn {
+        gap: 4px;
+    }
+    .gnb-btn .icon {
+        width: 14px;
+        height: 14px;
+    }
+    .dashboard-title {
+        font-size: 1.5rem; /* 24px */
+    }
+    .dashboard-desc {
+        font-size: 0.875rem; /* 14px */
+    }
+    .card-value {
+        font-size: 1.75rem; /* 28px */
+    }
+}
+
+/* Rounded background for dashboard card icons */
+.card-main .icon {
+  width: 42px;
+  height: 42px;
+  background-color: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: auto 22px;
+}
+.nutrition-list .swipe-summary {
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+/* --- looping swipe animation for nutrition card --- */
+/* Prevent text from spilling outside when width is narrow */
+.card, .card-desc {
+  word-wrap: break-word;      /* long text wraps */
+  overflow-wrap: anywhere;    /* modern equivalent */
+}
+/* ===== Resident table expandable detail row ===== */
+.detail-row {
+  background: #2A6AA6;
+  color: #FFFFFF;
+}
+
+.detail-row td {
+  padding: 0;             /* Remove default padding */
+  border-bottom: none;    /* Hide row border */
+}
+
+.detail-content {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  overflow: hidden;
+  max-height: 0;          /* Collapsed by default */
+  transition: max-height 0.35s ease;
+}
+
+.detail-row.open .detail-content {
+  max-height: 180px;      /* Enough to reveal content */
+}
+
+.detail-card {
+  flex: 1;
+  background: rgba(255,255,255,0.12);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.detail-card img {
+  width: 100%;
+  height: 72px;
+  object-fit: contain;
+  margin-bottom: 4px;
+}
+
+/* Highlight for clicked resident row */
+.selected-row {
+  background: #2A6AA6;
+  color: #FFFFFF;
+  border-bottom: none; /* Remove border to blend with expanded row */
+}
+.selected-row td {
+  color: #FFFFFF;
+}
+
+/* Preserve original status‑label colors when row is selected */
+.selected-row .status-label.daily   { color: #065F46; }
+.selected-row .status-label.exercise{ color: #1E40AF; }
+.selected-row .status-label.sleep   { color: #374151; }
+.selected-row .status-label.moving  { color: #991B1B; }
+
+/* === Inmate detail modal === */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+.modal-content {
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 24px 32px;
+  width: 90%;
+  max-width: 720px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  position: relative;
+}
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #374151;
+  cursor: pointer;
+}
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+  color: #111827;
+}
+
+.modal-table-wrapper {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.modal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem; /* 13px */
+}
+
+.modal-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #F9FAFB;
+  color: #6B7280;
+  font-weight: 500;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  border-bottom: 1px solid #E5E7EB;
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.modal-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid #F3F4F6;
+  color: #374151;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.modal-table tr:last-child td {
+  border-bottom: none;
+}
+
+.modal-table img {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;        /* center horizontally */
+  margin: 0 auto 4px;    /* add little gap below image */
+}
+.modal-overlay.hidden {
+  display: none !important;
+}
+
+.modal-edit-btn {
+  position: absolute;
+  top: 24px;
+  right: 60px;
+  background-color: #2A6AA6;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modal-edit-btn:hover {
+  background-color: #1F4F80;
+}
+.status-label.danger {
+  background: #EF4444;
+  color: #FFFFFF;
+}
+.call-message {
+  font-size: 0.9375rem;  /* 15px */
+  line-height: 1.5;
+  color: #374151;
+}
+
+/* Call modal highlight and phone button */
+.call-message .call-highlight {
+  color: #EF4444;
+  font-weight: 700;
+}
+
+/* Position call-phone-btn in bottom-right of modal-content */
+.call-phone-btn {
+  position: absolute;
+  bottom: 24px;
+  right: 32px;
+  margin-top: 0;
+  background: #2A6AA6;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.call-phone-btn:hover {
+  background: #1F4F80;
+}
+
+/* === Management Record Page (record.html) Styles === */
+.record-main {
+  max-width: 100%;
+  padding: 10px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.record-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 16px 24px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.03), 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.record-title {
+  font-size: 1.5rem; /* 24px */
+  font-weight: 700;
+  color: #111827;
+}
+
+.record-desc {
+  color: #6B7280;
+  font-size: 0.875rem; /* 14px */
+  font-weight: 400;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.record-date {
+  font-size: 1.375rem; /* 22px */
+  font-weight: 500;
+  color: #3B82F6;
+}
+
+
+
+.record-list-box{
+  background:#FFFFFF;
+  border-radius:12px;
+  box-shadow:0 2px 4px rgba(0,0,0,0.03),0 4px 12px rgba(0,0,0,0.05);
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  flex-grow:1;
+  overflow:hidden;
+}
+
+.record-list-body{
+  flex-grow:1;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+}
+
+/* === Management record list rows === */
+.record-row {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:20px 16px;
+  border-bottom:1px solid #E5E7EB;
+  cursor:pointer;
+}
+.record-row:last-child{ border-bottom:none; }
+
+.record-row:hover{ background:#F9FAFB; }
+
+.record-row.selected-row {
+  background: #2A6AA6;    /* Keep highlight background */
+  color: #FFFFFF;         /* All text white */
+}
+
+.record-row.selected-row .rec-name-title,
+.record-row.selected-row .rec-desc,
+.record-row.selected-row .rec-right {
+  color: #FFFFFF;         /* Ensure each cell’s text is white */
+}
+
+.rec-checkbox{
+  flex:0 0 24px;
+  margin-top:4px;
+}
+.rec-profile{
+  width:48px;height:48px;border-radius:50%;object-fit:cover;flex:0 0 48px;
+}
+.rec-main{
+  flex:1;display:flex;flex-direction:column;gap:4px;min-width:0;
+}
+.rec-name-title{
+  font-size:0.9375rem;font-weight:700;color:#111827;line-height:1.3;
+}
+.rec-desc{
+  font-size:0.8125rem;color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;
+}
+.rec-right{
+  flex:0 0 60px;font-size:0.75rem;color:#9CA3AF;text-align:right;font-weight:600;
+}
+.rec-status-done{ color:#9CA3AF; }
+
+.record-table-container {
+  flex-grow: 1;
+  overflow-y: auto; /* Enable vertical scroll for the table container */
+  min-height: 300px; /* Minimum height before scrolling starts */
+}
+
+.record-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem; /* 13px */
+}
+
+.record-table th,
+.record-table td {
+  padding: 10px 12px; /* Increased padding for better readability */
+  text-align: left;
+  border-bottom: 1px solid #F3F4F6;
+  white-space: nowrap;
+}
+
+.record-table th {
+  background: #F9FAFB;
+  color: #6B7280;
+  font-weight: 600; /* Bolder header text */
+  font-size: 0.75rem; /* 12px */
+  text-transform: uppercase;
+  border-bottom: 1px solid #E5E7EB;
+  position: sticky; /* Sticky header */
+  top: 0;
+  z-index: 1;
+}
+.record-table td {
+  color: #374151;
+  font-weight: 500;
+}
+.record-table td:first-child, /* Checkbox column */
+.record-table th:first-child {
+  text-align: center;
+  width: 40px; /* Fixed width for checkbox column */
+}
+.record-table input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.action-status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.action-status.completed { background: #D1FAE5; color: #065F46; } /* 완료 - Light Green */
+.action-status.pending { background: #FEF3C7; color: #92400E; } /* 대기 - Light Yellow */
+.action-status.in-progress { background: #DBEAFE; color: #1E40AF; } /* 처리중 - Light Blue */
+
+
+.record-table-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px; /* Space above actions */
+  border-top: 1px solid #E5E7EB; /* Separator line */
+}
+
+.action-btn {
+  background: #FFFFFF;
+  color: #374151;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.action-btn.delete-selected-btn {
+  background-color: #EF4444;
+  color: #FFFFFF;
+  border-color: #EF4444;
+}
+.action-btn.delete-selected-btn:hover {
+  background-color: #DC2626;
+}
+
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-btn {
+  background: #FFFFFF;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+}
+.page-btn:disabled {
+  color: #9CA3AF;
+  cursor: not-allowed;
+  background: #F9FAFB;
+}
+.page-info {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+
+/* ===== Record detail cards ===== */
+.detail-profile{width:48px;height:48px;border-radius:50%;object-fit:cover;}
+.detail-top{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.detail-info{display:flex;flex-direction:column;gap:4px;}
+.detail-name{font-weight:700;font-size:1rem;color:#111827;}
+.detail-extra{font-size:0.8125rem;color:#6B7280;}
+
+.detail-msg{font-size:0.875rem;color:#374151;line-height:1.4;margin:12px 0;}
+
+.detail-btn{
+  width:100%;
+  background:#E5E7EB;
+  border:none;
+  border-radius:8px;
+  padding:12px;
+  font-size:0.9375rem;
+  font-weight:600;
+  color:#374151;
+  margin-bottom:12px;
+  cursor:pointer;
+}
+.detail-btn.primary{background:#2A6AA6;color:#FFFFFF;}
+.detail-btn.danger{background:#EF4444;color:#FFFFFF;}
+
+.section-title{font-size:0.875rem;font-weight:600;margin:24px 0 8px;color:#374151;}
+.location-img{width:100%;height:auto;border-radius:8px;margin-bottom:24px;}
+
+.vital-card{
+  background:#FFFFFF;
+  border:1px solid #E5E7EB;
+  border-radius:8px;
+  padding:12px;
+  margin-bottom:16px;
+}
+.vital-header{display:flex;justify-content:space-between;font-size:0.75rem;color:#6B7280;margin-bottom:4px;}
+.vital-value{font-size:1.125rem;font-weight:700;color:#111827;margin-bottom:6px;}
+.vital-img{width:100%;height:72px;object-fit:contain;}
+.reply-edit, .reply-complete {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.reply-complete {
+  background: #2A6AA6;
+  color: #FFFFFF;
+}
+.reply-edit {
+  background: #E5E7EB;
+  color: #374151;
+}
+
+/* Remove placeholder for vital card images */
+.vital-img {
+  display: none;
+}
+.location-img{
+  display: none;
+}
+/* --- Make section-title visually identical to vital-card --- */
+.detail-body h4.section-title {
+  display: block;
+  background: #F3F4F6;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 0 0 16px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+
+/* Gray out non-active GNB buttons for status, guardian, and disease */
+.gnb-btn[data-page="status.html"],
+.gnb-btn[data-page="guardian.html"],
+.gnb-btn[data-page="disease.html"] {
+  filter: grayscale(100%);
+  opacity: 0.6;
+}
+/* Gray out unused sidebar titles */
+.sidebar-title.disabled {
+  filter: grayscale(100%);
+  opacity: 0.6;
+}

@@ -1,0 +1,524 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+below is dart code of my phone app which name is amazon-service, it has api methods in it. 
+please refer to the code for this webpage(dashboard) :
+
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
+import 'package:flutter/material.dart';
+import 'package:hello_on_beta_02/main.dart';
+import 'package:hello_on_beta_02/models/inbound/aws_user_mapping.dart';
+import 'package:hello_on_beta_02/models/outbound/bio_data_model.dart';
+import 'package:hello_on_beta_02/screens/error_page.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
+
+import '../../constants.dart';
+import '../../models/inbound/aws_total_bio_response.dart';
+import '../../models/kakao_user_model.dart';
+import '../../utils/screen_utils.dart';
+
+class AmazonService {
+  // 정적 변수로 싱글톤 인스턴스를 저장
+  static final AmazonService _instance = AmazonService._internal();
+
+  // 외부에서 접근할 수 있는 정적 getter 1
+  factory AmazonService() {
+    return _instance;
+  }
+
+  // 외부에서 접근할 수 있는 정적 getter 2
+  static AmazonService get instance => _instance;
+
+  // private constructor
+  AmazonService._internal();
+
+  // 피보호자 회원가입
+  Future<bool> registerCareRecipient(KakaoWardedUser user) async {
+    String url = '${Constants.baseUrl}/user/ward';
+
+    var bytes = utf8.encode(user.password);
+    var hashedPassword = sha256.convert(bytes).toString();
+
+    Map<String, dynamic> body = user.toJson();
+    body['password'] = hashedPassword;
+
+    try {
+      http.Response response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(body),
+      );
+      _logResponseData(response, 'registerCareRecipient', url, body: body);
+
+      var responseData = json.decode(utf8.decode(response.bodyBytes));
+      if (response.statusCode == 200 &&
+          (responseData['code'].toString() == "1000" ||
+              responseData['code'].toString() == "2004" ||
+              responseData['code'].toString() == "2005")) {
+        return true;
+      }
+    } on Exception catch (e) {
+      _logExceptionData(e);
+    }
+    return false;
+  }
+
+  // 피보호자-보호자 매핑데이터 등록 (피보호자용)
+  Future<void> addMappingForCareRecipient(
+      String wardedUserId, String watcherPhoneNumber) async {
+    String url = '${Constants.baseUrl}/ward/mapping';
+
+    watcherPhoneNumber = '+82 ' + watcherPhoneNumber.substring(1);
+    Map<String, dynamic> body = {
+      'wardedUserId': wardedUserId,
+      'watcherPhoneNumber': watcherPhoneNumber
+    };
+
+    try {
+      http.Response response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(body),
+      );
+      _logResponseData(response, 'addMappingForCareRecipient', url, body: body);
+    } on Exception catch (e) {
+      _logExceptionData(e);
+    }
+  }
+
+  // 보호자 회원가입
+  Future<bool> registerCareGiverUser(KakaoWatcherUser user) async {
+    String url = '${Constants.baseUrl}/user/watcher';
+
+    var bytes = utf8.encode(user.password);
+    var hashedPassword = sha256.convert(bytes).toString();
+
+    Map<String, dynamic> body = user.toJson();
+    body['password'] = hashedPassword;
+
+    try {
+      http.Response response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(body),
+      );
+      _logResponseData(response, 'registerCareGiverUser', url, body: body);
+
+      var responseData = json.decode(utf8.decode(response.bodyBytes));
+      if (response.statusCode == 200 &&
+          (responseData['code'].toString() == "1000" ||
+              responseData['code'].toString() == "2004" ||
+              responseData['code'].toString() == "2005")) {
+        return true;
+      }
+    } on Exception catch (e) {
+      _logExceptionData(e);
+    }
+    return false;
+  }
+
+  // 매핑데이터 조회 (보호자용)
+  Future<List<AwsUserMapping>> getMappingsForCareGiver(
+      String watcherUserId) async {
+    String url =
+        '${Constants.baseUrl}/watcher/mappings?watcherUserId=$watcherUserId';
+
+    try {
+      http.Response response = await http.get(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+      );
+      _logResponseData(response, 'getMappingsForCareGiver', url);
+
+      var responseData = json.decode(utf8.decode(response.bodyBytes));
+      if (response.statusCode == 200 &&
+          responseData['code'].toString() == "1000") {
+        List<dynamic> data = responseData['response'];
+        List<AwsUserMapping> users =
+            data.map((json) => AwsUserMapping.fromJson(json)).toList();
+
+        // activeYn 'o'가 먼저 나오도록 정렬
+        users.sort((a, b) {
+          if (a.activeYn == 'o' && b.activeYn != 'o') {
+            return -1;
+          } else if (a.activeYn != 'o' && b.activeYn == 'o') {
+            return 1;
+          } else {
+            return 0;
+          }
+        });
+
+        return users;
+      }
+    } on Exception catch (e) {
+      _logExceptionData(e);
+    }
+
+    return [];
+  }
+
+  // 매핑데이터 조회 (보호자용)
+  Future<List<AwsUserMapping>> getMappingsForCareRecipient(
+      String wardedUserId) async {
+    String url =
+        '${Constants.baseUrl}/ward/mappings?wardedUserId=$wardedUserId';
+
+    try {
+      http.Response response = await http.get(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+      );
+      _logResponseData(response, 'getMappingsForCareRecipient', url);
+
+      var responseData = json.decode(utf8.decode(response.bodyBytes));
+      if (response.statusCode == 200 &&
+          responseData['code'].toString() == "1000") {
+        List<dynamic> data = responseData['response'];
+        List<AwsUserMapping> users =
+            data.map((json) => AwsUserMapping.fromJson(json)).toList();
+
+        // activeYn 'o'가 먼저 나오도록 정렬
+        users.sort((a, b) {
+          if (a.activeYn == 'o' && b.activeYn != 'o') {
+            return -1;
+          } else if (a.activeYn != 'o' && b.activeYn == 'o') {
+            return 1;
+          } else {
+            return 0;
+          }
+        });
+
+        return users;
+      }
+    } on Exception catch (e) {
+      _logExceptionData(e);
+    }
+
+    return [];
+  }
+
+  // 피보호자-보호자 매핑데이터 활성화 여부 수정 (보호자용)
+  Future<void> updateMappingStatusForCareGiver(
+      String wardedUserId,
+      String watcherUserId,
+      String watcherPhoneNumber,
+      String activeYn,
+      String notificationRead,
+      String notificationClose) async {
+    String url = '${Constants.baseUrl}/watcher/mapping';
+    Map<String, dynamic> body = {
+      'wardedUserId': wardedUserId,
+      'watcherUserId': watcherUserId,
+      'watcherPhoneNumber': watcherPhoneNumber,
+      'activeYn': activeYn,
+      'notificationRead': notificationRead,
+      'notificationClose': notificationClose
+    };
+
+    try {
+      http.Response response = await http.put(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(body),
+      );
+
+      _logResponseData(response, 'updateMappingStatusForCareGiver', url,
+          body: body);
+    } on Exception catch (e) {
+      _logExceptionData(e);
+    }
+  }
+
+  // 사용자간 매핑 삭제 (피보호자용)
+  Future<void> removeMapping(
+      String wardedUserId, String watcherPhoneNumber) async {
+    String url = '${Constants.baseUrl}/ward/mapping';
+
+    Map<String, dynamic> body = {
+      'wardedUserId': wardedUserId,
+      'watcherPhoneNumber': watcherPhoneNumber
+    };
+
+    try {
+      http.Response response = await http.delete(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(body),
+      );
+      _logResponseData(response, 'removeMapping', url, body: body);
+    } on Exception catch (e) {
+      _logExceptionData(e);
+    }
+  }
+
+  // 보호자 정보 조회
+  Future<Map<String, dynamic>> getCareGiverInfo(String watcherUserId) async {
+    String url =
+        '${Constants.baseUrl}/watcher/user?watcherUserId=$watcherUserId';
+
+    http.Response response = await http.get(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      var responseData = json.decode(utf8.decode(response.bodyBytes));
+
+      _logResponseData(response, 'getCareGiverInfo', url);
+
+      Map<String, dynamic> careGiverInfo =
+          Map<String, dynamic>.from(responseData['response']);
+      return careGiverInfo;
+    }
+
+    return {};
+  }
+
+  // 피보호자 정보 조회
+  Future<KakaoWardedUser> getCareRecipientInfo(String wardedUserId) async {
+    String url = '${Constants.baseUrl}/ward/user?wardedUserId=$wardedUserId';
+
+    try {
+      http.Response response = await http.get(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+      );
+      _logResponseData(response, 'getCareRecipientInfo', url);
+
+      var responseData = json.decode(utf8.decode(response.bodyBytes));
+      if (response.statusCode == 200 &&
+          responseData['code'].toString() == "1000") {
+        Map<String, dynamic> data =
+            Map<String, dynamic>.from(responseData['response']);
+        return KakaoWardedUser.fromJson(data);
+      }
+    } on Exception catch (e) {
+      _logExceptionData(e);
+    }
+
+    return KakaoWardedUser(
+        wardedUserId: wardedUserId,
+        password: '',
+        userName: '',
+        gender: '',
+        age: '',
+        phoneNumber: '',
+        profileUrl: '',
+        pushTokenType: PushTokenType.returnToken,
+        pushToken: '');
+  }
+
+  // 피보호자 생체데이터 로드
+  Future<AwsTotalBioResponse> getBioDataOfCareRecipient(
+      String wardedUserId) async {
+    String url = '${Constants.baseUrl}/watcher?wardedUserId=$wardedUserId';
+
+    try {
+      http.Response response = await http.get(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+      );
+      _logResponseData(response, 'getBioDataOfCareRecipient', url);
+
+      var responseData = json.decode(utf8.decode(response.bodyBytes));
+      if (response.statusCode == 200 &&
+          responseData['code'].toString() == "1000") {
+        return AwsTotalBioResponse.fromJson(responseData['response']);
+      }
+    } on Exception catch (e) {
+      _logExceptionData(e);
+    }
+
+    return AwsTotalBioResponse(
+      wardedUserId: wardedUserId,
+      oxygenStatusList: [],
+      heartBeatList: [],
+      bodyTemperatureList: [],
+      bloodSugarList: [],
+      stepsList: [],
+      watchUserStatusList: [],
+      phoneUserStatusList: [],
+      locationList: [],
+      eventList: [],
+    );
+  }
+
+  // 피보호자 생체데이터 로드
+  Future<AwsTotalBioResponse> getBioDataOfCareRecipientByPeriod(
+      {required String wardedUserId,
+      required List<BioDataTypeEnum> bioDataTypeList,
+      required DateTime fromDate,
+      required DateTime toDate}) async {
+    // bioDataTypeList를 콤마로 구분된 문자열로 변환
+    var bioDataType = bioDataTypeList.map((e) => e.name).join(',');
+    // DateTime을 원하는 형식으로 변환 (예: yyyy-MM-dd)
+    String formattedFromDate = DateFormat('yyyy-MM-dd').format(fromDate);
+    String formattedToDate = DateFormat('yyyy-MM-dd').format(toDate);
+
+    // 최종 url 생성
+    String url =
+        '${Constants.baseUrl}/watcher/period?wardedUserId=$wardedUserId&bioDataTypes=$bioDataType&fromDate=$formattedFromDate&toDate=$formattedToDate';
+
+    logger.d('url: $url');
+
+    try {
+      http.Response response = await http.get(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+      );
+      _logResponseData(response, 'getBioDataOfCareRecipient', url);
+
+      var responseData = json.decode(utf8.decode(response.bodyBytes));
+      if (response.statusCode == 200 &&
+          responseData['code'].toString() == "1000") {
+        return AwsTotalBioResponse.fromJson(responseData['response']);
+      }
+    } on Exception catch (e) {
+      _logExceptionData(e);
+    }
+
+    return AwsTotalBioResponse(
+      wardedUserId: wardedUserId,
+      oxygenStatusList: [],
+      heartBeatList: [],
+      bodyTemperatureList: [],
+      bloodSugarList: [],
+      stepsList: [],
+      watchUserStatusList: [],
+      phoneUserStatusList: [],
+      locationList: [],
+      eventList: [],
+    );
+  }
+
+  // 피보호자 생체데이터 로드
+  Future<AwsTotalBioResponse> getBioDataOfCareRecipientByLimit(
+      {required String wardedUserId,
+      required List<BioDataTypeEnum> bioDataTypeList,
+      required int limit}) async {
+    // bioDataTypeList를 콤마로 구분된 문자열로 변환
+    var bioDataType = bioDataTypeList.map((e) => e.name).join(',');
+
+    // 최종 url 생성
+    String url =
+        '${Constants.baseUrl}/watcher/latest?wardedUserId=$wardedUserId&bioDataTypes=$bioDataType&limit=$limit';
+
+    logger.d('url: $url');
+
+    try {
+      http.Response response = await http.get(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+      );
+      _logResponseData(response, 'getBioDataOfCareRecipient', url);
+
+      var responseData = json.decode(utf8.decode(response.bodyBytes));
+      if (response.statusCode == 200 &&
+          responseData['code'].toString() == "1000") {
+        return AwsTotalBioResponse.fromJson(responseData['response']);
+      }
+    } on Exception catch (e) {
+      _logExceptionData(e);
+    }
+
+    return AwsTotalBioResponse(
+      wardedUserId: wardedUserId,
+      oxygenStatusList: [],
+      heartBeatList: [],
+      bodyTemperatureList: [],
+      bloodSugarList: [],
+      stepsList: [],
+      watchUserStatusList: [],
+      phoneUserStatusList: [],
+      locationList: [],
+      eventList: [],
+    );
+  }
+
+  // 피보호자 생체데이터 추가
+  Future<void> addCareRecipientBioData(BioData bioData) async {
+    String url = '${Constants.baseUrl}/ward';
+    Map<String, dynamic> body = bioData.toJson();
+
+    try {
+      http.Response response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(body),
+      );
+
+      _logResponseData(response, 'addCareRecipientBioData', url, body: body);
+    } on Exception catch (e) {
+      _logExceptionData(e);
+    }
+  }
+
+  // 전체 피보호자 이벤트 발생 데이터 로드
+  Future<List<Event>> getAllCareRecipientEventData(String watcherUserId) async {
+    String url =
+        '${Constants.baseUrl}/watcher/event?watcherUserId=$watcherUserId';
+
+    try {
+      http.Response response = await http.get(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+      );
+      _logResponseData(response, 'getEventData', url);
+
+      var responseData = json.decode(utf8.decode(response.bodyBytes));
+      if (response.statusCode == 200 &&
+          responseData['code'].toString() == "1000") {
+        List<dynamic> data = responseData['response'];
+        List<Event> eventList =
+            data.map((json) => Event.fromJson(json)).toList();
+
+        return eventList;
+      }
+    } on Exception catch (e) {
+      _logExceptionData(e);
+    }
+    return [];
+  }
+
+  void _logResponseData(http.Response response, String apiTitle, String url,
+      {Object? body}) {
+    var responseData = json.decode(utf8.decode(response.bodyBytes));
+
+    logger.d('''
+    ----------------------------------------
+    - AWS : $apiTitle
+    - AWS URL: $url
+    ${body != null ? '- Request Body: $body' : ''}
+    ----------------------------------------
+    - AWS code: ${response.statusCode}
+    - Internal Code: ${responseData['code']}
+    - Message: ${responseData['message']}
+    - Response: ${responseData['response']}
+    ----------------------------------------
+    ''');
+  }
+
+  Future<void> _logExceptionData(Exception e) async {
+    logger.e('- AWS connection error: $e');
+    var context = navigatorKey.currentState?.context;
+    if (context == null) return;
+    await showConfirmDialogWithText(
+        context, '연결 오류', '서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요. \n\n $e');
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation1, animation2) =>
+            ErrorPage(errorMessage: e.toString()),
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
+      (Route<dynamic> route) => false,
+    );
+  }
+}
