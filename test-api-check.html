@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API 테스트 - 이벤트 확인</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .test-panel { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+    .api-config { background: #e3f2fd; padding: 15px; border-radius: 5px; margin-bottom: 15px; }
+    .event-list { background: white; padding: 15px; border-radius: 5px; }
+    .event-item { padding: 10px; border-bottom: 1px solid #eee; }
+    .event-item.fall { background: #ffebee; }
+    .success { color: green; }
+    .error { color: red; }
+    .warning { color: orange; }
+    button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>🧪 API 이벤트 테스트</h1>
+  
+  <div class="test-panel">
+    <h2>API 설정</h2>
+    <div class="api-config">
+      <p><strong>BASE_URL:</strong> <span id="base-url"></span></p>
+      <p><strong>실제 API:</strong> http://ec2-52-78-169-124.ap-northeast-2.compute.amazonaws.com:8080</p>
+      <p><strong>WATCHER_USER_ID:</strong> <span id="watcher-id"></span></p>
+      <p><strong>목업 모드:</strong> <span id="mock-mode"></span></p>
+    </div>
+    
+    <p class="warning">⚠️ 프록시 서버가 실행 중이어야 합니다: <code>node proxy-server.js</code></p>
+    
+    <button onclick="testApiConnection()">API 연결 테스트</button>
+    <button onclick="fetchAndDisplayEvents()">이벤트 가져오기</button>
+    <button onclick="toggleMockMode()">목업 모드 토글</button>
+  </div>
+  
+  <div class="test-panel">
+    <h2>테스트 결과</h2>
+    <div id="test-result"></div>
+  </div>
+  
+  <div class="test-panel">
+    <h2>이벤트 목록</h2>
+    <div id="event-list" class="event-list">
+      <p>이벤트 가져오기 버튼을 클릭하세요.</p>
+    </div>
+  </div>
+
+  <script>
+    // API 설정 - 프록시 서버 사용
+    window.API_CONFIG = {
+      BASE_URL: 'http://localhost:3001', // 프록시 서버 URL (포트 3001)
+      WATCHER_USER_ID: '3743690826',
+      ENABLE_MOCK_DATA: false
+    };
+    
+    // 화면에 설정 표시
+    function updateConfigDisplay() {
+      document.getElementById('base-url').textContent = window.API_CONFIG.BASE_URL;
+      document.getElementById('watcher-id').textContent = window.API_CONFIG.WATCHER_USER_ID;
+      document.getElementById('mock-mode').textContent = window.API_CONFIG.ENABLE_MOCK_DATA ? '🎭 ON' : '🌐 OFF';
+    }
+    
+    // API 연결 테스트
+    async function testApiConnection() {
+      const resultDiv = document.getElementById('test-result');
+      resultDiv.innerHTML = '<p>연결 테스트 중...</p>';
+      
+      try {
+        const url = `${window.API_CONFIG.BASE_URL}/watcher/mappings?watcherUserId=${window.API_CONFIG.WATCHER_USER_ID}`;
+        console.log('Testing URL:', url);
+        
+        const response = await fetch(url, {
+          headers: {'Content-Type': 'application/json'}
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          resultDiv.innerHTML = `
+            <p class="success">✅ API 연결 성공!</p>
+            <p>응답 코드: ${data.code}</p>
+            <p>메시지: ${data.message}</p>
+            <p>매핑 수: ${data.response ? data.response.length : 0}개</p>
+          `;
+        } else {
+          resultDiv.innerHTML = `<p class="error">❌ API 연결 실패: HTTP ${response.status}</p>`;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <p class="error">❌ 네트워크 에러: ${error.message}</p>
+          <p class="warning">프록시 서버가 실행 중인지 확인하세요!</p>
+        `;
+        console.error('Connection test error:', error);
+      }
+    }
+    
+    // 이벤트 가져오기
+    async function fetchAndDisplayEvents() {
+      const listDiv = document.getElementById('event-list');
+      listDiv.innerHTML = '<p>이벤트 로딩 중...</p>';
+      
+      try {
+        const url = `${window.API_CONFIG.BASE_URL}/watcher/event?watcherUserId=${window.API_CONFIG.WATCHER_USER_ID}`;
+        console.log('Fetching events from:', url);
+        
+        const response = await fetch(url, {
+          headers: {'Content-Type': 'application/json'}
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Event data:', data);
+          
+          if (data.code === "1000" && data.response) {
+            if (data.response.length === 0) {
+              listDiv.innerHTML = '<p>현재 등록된 이벤트가 없습니다.</p>';
+            } else {
+              const eventItems = data.response.map(event => {
+                const eventItem = document.createElement('div');
+                eventItem.className = `event-item ${event.eventType === 'FALL_DETECTED' ? 'fall' : ''}`;
+                eventItem.innerHTML = `
+                  <p><strong>이벤트 타입:</strong> ${event.eventType} ${event.eventType === 'FALL_DETECTED' ? '🚨 낙상!' : ''}</p>
+                  <p><strong>이벤트 ID:</strong> ${event.eventId}</p>
+                  <p><strong>시간:</strong> ${new Date(event.registrationDateTime).toLocaleString('ko-KR')}</p>
+                  <p><strong>상태:</strong> ${event.status}</p>
+                `;
+                return eventItem;
+              });
+              listDiv.innerHTML = '';
+              eventItems.forEach(item => listDiv.appendChild(item));
+            }
+          } else {
+            listDiv.innerHTML = `<p class="error">API 응답 에러: ${data.message}</p>`;
+          }
+        } else {
+          listDiv.innerHTML = `<p class="error">HTTP ${response.status} 에러</p>`;
+        }
+      } catch (error) {
+        listDiv.innerHTML = `
+          <p class="error">네트워크 에러: ${error.message}</p>
+          <p class="warning">프록시 서버가 실행 중인지 확인하세요!</p>
+        `;
+        console.error('Event fetch error:', error);
+      }
+    }
+    
+    // 목업 모드 토글
+    function toggleMockMode() {
+      window.API_CONFIG.ENABLE_MOCK_DATA = !window.API_CONFIG.ENABLE_MOCK_DATA;
+      updateConfigDisplay();
+      
+      if (window.API_CONFIG.ENABLE_MOCK_DATA) {
+        const mockEventItem = document.createElement('div');
+        mockEventItem.className = 'event-item fall';
+        mockEventItem.innerHTML = `
+          <p><strong>이벤트 타입:</strong> FALL_DETECTED 🚨 낙상! (목업 데이터)</p>
+          <p><strong>이벤트 ID:</strong> mock_event_001</p>
+          <p><strong>시간:</strong> ${new Date().toLocaleString('ko-KR')}</p>
+          <p><strong>상태:</strong> UNCONFIRMED</p>
+        `;
+        document.getElementById('event-list').innerHTML = '';
+        document.getElementById('event-list').appendChild(mockEventItem);
+      }
+    }
+    
+    // 초기화
+    updateConfigDisplay();
+  </script>
+</body>
+</html> 

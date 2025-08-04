@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Record.html Test Page</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+    .success { background-color: #d4edda; border-color: #c3e6cb; }
+    .error { background-color: #f8d7da; border-color: #f5c6cb; }
+    .info { background-color: #d1ecf1; border-color: #bee5eb; }
+    pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+  </style>
+  <script src="config.js"></script>
+</head>
+<body>
+  <h1>Record.html Integration Test</h1>
+  
+  <div class="test-section info">
+    <h3>Configuration Check</h3>
+    <div id="config-status">Checking configuration...</div>
+  </div>
+  
+  <div class="test-section info">
+    <h3>API Functions Test</h3>
+    <div id="api-status">Testing API functions...</div>
+  </div>
+  
+  <div class="test-section info">
+    <h3>Record Data Test</h3>
+    <div id="record-status">Testing record data generation...</div>
+    <button onclick="testRecordData()">Test Record Data</button>
+  </div>
+  
+  <div class="test-section info">
+    <h3>Console Output</h3>
+    <div id="console-output">
+      <pre id="console-log"></pre>
+    </div>
+  </div>
+  
+  <div class="test-section info">
+    <h3>Actions</h3>
+    <button onclick="window.location.href='record.html'">Go to Record.html</button>
+    <button onclick="toggleMockData()">Toggle Mock Data</button>
+  </div>
+
+  <script>
+    // Override console.log to capture output
+    const originalLog = console.log;
+    const consoleOutput = document.getElementById('console-log');
+    console.log = function(...args) {
+      originalLog.apply(console, args);
+      const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg).join(' ');
+      consoleOutput.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+      consoleOutput.scrollTop = consoleOutput.scrollHeight;
+    };
+
+    // Check configuration
+    function checkConfiguration() {
+      const configDiv = document.getElementById('config-status');
+      if (window.API_CONFIG) {
+        configDiv.innerHTML = `
+          <div class="success">✓ Configuration loaded successfully</div>
+          <pre>${JSON.stringify(window.API_CONFIG, null, 2)}</pre>
+        `;
+      } else {
+        configDiv.innerHTML = '<div class="error">✗ Configuration not found</div>';
+      }
+    }
+
+    // Test API functions availability
+    function checkAPIFunctions() {
+      const apiDiv = document.getElementById('api-status');
+      const functions = ['fetchMappings', 'fetchEvents', 'fetchLatestBioData'];
+      let html = '';
+      
+      functions.forEach(func => {
+        if (typeof window[func] === 'function') {
+          html += `<div class="success">✓ ${func} function available</div>`;
+        } else {
+          html += `<div class="error">✗ ${func} function not found</div>`;
+        }
+      });
+      
+      apiDiv.innerHTML = html;
+    }
+
+    // Test record data generation
+    async function testRecordData() {
+      const recordDiv = document.getElementById('record-status');
+      recordDiv.innerHTML = '<div class="info">Testing record data generation...</div>';
+      
+      try {
+        console.log('Starting record data test...');
+        
+        // Test the functions if available
+        if (typeof window.fetchRecordData === 'function') {
+          await window.fetchRecordData();
+          recordDiv.innerHTML = '<div class="success">✓ Record data generation completed - check console for details</div>';
+        } else {
+          recordDiv.innerHTML = '<div class="error">✗ fetchRecordData function not available</div>';
+        }
+      } catch (error) {
+        console.error('Error testing record data:', error);
+        recordDiv.innerHTML = `<div class="error">✗ Error: ${error.message}</div>`;
+      }
+    }
+
+    // Toggle mock data setting
+    function toggleMockData() {
+      if (window.API_CONFIG) {
+        window.API_CONFIG.ENABLE_MOCK_DATA = !window.API_CONFIG.ENABLE_MOCK_DATA;
+        console.log('Mock data toggled:', window.API_CONFIG.ENABLE_MOCK_DATA);
+        checkConfiguration();
+      }
+    }
+
+    // Run initial checks
+    document.addEventListener('DOMContentLoaded', function() {
+      checkConfiguration();
+      
+      // Load script.js and then test API functions
+      const script = document.createElement('script');
+      script.src = 'script.js';
+      script.onload = function() {
+        console.log('script.js loaded');
+        checkAPIFunctions();
+      };
+      script.onerror = function() {
+        console.error('Failed to load script.js');
+        document.getElementById('api-status').innerHTML = '<div class="error">✗ Failed to load script.js</div>';
+      };
+      document.head.appendChild(script);
+    });
+  </script>
+</body>
+</html>
