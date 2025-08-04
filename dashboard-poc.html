@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>헬로온 대시보드 - POC</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- 카카오맵 API -->
+  <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=76614caefbdbf2a0cc21c70f2f43abd9"></script>
+  
+  <!-- POC 페이지용 추가 스타일 -->
+  <style>
+    /* POC 페이지에서는 resident-status-card가 전체 너비를 차지하도록 수정 */
+    .dashboard-content {
+      display: block; /* 그리드 대신 블록으로 변경 */
+      width: 100%; /* 전체 너비 사용 */
+      max-width: 100%; /* 최대 너비 100% */
+      padding: 0; /* 패딩 제거 */
+      margin: 0; /* 마진 제거 */
+    }
+    
+    .resident-status-card {
+      width: 100%; /* 부모 컨테이너의 전체 너비 사용 */
+      max-width: none; /* 최대 너비 제한 해제 */
+      height: calc(100vh - 220px); /* 헤더와 상태바를 제외한 전체 높이 */
+      box-sizing: border-box; /* 패딩을 너비에 포함 */
+      margin: 0; /* 마진 제거 */
+    }
+    
+    /* 위치 클릭 가능 스타일 */
+    .location-cell {
+      cursor: pointer;
+      text-decoration: underline;
+      color: #2A6AA6;
+    }
+    
+    .location-cell:hover {
+      color: #1F4F80;
+    }
+    
+    /* 위치 이모지 스타일 */
+    .location-emoji {
+      margin-right: 4px;
+      font-size: 1.1em;
+    }
+    
+    /* 위치 팝업 모달 스타일 */
+    #location-modal {
+      z-index: 3000;
+    }
+    
+    #location-modal .modal-content {
+      width: 90%;
+      max-width: 600px;
+      height: 500px;
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+    }
+    
+    #map-container {
+      flex: 1;
+      width: 100%;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 16px;
+    }
+    
+    .location-info {
+      margin: 16px 0;
+      font-size: 0.9rem;
+      color: #374151;
+    }
+    
+    .location-distance {
+      font-weight: 600;
+      color: #2A6AA6;
+    }
+    
+    /* 외출 리포트 스타일 */
+    .outing-report-cell {
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    
+    .outing-report-cell:hover {
+      opacity: 0.8;
+    }
+    
+    .outing-status-yes {
+      color: #DC2626;
+      font-weight: normal;
+    }
+    
+    .outing-status-no {
+      color: #1F2937;
+      font-weight: normal;
+    }
+    
+    /* 테이블 데이터 폰트 굵기 및 색상 통일 */
+    .resident-table td {
+      font-weight: normal;
+      color: #1F2937;
+    }
+    
+    /* 이름 컬럼은 기존 스타일 유지 (첫 번째 td는 제외) */
+    .resident-table td:first-child {
+      font-weight: 500;
+      color: #1F2937;
+    }
+    
+    .report-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #E5E7EB;
+    }
+    
+    .report-summary {
+      margin-bottom: 20px;
+      padding: 12px;
+      background-color: #F3F4F6;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+    
+    .report-content {
+      flex: 1;
+      overflow-y: auto;
+    }
+    
+    .outing-item {
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      margin-bottom: 8px;
+      background-color: #FAFAFA;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .outing-item:hover {
+      background-color: #F0F0F0;
+    }
+    
+    .outing-time-main {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #1F2937;
+      margin-bottom: 4px;
+    }
+    
+    .outing-location-sub {
+      font-size: 0.85rem;
+      color: #6B7280;
+      margin-bottom: 2px;
+    }
+    
+    .outing-distance-sub {
+      font-size: 0.8rem;
+      color: #DC2626;
+      font-weight: 500;
+    }
+  </style>
+  
+  <!-- 로그인 체크 -->
+  <script>
+    // 로그인되지 않았으면 로그인 페이지로 리다이렉트
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+      window.location.href = 'index.html';
+    }
+    
+    // silvercare 사용자가 아니면 적절한 페이지로 리다이렉트
+    const userType = localStorage.getItem('userType');
+    if (userType === 'admin') {
+      window.location.href = 'dashboard.html';
+    }
+  </script>
+</head>
+<body>
+  <div class="main-bg">
+    <header class="main-header">
+      <div class="logo-nav">
+        <img src="assets/hello-on_logotype.png" alt="헬로온 로고" class="hello-logo" />
+        <nav class="gnb">
+          <button class="gnb-btn active" data-page="dashboard-poc.html"><span class="icon dashboard"></span>대시보드</button>
+          <button class="gnb-btn" data-page="record.html" onclick="window.location.href='record.html'"><span class="icon record"></span>관리기록</button>
+          <button class="gnb-btn" data-page="status.html"><span class="icon status"></span>전체상태</button>
+          <button class="gnb-btn" data-page="guardian.html"><span class="icon guardian"></span>보호자</button>
+          <button class="gnb-btn" data-page="disease.html"><span class="icon disease"></span>유병확률</button>
+        </nav>
+      </div>
+      <div class="header-actions">
+        <!-- <button class="alarm-btn"><span class="icon alarm"></span></button> -->
+        <div class="user-menu">
+          <span class="user-name" id="user-display-name">admin</span>
+          <button class="logout-btn" onclick="logout()">로그아웃</button>
+        </div>
+      </div>
+    </header>
+    <main class="dashboard-main" id="main-content">
+      <section class="dashboard-status-bar">
+        <span class="dashboard-title">대시보드</span>
+        <span class="dashboard-desc">은빛노인요양전문기관의 전체 현황을 한눈에 볼 수 있는 페이지 입니다.</span>
+        <span class="dashboard-date">5월 8일 목요일</span>
+      </section>
+      <section class="alert-section hidden">
+        <div class="alert-card">
+          <img src="assets/status_01.png" class="alert-profile">
+          <span class="alert-name">김영수</span>
+          <img src="assets/caution_icon.png" class="alert-icon">
+          <span class="alert-title">높은 심박수 감지</span>
+          <span class="alert-desc">심박수가 107bpm 이상 입니다.<br>도움이 필요하신지 확인이 필요합니다.</span>
+          <button class="alert-btn">담당자 호출</button>
+        </div>
+        <div class="alert-card">
+          <img src="assets/status_02.png" class="alert-profile">
+          <span class="alert-name">김순자</span>
+          <img src="assets/caution_icon.png" class="alert-icon">
+          <span class="alert-title">낙상 감지</span>
+          <span class="alert-desc">넘어짐이 스마트 위치로 확인 되었습니다.<br>도움이 필요하신지 확인이 필요합니다.</span>
+          <button class="alert-btn">담당자 호출</button>
+        </div>
+      </section>
+      <section class="dashboard-content">
+        <div class="resident-status-card">
+          <div class="resident-header">
+            <span class="card-title">입소인 상태 목록</span>
+            <div class="resident-header-right">
+              <span class="last-refresh">0초 전 refresh </span>
+            </div>
+          </div>
+          <div class="resident-table-wrapper">
+            <table class="resident-table">
+              <thead>
+                <tr>
+                  <th>이름</th>
+                  <th>나이</th>
+                  <th>상태</th>
+                  <!-- <th>호수</th> -->
+                  <th>위치</th>
+                  <th>외출 리포트</th>
+                  <th>심박수</th>
+                  <!-- <th>산소포화도</th> -->
+                  <!-- <th>수면</th> -->
+                  <th>걸음수</th>
+                </tr>
+              </thead>
+              <tbody id="resident-table-body">
+                <!-- 동적으로 생성됨 -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<!-- Call‑alert modal -->
+<div id="call-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <button id="call-modal-close" class="modal-close">✕</button>
+    <h2 class="modal-title">담당자 호출</h2>
+    <p id="call-modal-message" class="call-message"></p>
+    <button id="call-phone-btn" class="call-phone-btn">관리인에게 전화하기</button>
+  </div>
+</div>
+
+<!-- 위치 팝업 모달 추가 -->
+<div id="location-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <button id="location-modal-close" class="modal-close">✕</button>
+    <h2 class="modal-title">현재 위치</h2>
+    <div class="location-info">
+      <span id="location-name"></span> 
+      <span id="location-distance" class="location-distance"></span>
+    </div>
+    <div id="map-container"></div>
+  </div>
+</div>
+
+<!-- 외출 리포트 모달 추가 -->
+<div id="outing-report-modal" class="modal-overlay hidden">
+  <div class="modal-content" style="width: 90%; max-width: 800px; height: 600px;">
+    <button id="outing-report-modal-close" class="modal-close">✕</button>
+    <h2 class="modal-title">오늘 외출 리포트</h2>
+    <div class="report-header">
+      <span id="report-resident-name"></span>
+      <span id="report-date"></span>
+    </div>
+    <div class="report-summary">
+      <span id="report-status"></span>
+    </div>
+    <div class="report-content">
+      <div id="outing-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- API Configuration -->
+<script src="config.js"></script>
+<script>
+// 사용자 이름 표시
+document.addEventListener('DOMContentLoaded', function() {
+    const username = localStorage.getItem('username');
+    const userDisplayElement = document.getElementById('user-display-name');
+    if (username && userDisplayElement) {
+        userDisplayElement.textContent = username;
+    }
+});
+
+// 로그아웃 함수
+function logout() {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('username');
+    localStorage.removeItem('userType');
+    localStorage.removeItem('watcherUserId');
+    window.location.href = 'index.html';
+}
+</script>
+
+<script src="script.js"></script>
+</body>
+</html>

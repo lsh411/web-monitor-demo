@@ -6,6 +6,16 @@
   <title>헬로온 관리기록</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="config.js"></script>
+  <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=76614caefbdbf2a0cc21c70f2f43abd9"></script>
+  
+  <!-- 로그인 체크 -->
+  <script>
+    // 로그인되지 않았으면 로그인 페이지로 리다이렉트
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+      window.location.href = 'index.html';
+    }
+  </script>
 </head>
 <body>
   <div class="main-bg">
@@ -13,7 +23,7 @@
       <div class="logo-nav">
         <img src="assets/hello-on_logotype.png" alt="헬로온 로고" class="hello-logo" />
         <nav class="gnb">
-          <button class="gnb-btn" data-page="index.html" onclick="window.location.href='index.html'"><span class="icon dashboard"></span>대시보드</button>
+          <button class="gnb-btn" data-page="dashboard.html" onclick="window.location.href='dashboard.html'"><span class="icon dashboard"></span>대시보드</button>
           <button class="gnb-btn active" data-page="record.html"><span class="icon record"></span>관리기록</button>
           <button class="gnb-btn" data-page="status.html"><span class="icon status"></span>전체상태</button>
           <button class="gnb-btn" data-page="guardian.html"><span class="icon guardian"></span>보호자</button>
@@ -21,10 +31,10 @@
         </nav>
       </div>
       <div class="header-actions">
-        <button class="alarm-btn"><span class="icon alarm"></span></button>
+        <!-- <button class="alarm-btn"><span class="icon alarm"></span></button> -->
         <div class="user-menu">
-          <span class="user-role">근무자 계정 1</span>
-          <span class="user-name">admin</span>
+          <span class="user-name" id="user-display-name">admin</span>
+          <button class="logout-btn" onclick="logout()">로그아웃</button>
         </div>
       </div>
     </header>
@@ -36,11 +46,11 @@
       </section>
       <div class="record-workspace">
         <aside class="record-sidebar">
-          <h3 class="sidebar-title"><span class="toggle-icon"></span>위험 신호 <span class="badge">6</span></h3>
+          <h3 class="sidebar-title"><span class="toggle-icon"></span>위험 신호</h3>
           <ul class="sidebar-menu">
-            <li class="sidebar-item active" data-type="unconfirmed">미확인 위험 신호 <span class="sub-count">3</span></li>
-            <li class="sidebar-item" data-type="confirmed">확인된 위험 신호 <span class="sub-count">1</span></li>
-            <li class="sidebar-item" data-type="resolved">해결 완료된 신호 <span class="sub-count">2</span></li>
+            <li class="sidebar-item active" data-type="unconfirmed">미확인 위험 신호 <span class="sub-count">0</span></li>
+            <li class="sidebar-item" data-type="confirmed">확인된 위험 신호 <span class="sub-count">0</span></li>
+            <li class="sidebar-item" data-type="resolved">해결 완료된 신호 <span class="sub-count">0</span></li>
           </ul>
 
           <h3 class="sidebar-title disabled">수면시간 부족</h3>
@@ -155,9 +165,40 @@
     <button id="call-phone-btn" class="call-phone-btn">관리인에게 전화하기</button>
   </div>
 </div>
+
+<div id="location-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <button id="location-modal-close" class="modal-close">✕</button>
+    <h2 class="modal-title">위치 정보</h2>
+    <div style="margin-bottom: 16px;">
+      <h3 id="location-name" style="margin: 0 0 4px 0; font-size: 1.1rem; font-weight: 600;">주소</h3>
+      <p id="location-distance" style="margin: 0; color: #6B7280; font-size: 0.875rem;">거리 정보</p>
+    </div>
+    <div id="map-container" style="width: 100%; height: 300px; border-radius: 8px; overflow: hidden;"></div>
+  </div>
+</div>
 <script>
+  // 사용자 이름 표시
+  document.addEventListener('DOMContentLoaded', function() {
+      const username = localStorage.getItem('username');
+      const userDisplayElement = document.getElementById('user-display-name');
+      if (username && userDisplayElement) {
+          userDisplayElement.textContent = username;
+      }
+  });
+
+  // 로그아웃 함수
+  function logout() {
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('username');
+      localStorage.removeItem('userType');
+      localStorage.removeItem('watcherUserId');
+      window.location.href = 'index.html';
+  }
+  
   document.addEventListener("DOMContentLoaded", function() {
-    renderTable('미확인 위험 신호');
+    // Record initialization is handled in script.js
+    console.log('Record page loaded');
   });
 </script>
 <script src="script.js"></script>

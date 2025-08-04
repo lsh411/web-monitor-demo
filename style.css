@@ -1,4 +1,3 @@
-
 .reply-block{
   background:#F3F4F6;
   border-radius:8px;
@@ -31,6 +30,7 @@
   padding:0 16px 8px 16px;   /* left/right 16px to match record rows */
   border-bottom:1px solid #E5E7EB;
   gap:0;
+  background: transparent; /* 워터마크가 보이도록 투명 배경 */
 }
 
 .select-all-checkbox{
@@ -475,6 +475,23 @@ body {
   font-weight: 500;
 }
 
+/* 로그아웃 버튼 스타일 */
+.logout-btn {
+  background: #EF4444; /* Red background */
+  color: #FFFFFF;
+  border: none;
+  border-radius: 9999px;
+  padding: 4px 12px;
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-left: 8px;
+}
+.logout-btn:hover {
+  background: #DC2626; /* Darker red on hover */
+}
+
 /* Dashboard Main Area */
 .dashboard-main {
   max-width: 100%; /* Allow full width */
@@ -572,6 +589,36 @@ body {
   position: relative;
   box-sizing: border-box; /* Prevent overflow when absolute within wrapper */
 }
+
+/* DEMO 워터마크 추가 */
+.card-inmates::before,
+.card-vacancy::before,
+.card-nutrition::before,
+.card-location::before {
+  content: 'DEMO';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 4rem;
+  font-weight: 800;
+  color: rgba(156, 163, 175, 0.15); /* 회색 투명도 15% */
+  z-index: 0;
+  pointer-events: none; /* 클릭 이벤트 무시 */
+  user-select: none; /* 텍스트 선택 불가 */
+}
+
+/* 위치정보 카드의 DEMO 워터마크 위치 조정 */
+.card-location::before {
+  top: 30%; /* 위쪽으로 이동 */
+}
+
+/* 카드 내용물이 워터마크 위에 표시되도록 z-index 조정 */
+.card > * {
+  position: relative;
+  z-index: 1;
+}
+
 .card-header {
   display: flex;
   align-items: center;
@@ -711,6 +758,21 @@ body {
   overflow: hidden;
   width: 100%;
   min-height: 0;         /* allow JS to set explicit height */
+}
+
+/* 영양 카드의 경우 wrapper에도 워터마크 추가 */
+.card-nutrition-wrapper::before {
+  content: 'DEMO';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 4rem;
+  font-weight: 800;
+  color: rgba(156, 163, 175, 0.15); /* 회색 투명도 15% */
+  z-index: 0;
+  pointer-events: none; /* 클릭 이벤트 무시 */
+  user-select: none; /* 텍스트 선택 불가 */
 }
 
 /* Each nutrition card occupies full width and will slide */
@@ -966,6 +1028,29 @@ body {
   /* Set max-height to prevent overflow, adjust calc value as needed */
   max-height: calc(100vh - 250px); /* Estimated height of header, padding, status bar etc. */
   overflow: hidden; /* Keep this to ensure content respects padding */
+  position: relative; /* LIVE 워터마크를 위한 position 추가 */
+}
+
+/* resident-status-card LIVE 워터마크 추가 */
+.resident-status-card::before {
+  content: 'LIVE';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 8rem;
+  font-weight: 800;
+  color: rgba(239, 68, 68, 0.08); /* 옅은 붉은색 투명도 8% */
+  z-index: 0;
+  pointer-events: none; /* 클릭 이벤트 무시 */
+  user-select: none; /* 텍스트 선택 불가 */
+  letter-spacing: 0.1em; /* LIVE 텍스트 간격 추가 */
+}
+
+/* resident-status-card 내부 요소들이 워터마크 위에 표시되도록 z-index 조정 */
+.resident-status-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .resident-header {
@@ -979,27 +1064,40 @@ body {
   font-weight: 600;
   color: #1F2937;
 }
+.resident-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.last-refresh {
+  font-size: 0.8125rem;
+  color: #6B7280;
+  font-weight: 500;
+}
 .resident-table-wrapper { /* New wrapper for scrollability */
   flex-grow: 1; /* Allows the wrapper to take available space */
   overflow-y: auto; /* Enables vertical scrolling */
   min-height: 0; /* Important for flex item with overflow */
+  background: transparent; /* LIVE 워터마크가 보이도록 투명 배경 */
 }
 .resident-table {
   width: 100%;
   border-collapse: collapse; /* Use collapse for cleaner lines */
   font-size: 0.8125rem; /* 13px */
+  background: transparent; /* LIVE 워터마크가 보이도록 투명 배경 */
 }
 .resident-table thead th { /* Sticky header for table */
   position: sticky;
   top: 0;
   z-index: 1; /* Ensures header stays above scrolling content */
-  background: #F9FAFB; /* Match existing header background */
+  background: rgba(249, 250, 251, 0.95); /* 반투명 배경으로 변경하여 LIVE가 살짝 비치도록 */
 }
 .resident-table th, .resident-table td {
   padding: 10px 8px; /* Consistent padding */
   text-align: left;
   border-bottom: 1px solid #F3F4F6; /* Very light border between rows */
   white-space: nowrap; /* Prevent text wrapping */
+  background: transparent; /* LIVE 워터마크가 보이도록 투명 배경 */
 }
 
 .resident-table .selected-row td {
@@ -1016,6 +1114,9 @@ body {
 .resident-table td {
   color: #374151;
   font-weight: 500;
+}
+.resident-table tbody tr:hover {
+  background: rgba(249, 250, 251, 0.5); /* 반투명 hover 효과 추가 */
 }
 .resident-table tr:last-child td {
   border-bottom: none;
@@ -1044,8 +1145,12 @@ body {
 .status-label.daily { background: #D1FAE5; color: #065F46; } /* 일상생활 - Light Green */
 .status-label.exercise { background: #DBEAFE; color: #1E40AF; } /* 운동 - Light Blue */
 .status-label.sleep { background: #E5E7EB; color: #374151; } /* 수면 - Light Gray */
-.status-label.moving { background: #FEE2E2; color: #991B1B; } /* 이동 - Light Pink/Red */
+.status-label.moving { background: #E3F2FD; color: #1976D2; } /* 이동 - Light Blue */
 .status-label.warning { background: #EF4444; color: #DBEAFE; } /* 경고 */
+.status-label.unknown {
+    background-color: #F5F5F5;
+    color: #757575;
+}
 
 /* Responsive Adjustments */
 @media (max-width: 1200px) { /* Adjust breakpoint as needed */
@@ -1413,6 +1518,15 @@ body {
   gap:16px;
   flex-grow:1;
   overflow:hidden;
+  position: relative; /* 워터마크가 보이도록 추가 */
+}
+
+/* DEMO 워터마크 제거됨 */
+
+/* record-list-box 내부 요소들이 워터마크 위에 표시되도록 z-index 조정 */
+.record-list-box > * {
+  position: relative;
+  z-index: 1;
 }
 
 .record-list-body{
@@ -1421,6 +1535,7 @@ body {
   display:flex;
   flex-direction:column;
   gap:0;
+  background: transparent; /* 워터마크가 보이도록 투명 배경 */
 }
 
 /* === Management record list rows === */
@@ -1431,10 +1546,11 @@ body {
   padding:20px 16px;
   border-bottom:1px solid #E5E7EB;
   cursor:pointer;
+  background: transparent; /* 워터마크가 보이도록 투명 배경 */
 }
 .record-row:last-child{ border-bottom:none; }
 
-.record-row:hover{ background:#F9FAFB; }
+.record-row:hover{ background:rgba(249, 250, 251, 0.8); } /* 반투명 hover 효과 */
 
 .record-row.selected-row {
   background: #2A6AA6;    /* Keep highlight background */
@@ -1444,7 +1560,7 @@ body {
 .record-row.selected-row .rec-name-title,
 .record-row.selected-row .rec-desc,
 .record-row.selected-row .rec-right {
-  color: #FFFFFF;         /* Ensure each cell’s text is white */
+  color: #FFFFFF;         /* Ensure each cell's text is white */
 }
 
 .rec-checkbox{
@@ -1672,4 +1788,82 @@ body {
 .sidebar-title.disabled {
   filter: grayscale(100%);
   opacity: 0.6;
+}
+
+/* Tooltip styles */
+.bio-tooltip {
+  position: fixed;
+  background-color: #374151;
+  color: #FFFFFF;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  z-index: 9999;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.bio-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #374151;
+}
+
+/* Add cursor pointer for cells with tooltip */
+.has-tooltip, .has-date-tooltip {
+  cursor: help;
+  position: relative;
+}
+
+.has-tooltip:hover, .has-date-tooltip:hover {
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+/* Loading state styles for faster perceived performance */
+.resident-table .loading {
+  position: relative;
+  color: #9CA3AF;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.resident-table .status-label.loading {
+  background: #F3F4F6;
+  color: #9CA3AF;
+}
+
+/* Skeleton loading animation */
+.resident-table td.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 12px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+  transform: translateY(-50%);
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%) translateY(-50%);
+  }
+  100% {
+    transform: translateX(100%) translateY(-50%);
+  }
 }
