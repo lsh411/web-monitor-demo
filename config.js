@@ -10,8 +10,7 @@ window.API_CONFIG = {
   },
   
   // Update intervals (in milliseconds)
-  UPDATE_INTERVAL: 10000, // 10 seconds (dashboard default)
-  RECORD_UPDATE_INTERVAL: 20000, // 20 seconds (record page)
+  UPDATE_INTERVAL: 10000, // 10 seconds
   
   // Feature flags
   ENABLE_MOCK_DATA: false, // false로 설정하여 실제 API 사용
@@ -27,7 +26,7 @@ window.API_CONFIG = {
   
   // Kakao Maps API configuration
   KAKAO_API: {
-    REST_API_KEY: '***REMOVED***',
+    REST_API_KEY: '38dfbdeae184d57cbb2aa76b517a5a64',
     GEOCODING_URL: 'https://dapi.kakao.com/v2/local/geo/coord2address.json',
     CACHE_DURATION: 300000, // 5분 캐시
     ENABLE_CACHE: true
