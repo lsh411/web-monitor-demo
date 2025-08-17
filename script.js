@@ -49,164 +49,1402 @@ if(bulkBtn){
 }
 
 if(refreshBtn){
-  refreshBtn.addEventListener('click',()=>{
+  refreshBtn.addEventListener('click', async ()=>{
+    console.log('Refreshing record data...');
+    
+    // Show loading
     const active=document.querySelector('.sidebar-menu li.active');
     const key=active?active.dataset.type:'unconfirmed';
-    renderList(key);
-    selectAllCb.checked=false;
+    
+    recordListBody.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">새로고침 중...</div>';
+    
+    try {
+      await fetchRecordData();
+      renderList(key);
+      syncSidebarCounts();
+      selectAllCb.checked=false;
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+      recordListBody.innerHTML = '<div style="text-align: center; padding: 20px; color: #ff6b6b;">새로고침 실패</div>';
+    }
   });
 }
 // === Record.html dynamic list logic ===
 const sidebarMenuItems = document.querySelectorAll('.sidebar-menu li');
 
-// Record data for each type (now with detail object for each)
-const recordData = {
-  unconfirmed: [
-    {
-      time:'10:10',
-      img:'assets/status_01.png',
-      name:'김순자',
-      title:'심박수가 147bpm 이상 입니다.',
-      desc:'심박수가 일상생활 상태에서 120BPM 이상으로…',
-      right:'방금',
-      detail:{
-        msg:'심박수가 일상생활 상태에서 120BPM 이상으로 올라갔습니다.<br>도움이 필요하신지 확인이 필요합니다.',
-        caller:'김순자',
-        location:'1층 거실',
-        map:'assets/map_101.png',
-        vitals:[
-          {label:'심박수',value:'147 bpm',img:'assets/graph_hr.png',time:'방금'},
-          {label:'산소포화도',value:'95%',img:'assets/graph_o2.png',time:'5분전'},
-          {label:'수면',value:'7.5h',img:'assets/graph_sleep.png',time:'지난 7일'},
-          {label:'걸음수',value:'3,482',img:'assets/graph_steps.png',time:'오늘'}
-        ]
-      }
-    },
-    {
-      time:'09:02',
-      img:'assets/status_02.png',
-      name:'이경숙',
-      title:'낙상이 스마트워치로 확인 되었습니다.',
-      desc:'도움이 필요하신지 확인이 필요합니다.',
-      right:'1시간전',
-      detail:{
-        msg:'스마트워치에서 낙상 신호가 감지되었습니다.<br>입소자의 안전을 확인해 주세요.',
-        caller:'이경숙',
-        location:'2층 복도',
-        map:'assets/map_201.png',
-        vitals:[
-          {label:'심박수',value:'89 bpm',img:'assets/graph_hr.png',time:'1시간전'},
-          {label:'산소포화도',value:'97%',img:'assets/graph_o2.png',time:'1시간전'},
-          {label:'수면',value:'6.8h',img:'assets/graph_sleep.png',time:'지난 7일'},
-          {label:'걸음수',value:'2,150',img:'assets/graph_steps.png',time:'오늘'}
-        ]
-      }
-    },
-    {
-      time:'09:01',
-      img:'assets/status_03.png',
-      name:'김정석',
-      title:'산소포화도가 90% 미만으로 감지되었습니다.',
-      desc:'즉시 산소포화도 확인이 필요합니다.',
-      right:'1시간전',
-      detail:{
-        msg:'산소포화도가 90% 미만으로 감지되었습니다.<br>즉시 산소포화도 확인이 필요합니다.',
-        caller:'김정석',
-        location:'1층 화장실',
-        map:'assets/map_102.png',
-        vitals:[
-          {label:'심박수',value:'112 bpm',img:'assets/graph_hr.png',time:'1시간전'},
-          {label:'산소포화도',value:'89%',img:'assets/graph_o2.png',time:'1시간전'},
-          {label:'수면',value:'6.1h',img:'assets/graph_sleep.png',time:'지난 7일'},
-          {label:'걸음수',value:'1,930',img:'assets/graph_steps.png',time:'오늘'}
-        ]
-      }
-    }
-  ],
-  confirmed: [
-    {
-      time:'08:11',
-      img:'assets/status_04.png',
-      name:'추순자',
-      title:'낙상이 스마트워치로 확인 되었습니다.',
-      desc:'도움이 필요하신지 확인이 필요합니다.',
-      manager:'박케어',
-      progress:'확인 중',
-      right:'2시간전',
-      detail:{
-        msg:'낙상 신호가 감지되어 담당자가 확인 중입니다.<br>입소자의 상태를 확인해 주세요.',
-        caller:'추순자',
-        location:'2층 욕실',
-        map:'assets/map_202.png',
-        vitals:[
-          {label:'심박수',value:'77 bpm',img:'assets/graph_hr.png',time:'1시간전'},
-          {label:'산소포화도',value:'98%',img:'assets/graph_o2.png',time:'1시간전'},
-          {label:'수면',value:'7.1h',img:'assets/graph_sleep.png',time:'지난 7일'},
-          {label:'걸음수',value:'2,980',img:'assets/graph_steps.png',time:'오늘'}
-        ]
-      },
-      reply:{ written:false, author:'', avatar:'', content:'' }
-    }
-  ],
-  resolved: [
-    {
-      time:'07:00',
-      img:'assets/status_05.png',
-      name:'이경미',
-      title:'심박수가 151bpm 이상 입니다.',
-      desc:'심박수가 휴식 상태에서 120BPM 이상으로…',
-      manager:'김헬퍼',
-      progress:'완료',
-      right:'3시간전',
-      detail:{
-        msg:'휴식 중 심박수 상승이 감지되었으나 현재 정상으로 회복되었습니다.',
-        caller:'이경미',
-        location:'1층 운동실',
-        map:'assets/map_103.png',
-        vitals:[
-          {label:'심박수',value:'151 bpm',img:'assets/graph_hr.png',time:'2시간전'},
-          {label:'산소포화도',value:'96%',img:'assets/graph_o2.png',time:'2시간전'},
-          {label:'수면',value:'7.9h',img:'assets/graph_sleep.png',time:'지난 7일'},
-          {label:'걸음수',value:'4,120',img:'assets/graph_steps.png',time:'오늘'}
-        ]
-      },
-      reply:{
-        written:true,
-        author:'김석우',
-        avatar:'assets/helper_kim.png',
-        content:'입소자 상태 확인 후 호흡 안정화 확인. 현재 이상 없음으로 판단되어 귀가 조치 완료했습니다.'
-      }
-    },
-    {
-      time:'06:45',
-      img:'assets/status_06.png',
-      name:'곽영철',
-      title:'낙상이 스마트워치로 확인 되었습니다.',
-      desc:'도움이 필요하신지 확인이 필요합니다.',
-      manager:'김헬퍼',
-      progress:'완료',
-      right:'4시간전',
-      detail:{
-        msg:'낙상 신호가 감지되었으나 안전이 확인되어 조치가 완료되었습니다.',
-        caller:'곽영철',
-        location:'1층 식당',
-        map:'assets/map_104.png',
-        vitals:[
-          {label:'심박수',value:'82 bpm',img:'assets/graph_hr.png',time:'2시간전'},
-          {label:'산소포화도',value:'97%',img:'assets/graph_o2.png',time:'2시간전'},
-          {label:'수면',value:'7.2h',img:'assets/graph_sleep.png',time:'지난 7일'},
-          {label:'걸음수',value:'3,790',img:'assets/graph_steps.png',time:'오늘'}
-        ]
-      },
-      reply:{
-        written:true,
-        author:'김석우',
-        avatar:'assets/helper_kim.png',
-        content:'현장 도착하여 낙상 상태 확인, 외상 없음. 입소자 안정 후 귀가 조치하였습니다.'
-      }
-    }
-  ]
+// Dynamic record data - will be populated from API calls
+let recordData = {
+  unconfirmed: [],
+  confirmed: [],
+  resolved: []
 };
+
+// Event type to record mapping
+const eventTypeMapping = {
+  'FALL_DETECTED': {
+    title: '낙상이 스마트워치로 확인 되었습니다.',
+    desc: '도움이 필요하신지 확인이 필요합니다.',
+    msg: '스마트워치에서 낙상 신호가 감지되었습니다.<br>입소자의 안전을 확인해 주세요.'
+  },
+  'HIGH_HEART_RATE_DETECTED': {
+    title: '심박수가 비정상적으로 높습니다.',
+    desc: '심박수가 일상생활 상태에서 120BPM 이상으로…',
+    msg: '심박수가 일상생활 상태에서 120BPM 이상으로 올라갔습니다.<br>도움이 필요하신지 확인이 필요합니다.'
+  },
+  'LOW_HEART_RATE_DETECTED': {
+    title: '심박수가 비정상적으로 낮습니다.',
+    desc: '심박수가 40BPM 이하로 내려갔습니다.',
+    msg: '심박수가 40BPM 이하로 내려갔습니다.<br>즉시 확인이 필요합니다.'
+  }
+};
+
+// localStorage 캐시 관리 함수들
+const CACHE_KEYS = {
+  PROCESSED_EVENTS: 'recordData_processedEvents'
+};
+
+function saveProcessedEventToCache(eventId, category, recordData) {
+  try {
+    const processedEvents = JSON.parse(localStorage.getItem(CACHE_KEYS.PROCESSED_EVENTS) || '{}');
+    processedEvents[eventId] = {
+      category: category,
+      timestamp: new Date().toISOString(),
+      recordData: recordData
+    };
+    localStorage.setItem(CACHE_KEYS.PROCESSED_EVENTS, JSON.stringify(processedEvents));
+    console.log(`✅ 이벤트 ${eventId}가 ${category} 카테고리로 캐시에 저장되었습니다.`);
+  } catch (error) {
+    console.error('❌ 캐시 저장 오류:', error);
+  }
+}
+
+function getProcessedEventFromCache(eventId) {
+  try {
+    const processedEvents = JSON.parse(localStorage.getItem(CACHE_KEYS.PROCESSED_EVENTS) || '{}');
+    return processedEvents[eventId] || null;
+  } catch (error) {
+    console.error('❌ 캐시 읽기 오류:', error);
+    return null;
+  }
+}
+
+function clearOldCacheEntries() {
+  try {
+    const processedEvents = JSON.parse(localStorage.getItem(CACHE_KEYS.PROCESSED_EVENTS) || '{}');
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    
+    let cleanedCount = 0;
+    Object.keys(processedEvents).forEach(eventId => {
+      const cacheEntry = processedEvents[eventId];
+      if (new Date(cacheEntry.timestamp) < oneDayAgo) {
+        delete processedEvents[eventId];
+        cleanedCount++;
+      }
+    });
+    
+    if (cleanedCount > 0) {
+      localStorage.setItem(CACHE_KEYS.PROCESSED_EVENTS, JSON.stringify(processedEvents));
+      console.log(`🧹 ${cleanedCount}개의 오래된 캐시 항목을 정리했습니다.`);
+    }
+  } catch (error) {
+    console.error('❌ 캐시 정리 오류:', error);
+  }
+}
+
+function clearAllCache() {
+  try {
+    localStorage.removeItem(CACHE_KEYS.PROCESSED_EVENTS);
+    console.log('🗑️ 모든 캐시 데이터가 초기화되었습니다.');
+    return true;
+  } catch (error) {
+    console.error('❌ 캐시 초기화 오류:', error);
+    return false;
+  }
+}
+
+function getCacheInfo() {
+  try {
+    const processedEvents = JSON.parse(localStorage.getItem(CACHE_KEYS.PROCESSED_EVENTS) || '{}');
+    const eventCount = Object.keys(processedEvents).length;
+    
+    console.log(`📊 캐시 정보:`);
+    console.log(`- 저장된 이벤트 수: ${eventCount}개`);
+    
+    if (eventCount > 0) {
+      const categories = {};
+      Object.values(processedEvents).forEach(event => {
+        categories[event.category] = (categories[event.category] || 0) + 1;
+      });
+      
+      console.log('- 카테고리별 분포:', categories);
+      console.log('- 상세 데이터:', processedEvents);
+    }
+    
+    return { eventCount, processedEvents };
+  } catch (error) {
+    console.error('❌ 캐시 정보 조회 오류:', error);
+    return null;
+  }
+}
+
+// Fetch real record data from API
+async function fetchRecordData() {
+  console.log('🔄 Fetching record data...');
+  
+  try {
+    // 오래된 캐시 항목 정리
+    clearOldCacheEntries();
+    
+    // Get mappings to get list of residents
+    const mappings = await fetchMappings();
+    console.log('📋 받은 매핑 데이터:', mappings);
+    console.log('📊 매핑 데이터 개수:', mappings.length);
+    
+    if (mappings.length === 0) {
+      const ENABLE_MOCK_DATA = window.API_CONFIG?.ENABLE_MOCK_DATA || false;
+      if (ENABLE_MOCK_DATA) {
+        console.log('🎭 목업 모드: 매핑이 없어서 샘플 데이터 생성');
+        generateSampleRecordData();
+      } else {
+        console.log('🌐 실제 API 모드: 매핑이 없음. 빈 상태 유지');
+        recordData = {
+          unconfirmed: [],
+          confirmed: [],
+          resolved: []
+        };
+      }
+      return;
+    }
+
+    // Update global wardedUsers with mapping data
+    wardedUsers = mappings.map(mapping => ({
+      wardedUserId: mapping.wardedUserId,
+      userName: mapping.userName,
+      age: mapping.age,
+      profileUrl: mapping.userProfileUrl,
+      gender: mapping.gender,
+      phoneNo: mapping.phoneNo,
+      room: mapping.room || '미지정'
+    }));
+    console.log('✅ wardedUsers populated from real mappings:', wardedUsers.length, 'users');
+
+    // Get events data
+    const events = await fetchEvents();
+    console.log('Events fetched:', events);
+
+    // Reset record data
+    recordData = {
+      unconfirmed: [],
+      confirmed: [],
+      resolved: []
+    };
+
+    // If no events, handle based on mode
+    if (events.length === 0) {
+      const ENABLE_MOCK_DATA = window.API_CONFIG?.ENABLE_MOCK_DATA || false;
+      if (ENABLE_MOCK_DATA) {
+        console.log('🎭 목업 모드: 이벤트가 없어서 샘플 이벤트 생성');
+        await generateSampleEventsFromMappings(mappings);
+      } else {
+        console.log('🌐 실제 API 모드: 이벤트가 없음. 빈 상태 유지');
+        recordData = {
+          unconfirmed: [],
+          confirmed: [],
+          resolved: []
+        };
+      }
+      return;
+    }
+
+    let cacheHitCount = 0;
+
+    // Process events and create record entries
+    for (const event of events) {
+      const resident = mappings.find(m => m.wardedUserId === event.wardedUserId);
+      if (!resident) continue;
+
+      // Get bio data for vitals
+      const bioData = await fetchLatestBioData(event.wardedUserId);
+      
+      const record = await createRecordFromEvent(event, resident, bioData);
+      
+      // 캐시에서 처리 상태 확인
+      const cachedStatus = getProcessedEventFromCache(event.eventId);
+      
+      if (cachedStatus) {
+        // 캐시에서 처리 상태 복원
+        if (cachedStatus.recordData && cachedStatus.recordData.reply) {
+          record.reply = cachedStatus.recordData.reply;
+        }
+        recordData[cachedStatus.category].push(record);
+        cacheHitCount++;
+        console.log(`🔄 이벤트 ${event.eventId}를 캐시에서 ${cachedStatus.category}로 복원`);
+      } else {
+        // 새로운 이벤트는 API 상태 또는 미확인으로 분류
+        if (event.status === 'UNCONFIRMED' || !event.status) {
+          recordData.unconfirmed.push(record);
+        } else if (event.status === 'CONFIRMED') {
+          recordData.confirmed.push(record);
+        } else if (event.status === 'RESOLVED') {
+          recordData.resolved.push(record);
+        }
+      }
+    }
+
+    // Sort by time (most recent first)
+    Object.keys(recordData).forEach(key => {
+      recordData[key].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    });
+
+    console.log('✅ Record data populated:', recordData);
+    console.log(`🔄 ${cacheHitCount}개의 레코드가 캐시에서 복원되었습니다.`);
+
+  } catch (error) {
+    console.error('Error fetching record data:', error);
+    // Only fallback to sample data if in mock mode
+    if (window.API_CONFIG?.ENABLE_MOCK_DATA) {
+      generateSampleRecordData();
+    } else {
+      // In real API mode, show empty state or error message
+      recordData = {
+        unconfirmed: [],
+        confirmed: [],
+        resolved: []
+      };
+      console.log('Real API mode: No fallback to mock data');
+    }
+  }
+}
+
+// Generate sample record data for testing when API is not available
+function generateSampleRecordData() {
+  console.log('Generating sample record data for testing...');
+  
+  // Update global wardedUsers with mock user data
+  wardedUsers = Object.values(mockData.users).map(user => ({
+    wardedUserId: user.wardedUserId,
+    userName: user.userName,
+    age: user.age,
+    profileUrl: user.userProfileUrl,
+    room: mockData.mappings.find(m => m.wardedUserId === user.wardedUserId)?.room || '미지정'
+  }));
+  console.log('✅ wardedUsers populated from mock data:', wardedUsers.length, 'users');
+  
+  const now = new Date();
+  const sampleEvents = [
+    {
+      eventId: 'sample_1',
+      wardedUserId: 'ward001',
+      eventType: 'HIGH_HEART_RATE_DETECTED',
+      registrationDateTime: new Date(now.getTime() - 10 * 60 * 1000).toISOString(), // 10 min ago
+      status: 'UNCONFIRMED'
+    },
+    {
+      eventId: 'sample_2', 
+      wardedUserId: 'ward002',
+      eventType: 'FALL_DETECTED',
+      registrationDateTime: new Date(now.getTime() - 60 * 60 * 1000).toISOString(), // 1 hour ago
+      status: 'CONFIRMED'
+    },
+    {
+      eventId: 'sample_3',
+      wardedUserId: 'ward003', 
+      eventType: 'LOW_HEART_RATE_DETECTED',
+      registrationDateTime: new Date(now.getTime() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
+      status: 'RESOLVED'
+    }
+  ];
+
+  recordData = {
+    unconfirmed: [],
+    confirmed: [],
+    resolved: []
+  };
+
+  // Create sample records using mock data
+  sampleEvents.forEach(event => {
+    const mockResident = mockData.users[event.wardedUserId] || {
+      userName: 'Sample User',
+      userProfileUrl: 'assets/status_01.png',
+      room: '101호'
+    };
+
+    const record = {
+      time: new Date(event.registrationDateTime).toLocaleTimeString('ko-KR', { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        hour12: false 
+      }),
+      img: mockResident.userProfileUrl || 'assets/status_01.png',
+      name: mockResident.userName,
+      title: eventTypeMapping[event.eventType]?.title || '알 수 없는 이벤트',
+      desc: eventTypeMapping[event.eventType]?.desc || '상세 정보가 없습니다.',
+      right: timeAgo(event.registrationDateTime),
+      timestamp: event.registrationDateTime,
+      eventId: event.eventId,
+      wardedUserId: event.wardedUserId,
+      detail: {
+        msg: eventTypeMapping[event.eventType]?.msg || '이벤트가 감지되었습니다.',
+        caller: mockResident.userName,
+        location: '1층 거실',
+        map: 'assets/map_101.png',
+        vitals: [
+          { label: '심박수', value: '120 bpm', img: 'assets/graph_hr.png', time: '방금' },
+          { label: '산소포화도', value: '95%', img: 'assets/graph_o2.png', time: '5분전' },
+          { label: '걸음수', value: '3,450', img: 'assets/graph_steps.png', time: '오늘' }
+        ]
+      }
+    };
+
+    // Add status-specific properties
+    if (event.status === 'CONFIRMED') {
+      record.manager = '담당자';
+      record.progress = '확인 중';
+      record.reply = { written: false, author: '', avatar: '', content: '' };
+    } else if (event.status === 'RESOLVED') {
+      record.manager = '담당자';
+      record.progress = '완료';
+      record.reply = {
+        written: true,
+        author: '관리자',
+        avatar: 'assets/helper_kim.png',
+        content: '상황 확인 및 조치 완료되었습니다.'
+      };
+    }
+
+    // Add to appropriate category
+    if (event.status === 'UNCONFIRMED') {
+      recordData.unconfirmed.push(record);
+    } else if (event.status === 'CONFIRMED') {
+      recordData.confirmed.push(record);
+    } else if (event.status === 'RESOLVED') {
+      recordData.resolved.push(record);
+    }
+  });
+
+  console.log('Sample record data generated:', recordData);
+}
+
+// Generate sample events from existing mappings for testing
+async function generateSampleEventsFromMappings(mappings) {
+  console.log('Creating sample events from existing mappings...');
+  
+  // Update global wardedUsers with mapping data
+  wardedUsers = mappings.map(mapping => ({
+    wardedUserId: mapping.wardedUserId,
+    userName: mapping.userName,
+    age: mapping.age,
+    profileUrl: mapping.userProfileUrl,
+    gender: mapping.gender,
+    phoneNo: mapping.phoneNo,
+    room: mapping.room || '미지정'
+  }));
+  console.log('✅ wardedUsers populated from sample events:', wardedUsers.length, 'users');
+  
+  const eventTypes = ['HIGH_HEART_RATE_DETECTED', 'FALL_DETECTED', 'LOW_HEART_RATE_DETECTED'];
+  const statuses = ['UNCONFIRMED', 'CONFIRMED', 'RESOLVED'];
+  const now = new Date();
+
+  recordData = {
+    unconfirmed: [],
+    confirmed: [],
+    resolved: []
+  };
+
+  // Create 1-2 events per resident (up to first 5 residents)
+  const limitedMappings = mappings.slice(0, 5);
+  
+  for (let i = 0; i < limitedMappings.length; i++) {
+    const mapping = limitedMappings[i];
+    const eventType = eventTypes[i % eventTypes.length];
+    const status = statuses[i % statuses.length];
+    
+    const sampleEvent = {
+      eventId: `sample_${i}`,
+      wardedUserId: mapping.wardedUserId,
+      eventType: eventType,
+      registrationDateTime: new Date(now.getTime() - (i * 30 + 10) * 60 * 1000).toISOString(),
+      status: status
+    };
+
+    try {
+      const bioData = await fetchLatestBioData(mapping.wardedUserId);
+      const record = await createRecordFromEvent(sampleEvent, mapping, bioData);
+      
+      if (status === 'UNCONFIRMED') {
+        recordData.unconfirmed.push(record);
+      } else if (status === 'CONFIRMED') {
+        recordData.confirmed.push(record);
+      } else if (status === 'RESOLVED') {
+        recordData.resolved.push(record);
+      }
+    } catch (error) {
+      console.error(`Error creating record for ${mapping.wardedUserId}:`, error);
+    }
+  }
+
+  console.log('Sample events from mappings created:', recordData);
+}
+
+// Create record entry from event data
+async function createRecordFromEvent(event, resident, bioData) {
+  const eventTime = new Date(event.registrationDateTime);
+  const timeStr = eventTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const timeAgoStr = timeAgo(event.registrationDateTime);
+  
+  // Get configuration
+  const ENABLE_MOCK_DATA = window.API_CONFIG?.ENABLE_MOCK_DATA || false;
+  
+  // Get event type details
+  const eventTypeDetails = eventTypeMapping[event.eventType] || {
+    title: '알 수 없는 이벤트',
+    desc: '상세 정보가 없습니다.',
+    msg: '이벤트가 감지되었습니다.'
+  };
+
+  // Create vitals array from bio data
+  const vitals = [];
+  
+  if (bioData) {
+    if (bioData.heartBeat && bioData.heartBeat.length > 0) {
+      vitals.push({
+        label: '심박수',
+        value: `${bioData.heartBeat[0].heartBeat} bpm`,
+        img: 'assets/graph_hr.png',
+        time: timeAgo(bioData.heartBeat[0].registrationDateTime)
+      });
+    }
+    
+    if (bioData.oxygenStatus && bioData.oxygenStatus.length > 0) {
+      vitals.push({
+        label: '산소포화도',
+        value: `${bioData.oxygenStatus[0].oxygenSaturation}%`,
+        img: 'assets/graph_o2.png',
+        time: timeAgo(bioData.oxygenStatus[0].registrationDateTime)
+      });
+    } else if (ENABLE_MOCK_DATA) {
+      vitals.push({
+        label: '산소포화도',
+        value: `${95 + Math.floor(Math.random() * 5)}%`,
+        img: 'assets/graph_o2.png',
+        time: '방금 전'
+      });
+    }
+    
+    if (bioData.steps && bioData.steps.length > 0) {
+      vitals.push({
+        label: '걸음수',
+        value: bioData.steps[0].stepsDaily.toLocaleString(),
+        img: 'assets/graph_steps.png',
+        time: dateAgo(bioData.steps[0].step_date)
+      });
+    } else {
+      // 걸음수 데이터가 없어도 카드는 표시
+      vitals.push({
+        label: '걸음수',
+        value: '--',
+        img: 'assets/graph_steps.png',
+        time: '데이터 없음'
+      });
+    }
+  } else {
+    // bioData가 없는 경우에도 기본 카드들 표시
+    vitals.push({
+      label: '심박수',
+      value: '--',
+      img: 'assets/graph_hr.png',
+      time: '데이터 없음'
+    });
+    vitals.push({
+      label: '걸음수',
+      value: '--',
+      img: 'assets/graph_steps.png',
+      time: '데이터 없음'
+    });
+  }
+
+  // 수면 데이터 제거됨 - 걸음수는 이미 위에서 추가됨
+
+  // Get location from bio data or use default
+  let location = '미확인';
+  if (bioData && bioData.location && bioData.location.length > 0) {
+    const lat = bioData.location[0].latitude;
+    const lng = bioData.location[0].longitude;
+    location = await getLocationName(lat, lng);
+  } else {
+    // Use default locations based on room
+    const roomLocations = {
+      '101호': '1층 거실',
+      '102호': '1층 화장실', 
+      '103호': '1층 운동실',
+      '104호': '1층 식당',
+      '105호': '1층 복도',
+      '201호': '2층 거실',
+      '202호': '2층 욕실',
+      '203호': '2층 복도'
+    };
+    location = roomLocations[resident.room] || '시설 내';
+  }
+
+  const record = {
+    time: timeStr,
+    img: resident.userProfileUrl || 'assets/status_01.png',
+    name: resident.userName,
+    title: eventTypeDetails.title,
+    desc: eventTypeDetails.desc,
+    right: timeAgoStr,
+    timestamp: event.registrationDateTime,
+    eventId: event.eventId,
+    wardedUserId: event.wardedUserId,
+    detail: {
+      msg: eventTypeDetails.msg,
+      caller: resident.userName,
+      location: location,
+      locationCoords: bioData && bioData.location && bioData.location.length > 0 ? {
+        lat: bioData.location[0].latitude,
+        lng: bioData.location[0].longitude
+      } : null,
+      map: 'assets/map_101.png', // Default map
+      vitals: vitals
+    }
+  };
+
+  // Add manager info for confirmed/resolved events
+  if (event.status === 'CONFIRMED') {
+    record.manager = '담당자';
+    record.progress = '확인 중';
+    record.reply = { written: false, author: '', avatar: '', content: '' };
+  } else if (event.status === 'RESOLVED') {
+    record.manager = '담당자';
+    record.progress = '완료';
+    record.reply = {
+      written: true,
+      author: '관리자',
+      avatar: 'assets/helper_kim.png',
+      content: '상황 확인 및 조치 완료되었습니다.'
+    };
+  }
+
+  return record;
+}
+
+// Initialize record data on page load
+async function initializeRecordData() {
+  console.log('Initializing record data...');
+  
+  // Show loading message
+  if (recordListBody) {
+    recordListBody.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">데이터를 불러오는 중...</div>';
+  }
+  
+  try {
+    await fetchRecordData();
+    
+    // Render initial list
+    renderList('unconfirmed');
+    syncSidebarCounts();
+    
+    // Select first record
+    setTimeout(() => {
+      const firstRow = recordListBody.querySelector('.record-row');
+      if (firstRow) {
+        firstRow.click();
+      }
+    }, 100);
+    
+  } catch (error) {
+    console.error('Error initializing record data:', error);
+    if (recordListBody) {
+      recordListBody.innerHTML = '<div style="text-align: center; padding: 20px; color: #ff6b6b;">데이터 로드 실패</div>';
+    }
+  }
+}
+
+// ===== GLOBAL API FUNCTIONS (moved from DOMContentLoaded) =====
+
+// AWS API 호출 함수들
+async function fetchMappings() {
+    const API_BASE_URL = window.API_CONFIG?.BASE_URL || 'https://your-api-endpoint.com';
+    const WATCHER_USER_ID = window.API_CONFIG?.WATCHER_USER_ID || 'watcher_001';
+    const ENABLE_MOCK_DATA = window.API_CONFIG?.ENABLE_MOCK_DATA || false;
+    
+    console.log('🔍 fetchMappings 호출됨');
+    console.log('📡 API_BASE_URL:', API_BASE_URL);
+    console.log('🎭 ENABLE_MOCK_DATA:', ENABLE_MOCK_DATA);
+    
+    if (ENABLE_MOCK_DATA) {
+        console.log('🎭 목업 모드: mockData.mappings 반환');
+        return mockData.mappings;
+    }
+    
+    console.log('🌐 실제 API 호출 시작...');
+    try {
+        const url = `${API_BASE_URL}/watcher/mappings?watcherUserId=${WATCHER_USER_ID}`;
+        console.log('📞 API 호출:', url);
+        
+        const response = await fetch(url, {
+            headers: {'Content-Type': 'application/json'}
+        });
+        console.log('📡 Response status:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('📋 Response data:', data);
+        
+        if (data.code === "1000") {
+            const filtered = data.response.filter(m => m.activeYn === 'o' || m.activeYn === 'y');
+            console.log('✅ 필터링된 매핑:', filtered);
+            return filtered;
+        } else {
+            console.warn('⚠️ API returned error code:', data.code, data.message);
+        }
+    } catch (error) {
+        console.error('❌ Error fetching mappings:', error.message);
+        if (window.API_CONFIG?.SHOW_API_ERRORS) {
+            console.log('🔧 실제 API 연결 실패. 실제 서버가 실행 중인지 확인하세요.');
+        }
+    }
+    return [];
+}
+
+async function fetchEvents() {
+    const API_BASE_URL = window.API_CONFIG?.BASE_URL || 'https://your-api-endpoint.com';
+    const WATCHER_USER_ID = window.API_CONFIG?.WATCHER_USER_ID || 'watcher_001';
+    const ENABLE_MOCK_DATA = window.API_CONFIG?.ENABLE_MOCK_DATA || false;
+    
+    if (ENABLE_MOCK_DATA) {
+        return mockData.events;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/watcher/event?watcherUserId=${WATCHER_USER_ID}`, {
+            headers: {'Content-Type': 'application/json'}
+        });
+        const data = await response.json();
+        if (data.code === "1000") {
+            return data.response;
+        }
+    } catch (error) {
+        console.error('Error fetching events:', error);
+    }
+    return [];
+}
+
+async function fetchLatestBioData(wardedUserId) {
+    const API_BASE_URL = window.API_CONFIG?.BASE_URL || 'https://your-api-endpoint.com';
+    const ENABLE_MOCK_DATA = window.API_CONFIG?.ENABLE_MOCK_DATA || false;
+    
+    if (ENABLE_MOCK_DATA) {
+        // 목업 데이터에 약간의 변동 추가
+        const baseBio = mockData.bioData[wardedUserId];
+        if (!baseBio) return null;
+        
+        return {
+            ...baseBio,
+            heartBeat: [{ heartBeat: baseBio.heartBeat[0].heartBeat + Math.floor(Math.random() * 10 - 5), registrationDateTime: new Date().toISOString() }],
+            oxygenStatus: [],
+            steps: [{ stepsDaily: baseBio.steps[0].stepsDaily + Math.floor(Math.random() * 100), step_date: new Date().toISOString().split('T')[0] }]
+        };
+    }
+    
+    try {
+        const url = `${API_BASE_URL}/watcher?wardedUserId=${wardedUserId}`;
+        console.log('Fetching bio data from:', url);
+        
+        const response = await fetch(url, { headers: {'Content-Type': 'application/json'} });
+        console.log('Bio data response status:', response.status);
+        
+        const data = await response.json();
+        console.log(`Bio data for ${wardedUserId}:`, data);
+        
+        if (data.code === "1000") {
+            console.log('Bio data response:', data.response);
+            return data.response;
+        } else {
+            console.log('API error:', data);
+        }
+    } catch (error) {
+        console.error('Error fetching bio data:', error);
+    }
+    return null;
+}
+
+// 목업 데이터 (개발/테스트용)
+const mockData = {
+    mappings: [
+        { wardedUserId: 'ward001', activeYn: 'o', room: '101호', userName: '김영수', age: '77', userProfileUrl: 'assets/status_01.png' },
+        { wardedUserId: 'ward002', activeYn: 'o', room: '101호', userName: '김순자', age: '84', userProfileUrl: 'assets/status_02.png' },
+        { wardedUserId: 'ward003', activeYn: 'o', room: '101호', userName: '신영자', age: '82', userProfileUrl: 'assets/status_03.png' },
+        { wardedUserId: 'ward004', activeYn: 'o', room: '102호', userName: '김정석', age: '78', userProfileUrl: 'assets/status_04.png' },
+        { wardedUserId: 'ward005', activeYn: 'o', room: '102호', userName: '서영숙', age: '84', userProfileUrl: 'assets/status_05.png' }
+    ],
+    users: {
+        'ward001': { wardedUserId: 'ward001', userName: '김영수', age: '77', userProfileUrl: 'assets/status_01.png' },
+        'ward002': { wardedUserId: 'ward002', userName: '김순자', age: '84', userProfileUrl: 'assets/status_02.png' },
+        'ward003': { wardedUserId: 'ward003', userName: '신영자', age: '82', userProfileUrl: 'assets/status_03.png' },
+        'ward004': { wardedUserId: 'ward004', userName: '김정석', age: '78', userProfileUrl: 'assets/status_04.png' },
+        'ward005': { wardedUserId: 'ward005', userName: '서영숙', age: '84', userProfileUrl: 'assets/status_05.png' }
+    },
+    bioData: {
+        'ward001': {
+            heartBeat: [{ heartBeat: 68 + Math.floor(Math.random() * 10), registrationDateTime: new Date().toISOString() }],
+            oxygenStatus: [],
+            steps: [{ stepsDaily: 3482 + Math.floor(Math.random() * 500), step_date: new Date().toISOString().split('T')[0] }]
+        },
+        'ward002': {
+            heartBeat: [{ heartBeat: 72 + Math.floor(Math.random() * 10), registrationDateTime: new Date().toISOString() }],
+            oxygenStatus: [],
+            steps: [{ stepsDaily: 4200 + Math.floor(Math.random() * 500), step_date: new Date().toISOString().split('T')[0] }]
+        },
+        'ward003': {
+            heartBeat: [{ heartBeat: 70 + Math.floor(Math.random() * 10), registrationDateTime: new Date().toISOString() }],
+            oxygenStatus: [],
+            steps: [{ stepsDaily: 3800 + Math.floor(Math.random() * 500), step_date: new Date().toISOString().split('T')[0] }]
+        },
+        'ward004': {
+            heartBeat: [{ heartBeat: 65 + Math.floor(Math.random() * 10), registrationDateTime: new Date().toISOString() }],
+            oxygenStatus: [],
+            steps: [{ stepsDaily: 2100 + Math.floor(Math.random() * 500), step_date: new Date().toISOString().split('T')[0] }]
+        },
+        'ward005': {
+            heartBeat: [{ heartBeat: 69 + Math.floor(Math.random() * 10), registrationDateTime: new Date().toISOString() }],
+            oxygenStatus: [],
+            steps: [{ stepsDaily: 3300 + Math.floor(Math.random() * 500), step_date: new Date().toISOString().split('T')[0] }]
+        }
+    },
+    events: {
+        'FALL_DETECTED': {
+            eventId: 'event_001',
+            eventType: 'FALL_DETECTED',
+            timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString()
+        },
+        'HIGH_HEART_RATE_DETECTED': {
+            eventId: 'event_002',
+            eventType: 'HIGH_HEART_RATE_DETECTED',
+            timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString()
+        },
+        'LOW_HEART_RATE_DETECTED': {
+            eventId: 'event_003',
+            eventType: 'LOW_HEART_RATE_DETECTED',
+            timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString()
+        }
+    }
+};
+
+// Global utility functions
+function timeAgo(dateString, isCalculated = false) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const difference = now - date; // milliseconds
+    
+    const minutes = Math.floor(difference / 60000);
+    const hours = Math.floor(difference / 3600000);
+    const days = Math.floor(difference / 86400000);
+    
+    if (isCalculated && minutes > 60) {
+        if (minutes % 15 === 0) {
+            return '방금 전';
+        }
+        return `${minutes % 15}분 전`;
+    }
+    
+    if (days > 1) {
+        return `${days}일 전`;
+    } else if (days === 1) {
+        return '1일 전';
+    } else if (hours > 1) {
+        return `${hours}시간 전`;
+    } else if (hours === 1) {
+        return '1시간 전';
+    } else if (minutes > 1) {
+        return `${minutes}분 전`;
+    } else if (minutes === 1) {
+        return '1분 전';
+    } else {
+        return '방금 전';
+    }
+}
+
+function dateAgo(dateString) {
+    const date = new Date(dateString);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    date.setHours(0, 0, 0, 0);
+    
+    const difference = today - date; // milliseconds
+    const days = Math.floor(difference / 86400000);
+    
+    if (days === 0) {
+        return '오늘';
+    } else if (days === 1) {
+        return '1일전';
+    } else {
+        return `${days}일전`;
+    }
+}
+
+function formatAge(age) {
+    const ageStr = String(age);
+    
+    if (ageStr.length === 4) {
+        const ageGroup = ageStr.substring(0, 2);
+        return `${ageGroup}대`;
+    }
+    
+    const ageNum = parseInt(ageStr);
+    if (!isNaN(ageNum)) {
+        const ageGroup = Math.floor(ageNum / 10) * 10;
+        return `${ageGroup}대`;
+    }
+    
+    return ageStr + '세';
+}
+
+// 위치 캐시 전역 변수
+if (!window.locationCache) {
+    window.locationCache = {};
+}
+
+// 은빛노인요양전문기관 위치 설정
+const FACILITY_LOCATION = {
+    name: '은빛노인요양전문기관',
+    lat: 37.501610,
+    lng: 127.148037,
+    buffer: 0.04 // 40m 버퍼 (GPS 오차 감안)
+};
+
+// 두 지점 사이의 거리 계산 (km)
+function calculateDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371; // 지구 반지름 (km)
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+// 위치 정보 포맷팅 (이모지 포함)
+function formatLocationWithDistance(lat, lng, locationName) {
+    const distance = calculateDistance(FACILITY_LOCATION.lat, FACILITY_LOCATION.lng, lat, lng);
+    
+    if (distance <= FACILITY_LOCATION.buffer) {
+        // 기관 내에 있음
+        return `<span class="location-emoji">🏥</span>기관 입소중`;
+    } else {
+        // 기관 밖에 있음
+        const distanceText = distance < 1 ? 
+            `${Math.round(distance * 1000)}m` : 
+            `${distance.toFixed(1)}km`;
+        return `<span class="location-emoji">🚶</span>${locationName} (${distanceText})`;
+    }
+}
+
+// 카카오맵 표시 함수 (시간 정보 포함)
+function showLocationMapWithTime(lat, lng, locationName, residentName, timeStr) {
+    const modal = document.getElementById('location-modal');
+    const mapContainer = document.getElementById('map-container');
+    const modalTitle = modal.querySelector('.modal-title');
+    const locationNameEl = document.getElementById('location-name');
+    const locationDistanceEl = document.getElementById('location-distance');
+    
+    if (!modal || !mapContainer) return;
+    
+    // 모달 표시
+    modal.classList.remove('hidden');
+    
+    // 모달 제목 설정: (이름)님 (날짜)(시간) 위치
+    const today = new Date();
+    const dateStr = `${today.getMonth() + 1}월 ${today.getDate()}일`;
+    modalTitle.textContent = `${residentName}님 ${dateStr} ${timeStr} 위치`;
+    
+    // 위치 정보 표시 (주소만)
+    const distance = calculateDistance(FACILITY_LOCATION.lat, FACILITY_LOCATION.lng, lat, lng);
+    if (distance <= FACILITY_LOCATION.buffer) {
+        locationDistanceEl.textContent = '(기관 내 위치)';
+        locationNameEl.textContent = '기관 입소중';
+    } else {
+        const distanceText = distance < 1 ? 
+            `${Math.round(distance * 1000)}m` : 
+            `${distance.toFixed(1)}km`;
+        locationDistanceEl.textContent = `(기관에서 ${distanceText} 떨어진 위치)`;
+        // buildingName이 있으면 함께 표기
+        if (locationName && typeof locationName === 'object') {
+            if (locationName.building) {
+                locationNameEl.textContent = `${locationName.full} (${locationName.building})`;
+            } else {
+                locationNameEl.textContent = locationName.full || locationName.simple || '위치 정보 없음';
+            }
+        } else {
+            locationNameEl.textContent = locationName || '위치 정보 없음';
+        }
+    }
+    
+    // 지도 생성
+    const tryCreateMap = () => {
+        // 카카오맵 API가 로드되었는지 확인
+        if (typeof kakao === 'undefined' || !kakao.maps) {
+            console.error('카카오맵 API가 로드되지 않았습니다. 재시도 중...');
+            // 500ms 후 재시도 (최대 5번)
+            if (!window.mapRetryCount) window.mapRetryCount = 0;
+            if (window.mapRetryCount < 5) {
+                window.mapRetryCount++;
+                setTimeout(tryCreateMap, 500);
+                return;
+            } else {
+                mapContainer.innerHTML = '<p style="text-align: center; padding: 20px;">지도를 불러올 수 없습니다.<br>카카오맵 API 키를 확인해주세요.</p>';
+                return;
+            }
+        }
+        
+        // 카카오맵 API 로드 성공
+        console.log('카카오맵 API 로드 확인, 지도 생성 시작');
+        window.mapRetryCount = 0;
+        
+        const mapOption = {
+            center: new kakao.maps.LatLng(lat, lng),
+            level: 3
+        };
+        
+        const map = new kakao.maps.Map(mapContainer, mapOption);
+        
+        // 현재 위치 마커
+        const markerPosition = new kakao.maps.LatLng(lat, lng);
+        const marker = new kakao.maps.Marker({
+            position: markerPosition,
+            map: map
+        });
+        
+        // 기관 위치 마커 (다른 색상)
+        const facilityMarkerImage = new kakao.maps.MarkerImage(
+            'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png',
+            new kakao.maps.Size(24, 35)
+        );
+        
+        const facilityMarker = new kakao.maps.Marker({
+            position: new kakao.maps.LatLng(FACILITY_LOCATION.lat, FACILITY_LOCATION.lng),
+            map: map,
+            image: facilityMarkerImage
+        });
+        
+        // 두 마커가 모두 보이도록 지도 범위 조정
+        const bounds = new kakao.maps.LatLngBounds();
+        bounds.extend(markerPosition);
+        bounds.extend(new kakao.maps.LatLng(FACILITY_LOCATION.lat, FACILITY_LOCATION.lng));
+        map.setBounds(bounds);
+    };
+    
+    // 지도 생성 시도
+    setTimeout(tryCreateMap, 100);
+}
+
+// 카카오맵 표시 함수 (기존 버전 - 호환성 유지)
+function showLocationMap(lat, lng, locationName, residentName) {
+    const modal = document.getElementById('location-modal');
+    const mapContainer = document.getElementById('map-container');
+    const locationNameEl = document.getElementById('location-name');
+    const locationDistanceEl = document.getElementById('location-distance');
+    
+    if (!modal || !mapContainer) return;
+    
+    // 모달 표시
+    modal.classList.remove('hidden');
+    
+    // 위치 정보 표시
+    const distance = calculateDistance(FACILITY_LOCATION.lat, FACILITY_LOCATION.lng, lat, lng);
+    if (distance <= FACILITY_LOCATION.buffer) {
+        locationDistanceEl.textContent = '(기관 내 위치)';
+        locationNameEl.textContent = '기관 입소중';
+    } else {
+        const distanceText = distance < 1 ? 
+            `${Math.round(distance * 1000)}m` : 
+            `${distance.toFixed(1)}km`;
+        locationDistanceEl.textContent = `(기관에서 ${distanceText} 떨어진 위치)`;
+        // buildingName이 있으면 함께 표기
+        if (locationName && typeof locationName === 'object') {
+            if (locationName.building) {
+                locationNameEl.textContent = `${locationName.full} (${locationName.building})`;
+            } else {
+                locationNameEl.textContent = locationName.full || locationName.simple || '위치 정보 없음';
+            }
+        } else {
+            locationNameEl.textContent = locationName || '위치 정보 없음';
+        }
+    }
+    
+    // 지도 생성
+    const tryCreateMap = () => {
+        // 카카오맵 API가 로드되었는지 확인
+        if (typeof kakao === 'undefined' || !kakao.maps) {
+            console.error('카카오맵 API가 로드되지 않았습니다. 재시도 중...');
+            // 500ms 후 재시도 (최대 5번)
+            if (!window.mapRetryCount) window.mapRetryCount = 0;
+            if (window.mapRetryCount < 5) {
+                window.mapRetryCount++;
+                setTimeout(tryCreateMap, 500);
+                return;
+            } else {
+                mapContainer.innerHTML = '<p style="text-align: center; padding: 20px;">지도를 불러올 수 없습니다.<br>카카오맵 API 키를 확인해주세요.</p>';
+                return;
+            }
+        }
+        
+        // 카카오맵 API 로드 성공
+        console.log('카카오맵 API 로드 확인, 지도 생성 시작');
+        window.mapRetryCount = 0;
+        
+        const mapOption = {
+            center: new kakao.maps.LatLng(lat, lng),
+            level: 3
+        };
+        
+        const map = new kakao.maps.Map(mapContainer, mapOption);
+        
+        // 현재 위치 마커
+        const markerPosition = new kakao.maps.LatLng(lat, lng);
+        const marker = new kakao.maps.Marker({
+            position: markerPosition,
+            map: map
+        });
+        
+        // 기관 위치 마커 (다른 색상)
+        const facilityMarkerImage = new kakao.maps.MarkerImage(
+            'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png',
+            new kakao.maps.Size(24, 35)
+        );
+        
+        const facilityMarker = new kakao.maps.Marker({
+            position: new kakao.maps.LatLng(FACILITY_LOCATION.lat, FACILITY_LOCATION.lng),
+            map: map,
+            image: facilityMarkerImage
+        });
+        
+        // 두 마커가 모두 보이도록 지도 범위 조정
+        const bounds = new kakao.maps.LatLngBounds();
+        bounds.extend(markerPosition);
+        bounds.extend(new kakao.maps.LatLng(FACILITY_LOCATION.lat, FACILITY_LOCATION.lng));
+        map.setBounds(bounds);
+    };
+    
+    // 지도 생성 시도
+    setTimeout(tryCreateMap, 100);
+}
+
+// 외출 시간 포맷팅 함수
+function formatOutingDuration(totalMinutes) {
+    if (totalMinutes < 60) {
+        return `${totalMinutes}분`;
+    } else {
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        if (minutes === 0) {
+            return `${hours}시간`;
+        } else {
+            return `${hours}시간 ${minutes}분`;
+        }
+    }
+}
+
+// 외출 리포트 분석 함수
+function analyzeOutingReport(locationData) {
+    if (!locationData || locationData.length === 0) {
+        return { hasOuting: false, status: '데이터 없음', outings: [], totalDuration: 0 };
+    }
+    
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    
+    // 오늘 위치 데이터만 필터링하고 시간순 정렬
+    const todayLocations = locationData.filter(loc => {
+        const locDate = new Date(loc.registrationDateTime);
+        return locDate >= todayStart;
+    }).sort((a, b) => new Date(a.registrationDateTime) - new Date(b.registrationDateTime));
+    
+    console.log(`오늘 위치 데이터 ${todayLocations.length}개:`, todayLocations);
+    
+    if (todayLocations.length === 0) {
+        return { hasOuting: false, status: '오늘 데이터 없음', outings: [], totalDuration: 0 };
+    }
+    
+    const outings = [];
+    let totalOutingMinutes = 0;
+    let currentOutingStart = null;
+    
+    // 위치 데이터를 순회하며 외출 구간 분석
+    for (let i = 0; i < todayLocations.length; i++) {
+        const loc = todayLocations[i];
+        const distance = calculateDistance(FACILITY_LOCATION.lat, FACILITY_LOCATION.lng, loc.latitude, loc.longitude);
+        const isOutside = distance > FACILITY_LOCATION.buffer;
+        
+        if (isOutside) {
+            // 외출 위치 발견
+            if (!currentOutingStart) {
+                // 새로운 외출 시작
+                currentOutingStart = new Date(loc.registrationDateTime);
+            }
+            
+            outings.push({
+                latitude: loc.latitude,
+                longitude: loc.longitude,
+                time: loc.registrationDateTime,
+                distance: distance
+            });
+        } else {
+            // 기관 내부 위치 (복귀)
+            if (currentOutingStart) {
+                // 외출에서 복귀
+                const returnTime = new Date(loc.registrationDateTime);
+                const outingDuration = Math.round((returnTime - currentOutingStart) / (1000 * 60)); // 분 단위
+                totalOutingMinutes += outingDuration;
+                currentOutingStart = null;
+            }
+        }
+    }
+    
+    // 현재도 외출 중인 경우 (마지막 위치가 외부)
+    if (currentOutingStart) {
+        const now = new Date();
+        const currentOutingDuration = Math.round((now - currentOutingStart) / (1000 * 60)); // 분 단위
+        totalOutingMinutes += currentOutingDuration;
+    }
+    
+    const hasOuting = outings.length > 0;
+    const status = hasOuting ? '오늘 외출 있음' : '오늘 외출 없음';
+    
+    return { hasOuting, status, outings, totalDuration: totalOutingMinutes };
+}
+
+// 오늘 날짜의 모든 위치 데이터 가져오기 함수
+async function fetchTodayLocationData(wardedUserId) {
+    const API_BASE_URL = window.API_CONFIG?.BASE_URL || 'http://localhost:3001';
+    const ENABLE_MOCK_DATA = window.API_CONFIG?.ENABLE_MOCK_DATA || false;
+    
+    if (ENABLE_MOCK_DATA) {
+        // 목업 데이터에서 오늘 날짜의 위치 데이터 생성
+        const today = new Date();
+        const mockLocations = [];
+        for (let i = 0; i < 50; i++) { // 50개의 목업 위치 데이터
+            const time = new Date(today.getTime() + (i * 30 * 60 * 1000)); // 30분 간격
+            mockLocations.push({
+                latitude: 37.501610 + (Math.random() - 0.5) * 0.01,
+                longitude: 127.148037 + (Math.random() - 0.5) * 0.01,
+                registrationDateTime: time.toISOString()
+            });
+        }
+        return mockLocations;
+    }
+    
+    try {
+        // 오늘 날짜를 YYYY-MM-DD 형식으로 생성
+        const today = new Date();
+        const fromDateStr = today.getFullYear() + '-' + 
+                           String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                           String(today.getDate()).padStart(2, '0');
+        
+        // 내일 날짜를 toDate로 설정
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const toDateStr = tomorrow.getFullYear() + '-' + 
+                         String(tomorrow.getMonth() + 1).padStart(2, '0') + '-' + 
+                         String(tomorrow.getDate()).padStart(2, '0');
+        
+        // Period API 호출 (toDate를 미래 날짜로 설정)
+        const url = `${API_BASE_URL}/watcher/period?wardedUserId=${wardedUserId}&bioDataTypes=LOCATION&fromDate=${fromDateStr}&toDate=${toDateStr}`;
+        console.log('🔍 Fetching today location data from:', url);
+        console.log('📅 Date range:', fromDateStr, 'to', toDateStr);
+        
+        const response = await fetch(url, { 
+            headers: {'Content-Type': 'application/json'} 
+        });
+        console.log('📡 Today location data response status:', response.status);
+        
+        const data = await response.json();
+        console.log(`📋 Today location data for ${wardedUserId}:`, data);
+        
+        if (data.code === "1000" && data.response && data.response.location && data.response.location.length > 0) {
+            console.log('✅ Today location data response:', data.response.location.length, 'records');
+            return data.response.location;
+        } else {
+            console.log('⚠️ No location data for today, falling back to recent data');
+            
+            // 폴백: 기존 /watcher API에서 위치 데이터 가져오기
+            const fallbackUrl = `${API_BASE_URL}/watcher?wardedUserId=${wardedUserId}`;
+            console.log('🔄 Fallback to:', fallbackUrl);
+            
+            const fallbackResponse = await fetch(fallbackUrl, { 
+                headers: {'Content-Type': 'application/json'} 
+            });
+            
+            const fallbackData = await fallbackResponse.json();
+            
+            if (fallbackData.code === "1000" && fallbackData.response && fallbackData.response.location) {
+                // 오늘 날짜의 데이터만 필터링
+                const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                const todayLocations = fallbackData.response.location.filter(loc => {
+                    const locDate = new Date(loc.registrationDateTime);
+                    return locDate >= todayStart;
+                });
+                
+                console.log(`📍 Fallback: filtered ${todayLocations.length} today locations from ${fallbackData.response.location.length} total`);
+                return todayLocations;
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching today location data:', error);
+    }
+    return [];
+}
+
+// 외출 리포트 모달 표시 함수
+async function showOutingReport(userName, wardedUserId, locationData, outingReport) {
+    const modal = document.getElementById('outing-report-modal');
+    const residentNameEl = document.getElementById('report-resident-name');
+    const reportDateEl = document.getElementById('report-date');
+    const reportStatusEl = document.getElementById('report-status');
+    const outingListEl = document.getElementById('outing-list');
+    
+    if (!modal) return;
+    
+    // 모달 표시
+    modal.classList.remove('hidden');
+    
+    // 헤더 정보 설정
+    residentNameEl.textContent = `${userName} 님`;
+    const today = new Date();
+    const weekdays = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+    const weekday = weekdays[today.getDay()];
+    reportDateEl.textContent = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일 ${weekday}`;
+    
+    // 요약 정보 설정
+    if (outingReport.hasOuting) {
+        const durationText = outingReport.totalDuration > 0 ? 
+            formatOutingDuration(outingReport.totalDuration) : '0분';
+        reportStatusEl.textContent = `총 ${durationText}의 외출이 확인되었습니다.`;
+        reportStatusEl.className = 'outing-status-yes';
+    } else {
+        reportStatusEl.textContent = '오늘 외출이 확인되지 않았습니다.';
+        reportStatusEl.className = 'outing-status-no';
+    }
+    
+    // 외출 목록 생성 (최근 시간부터 정렬)
+    outingListEl.innerHTML = '';
+    
+    if (outingReport.outings.length > 0) {
+        // 시간순으로 내림차순 정렬 (최근 시간이 먼저)
+        const sortedOutings = [...outingReport.outings].sort((a, b) => 
+            new Date(b.time) - new Date(a.time)
+        );
+        
+        for (const outing of sortedOutings) {
+            try {
+                const locationInfo = await getLocationName(outing.latitude, outing.longitude);
+                const outingItem = document.createElement('div');
+                outingItem.className = 'outing-item';
+                
+                const time = new Date(outing.time);
+                const timeStr = `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
+                
+                const distanceText = outing.distance < 1 ? 
+                    `${Math.round(outing.distance * 1000)}m` : 
+                    `${outing.distance.toFixed(1)}km`;
+                
+                const locationText = locationInfo.building ? 
+                    `${locationInfo.full} (${locationInfo.building})` : 
+                    locationInfo.full;
+                
+                outingItem.innerHTML = `
+                    <div class="outing-time-main">${timeStr}</div>
+                    <div class="outing-location-sub">${locationText}</div>
+                    <div class="outing-distance-sub">기관에서 ${distanceText}</div>
+                `;
+                
+                // 클릭 시 지도 표시
+                outingItem.onclick = () => {
+                    showLocationMapWithTime(outing.latitude, outing.longitude, locationInfo, userName, timeStr);
+                };
+                
+                outingListEl.appendChild(outingItem);
+            } catch (error) {
+                console.error('외출 위치 정보 가져오기 실패:', error);
+            }
+        }
+    } else {
+        outingListEl.innerHTML = '<div style="text-align: center; padding: 40px; color: #6B7280;">오늘 외출 기록이 없습니다.</div>';
+    }
+}
+
+// 모달 닫기 이벤트
+document.addEventListener('DOMContentLoaded', function() {
+    const locationModalClose = document.getElementById('location-modal-close');
+    const locationModal = document.getElementById('location-modal');
+    const outingReportModalClose = document.getElementById('outing-report-modal-close');
+    const outingReportModal = document.getElementById('outing-report-modal');
+    
+    if (locationModalClose && locationModal) {
+        locationModalClose.addEventListener('click', () => {
+            locationModal.classList.add('hidden');
+        });
+        
+        locationModal.addEventListener('click', (e) => {
+            if (e.target === locationModal) {
+                locationModal.classList.add('hidden');
+            }
+        });
+    }
+    
+    if (outingReportModalClose && outingReportModal) {
+        outingReportModalClose.addEventListener('click', () => {
+            outingReportModal.classList.add('hidden');
+        });
+        
+        outingReportModal.addEventListener('click', (e) => {
+            if (e.target === outingReportModal) {
+                outingReportModal.classList.add('hidden');
+            }
+        });
+    }
+});
+
+// ===== END GLOBAL API FUNCTIONS =====
+
+// Global variables for resident data
+let wardedUsers = [];
+let bioDataCache = {};
+
+// Update record data if needed (for real-time updates)
+async function updateRecordDataIfNeeded() {
+  // Only update if we're on the record page and have the necessary elements
+  if (!recordListBody || !sidebarMenuItems.length) return;
+  
+  try {
+    const currentActiveType = document.querySelector('.sidebar-menu li.active')?.dataset.type || 'unconfirmed';
+    const currentRecordCount = recordData[currentActiveType]?.length || 0;
+    
+    // Fetch fresh data
+    await fetchRecordData();
+    
+    // Check if counts changed
+    const newRecordCount = recordData[currentActiveType]?.length || 0;
+    
+    if (newRecordCount !== currentRecordCount) {
+      console.log('Record data updated, refreshing view');
+      
+      // Update the view
+      renderList(currentActiveType);
+      syncSidebarCounts();
+      
+      // If there's a notification sound or visual indicator, you could add it here
+      console.log(`Records updated: ${currentActiveType} count changed from ${currentRecordCount} to ${newRecordCount}`);
+    }
+    
+  } catch (error) {
+    console.error('Error updating record data:', error);
+  }
+}
 // --- synchronize sidebar badge counts ---
 function syncSidebarCounts() {
   document.querySelector('[data-type="unconfirmed"] .sub-count').textContent = recordData.unconfirmed.length;
@@ -228,9 +1466,7 @@ function buildDetailHTML(rec, showButtons, showEditDone){
 
   // Conditionally include action buttons
   const buttonsHTML = showButtons ? `
-    <button class="detail-btn primary">담당자 호출</button>
-    <button class="detail-btn">${rec.detail.caller}님에게 전화 걸기</button>
-    <button class="detail-btn danger">119에 전화 걸기</button>
+    <button class="detail-btn primary confirm-btn">확인</button>
   ` : '';
 
   let replyHTML = '';
@@ -245,8 +1481,7 @@ function buildDetailHTML(rec, showButtons, showEditDone){
       replyHTML = `
          <div class="reply-block">
            <div class="reply-header">
-             <img src="${rec.reply.avatar}" class="reply-avatar">
-             <span class="reply-author">${rec.reply.author} 담당자 확인</span>
+             <span class="reply-author">담당자 확인 내용</span>
            </div>
            <p class="reply-content">${rec.reply.content}</p>
            ${actionsHTML}
@@ -263,24 +1498,39 @@ function buildDetailHTML(rec, showButtons, showEditDone){
     }
   }
 
+  // Get resident info from mapping data if available
+  let residentAge = '나이 미확인';
+  let residentRoom = '호실 미확인';
+  let residentStatus = '일상생활';
+  
+  if (rec.wardedUserId && wardedUsers && wardedUsers.length > 0) {
+    const resident = wardedUsers.find(u => u.wardedUserId === rec.wardedUserId);
+    if (resident) {
+      residentAge = formatAge(resident.age);
+      residentRoom = resident.room || '호실 미확인';
+    }
+  } else {
+    console.log('⚠️ wardedUsers not available in buildDetailHTML:', { wardedUserId: rec.wardedUserId, wardedUsersLength: wardedUsers?.length });
+  }
+
   // Keep ${buttonsHTML} where it was inserted before
   return `
     <div class="detail-top">
       <img src="${rec.img}" class="detail-profile">
       <div class="detail-info">
         <span class="detail-name">${rec.name}</span>
-        <span class="detail-extra">77세&nbsp;&nbsp;101호&nbsp;&nbsp;<span class="status-label daily">일상생활</span>&nbsp;&nbsp;담당자: 김석우</span>
+        <span class="detail-extra">${residentAge}&nbsp;&nbsp;${residentRoom}&nbsp;&nbsp;<span class="status-label daily">${residentStatus}</span>&nbsp;&nbsp;담당자: 관리자</span>
       </div>
     </div>
     <p class="detail-msg">${rec.detail.msg}</p>
     ${buttonsHTML}
     ${replyHTML}
-    <div class="vital-card">
+    <div class="vital-card location-card-clickable" style="cursor: pointer;">
           <div class="vital-header">
         <span class="vital-label">최근위치</span>
         <span class="vital-time">방금</span>
       </div>
-      <div class="vital-value">${rec.detail.location}</div>
+      <div class="vital-value">${typeof rec.detail.location === 'object' ? (rec.detail.location.building ? `${rec.detail.location.full} (${rec.detail.location.building})` : (rec.detail.location.full || rec.detail.location.simple || '위치 정보 없음')) : rec.detail.location}</div>
       </div>
     <img src="${rec.detail.map}" class="location-img">
     ${vitalsHTML}
@@ -290,8 +1540,8 @@ function buildDetailHTML(rec, showButtons, showEditDone){
 function renderList(typeKey){
   const list = recordData[typeKey] || [];
   let html='';
-  list.forEach(item=>{
-    html += `<div class="record-row" data-time="${item.time}">
+  list.forEach((item, index)=>{
+    html += `<div class="record-row" data-time="${item.time}" data-event-id="${item.eventId || ''}" data-warded-user-id="${item.wardedUserId || ''}" data-record-index="${index}">
       <input type="checkbox" class="rec-checkbox">
       <img src="${item.img}" class="rec-profile" alt="${item.name}">
       <div class="rec-main">
@@ -316,13 +1566,9 @@ if (sidebarMenuItems.length && recordListBody) {
       syncSidebarCounts();
     });
   });
-  renderList('unconfirmed');
-  syncSidebarCounts();
-  // --- default-select first unconfirmed record on load ---
-  const firstRow = recordListBody.querySelector('.record-row');
-  if (firstRow) {
-    firstRow.click();
-  }
+  
+  // Initialize with real data
+  initializeRecordData();
 }
 // ===== Record list → detail view sync =====
 function attachRecordRowListeners(){
@@ -332,24 +1578,158 @@ function attachRecordRowListeners(){
   const detailBody  = detailPane?.querySelector('.detail-body');
   const detailTime  = detailPane?.querySelector('.detail-time');
   rows.forEach(row=>{
-    row.addEventListener('click',()=>{
+    row.addEventListener('click', async ()=>{
       rows.forEach(r=>r.classList.remove('selected-row'));
       row.classList.add('selected-row');
-      const time=row.dataset.time;
-      const name=row.querySelector('.rec-main .rec-name-title').textContent.split(' ')[0];
-      const title=row.querySelector('.rec-name-title').textContent.replace(name,'').trim();
-      if(detailTime) detailTime.textContent=`2025.5.8 목 ${time}`;
-      if(detailTitle) detailTitle.textContent=title;
+      
+      const recordIndex = parseInt(row.dataset.recordIndex);
+      const eventId = row.dataset.eventId;
+      const wardedUserId = row.dataset.wardedUserId;
+      const activeType = document.querySelector('.sidebar-menu li.active').dataset.type;
+      
+      // Get record object using index for reliability
+      const recObj = recordData[activeType][recordIndex];
+      
+      
+      if (!recObj) {
+        console.error('Record object not found');
+        return;
+      }
+      
+      const name = recObj.name;
+      const title = recObj.title;
+      
+      // Format date properly
+      const eventDate = new Date(recObj.timestamp);
+      const dateStr = eventDate.toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: 'numeric', 
+        day: 'numeric',
+        weekday: 'short'
+      });
+      
+      if(detailTime) detailTime.textContent = `${dateStr} ${recObj.time}`;
+      if(detailTitle) detailTitle.textContent = title;
+      
       if(detailBody){
-        const recObj = recordData[document.querySelector('.sidebar-menu li.active').dataset.type]
-                         .find(r=>r.time===time && r.name===name);
-        const activeType = document.querySelector('.sidebar-menu li.active').dataset.type;
-        detailBody.innerHTML = buildDetailHTML(recObj || {}, activeType === 'unconfirmed', activeType === 'confirmed');
+        // Get fresh bio data for the detail view
+        let freshBioData = null;
+        try {
+          if (wardedUserId) {
+            freshBioData = await fetchLatestBioData(wardedUserId);
+            
+            // Update vitals with fresh data if available
+            if (freshBioData && recObj.detail && recObj.detail.vitals) {
+              updateVitalsWithFreshData(recObj.detail.vitals, freshBioData);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching fresh bio data for detail view:', error);
+        }
+        
+        detailBody.innerHTML = buildDetailHTML(recObj, activeType === 'unconfirmed', activeType === 'confirmed');
         attachReplyHandlers();
-        attachDetailBtns(recObj.detail.caller);
+        
+        // 확인 버튼 클릭 이벤트 추가 (미확인 → 확인된 위험신호로 이동)
+        const confirmBtn = detailBody.querySelector('.confirm-btn');
+        if (confirmBtn && activeType === 'unconfirmed') {
+          confirmBtn.onclick = () => {
+            // 미확인 위험신호에서 항목 제거
+            const unconfirmedIndex = recordData.unconfirmed.findIndex(r => 
+              r.time === recObj.time && r.name === recObj.name && r.eventId === recObj.eventId
+            );
+            
+            if (unconfirmedIndex !== -1) {
+              // 미확인에서 제거
+              const confirmedRecord = recordData.unconfirmed.splice(unconfirmedIndex, 1)[0];
+              
+              // 확인된 위험신호에 추가 (reply 정보 추가)
+              confirmedRecord.reply = { 
+                written: false, 
+                author: '', 
+                avatar: '', 
+                content: '' 
+              };
+              recordData.confirmed.unshift(confirmedRecord);
+              
+              // 캐시에 처리 상태 저장
+              saveProcessedEventToCache(confirmedRecord.eventId, 'confirmed', confirmedRecord);
+              
+              // 사이드바 카운트 업데이트
+              syncSidebarCounts();
+              
+              // 미확인 목록 새로고침
+              renderList('unconfirmed');
+              
+              // 디테일 패널 클리어
+              document.querySelector('.detail-title').textContent = '';
+              document.querySelector('.detail-body').innerHTML = '';
+              document.querySelector('.detail-time').textContent = '';
+              
+              console.log('항목이 확인된 위험신호로 이동되었습니다:', confirmedRecord.name, confirmedRecord.title);
+            }
+          };
+        }
+        
+        // 위치 카드 클릭 이벤트 추가
+        const locationCard = detailBody.querySelector('.location-card-clickable');
+        if (locationCard) {
+          locationCard.onclick = async () => {
+            let lat, lng;
+            
+            // 저장된 좌표 정보 또는 최신 bioData 사용
+            if (recObj.detail.locationCoords) {
+              lat = recObj.detail.locationCoords.lat;
+              lng = recObj.detail.locationCoords.lng;
+            } else if (freshBioData && freshBioData.location && freshBioData.location.length > 0) {
+              lat = freshBioData.location[0].latitude;
+              lng = freshBioData.location[0].longitude;
+            } else {
+              alert('위치 정보가 없습니다.');
+              return;
+            }
+            
+            const locationInfo = await getLocationName(lat, lng);
+            const eventTime = new Date(recObj.timestamp);
+            const timeStr = eventTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+            showLocationMapWithTime(lat, lng, locationInfo, recObj.name, timeStr);
+          };
+        }
       }
     });
   });
+}
+
+// Update vitals array with fresh bio data
+function updateVitalsWithFreshData(vitals, bioData) {
+  if (!bioData) return;
+  
+  // Update heart rate
+  if (bioData.heartBeat && bioData.heartBeat.length > 0) {
+    const hrVital = vitals.find(v => v.label === '심박수');
+    if (hrVital) {
+      hrVital.value = `${bioData.heartBeat[0].heartBeat} bpm`;
+      hrVital.time = timeAgo(bioData.heartBeat[0].registrationDateTime);
+    }
+  }
+  
+  // Update oxygen saturation
+  if (bioData.oxygenStatus && bioData.oxygenStatus.length > 0) {
+    const spo2Vital = vitals.find(v => v.label === '산소포화도');
+    if (spo2Vital) {
+      spo2Vital.value = `${bioData.oxygenStatus[0].oxygenSaturation}%`;
+      spo2Vital.time = timeAgo(bioData.oxygenStatus[0].registrationDateTime);
+    }
+  }
+  
+  // Update steps
+  if (bioData.steps && bioData.steps.length > 0) {
+    const stepsVital = vitals.find(v => v.label === '걸음수');
+    if (stepsVital) {
+      stepsVital.value = bioData.steps[0].stepsDaily.toLocaleString();
+      stepsVital.time = dateAgo(bioData.steps[0].step_date);
+    }
+  }
 }
 
 function attachReplyHandlers(){
@@ -386,6 +1766,10 @@ function attachReplyHandlers(){
         const recObj = recordData.confirmed.splice(idx, 1)[0];
         // add to resolved
         recordData.resolved.unshift(recObj);
+        
+        // 캐시에 처리 상태 저장
+        saveProcessedEventToCache(recObj.eventId, 'resolved', recObj);
+        
         syncSidebarCounts();
         // if viewing confirmed, refresh list and clear detail
         const activeType = document.querySelector('.sidebar-menu li.active')?.dataset.type;
@@ -414,12 +1798,49 @@ function attachReplyHandlers(){
       avatar:'assets/helper_kim.png',
       content:textArea.value
     };
-    // Re‑render detail
-    const detailBody = document.querySelector('.detail-body');
-    const activeType = document.querySelector('.sidebar-menu li.active').dataset.type;
-    detailBody.innerHTML = buildDetailHTML(recObj, activeType === 'unconfirmed', activeType === 'confirmed');
-    attachReplyHandlers();
-    attachDetailBtns(recObj.detail.caller);
+    
+    // Move data between categories based on current type
+    if (type === 'unconfirmed') {
+      // Move from unconfirmed to confirmed
+      const idx = recordData.unconfirmed.findIndex(r => r.time === time && r.name === name);
+      if (idx !== -1) {
+        const removedRec = recordData.unconfirmed.splice(idx, 1)[0];
+        recordData.confirmed.unshift(removedRec);
+        
+        // 캐시에 처리 상태 저장
+        saveProcessedEventToCache(removedRec.eventId, 'confirmed', removedRec);
+        
+        syncSidebarCounts();
+        // Refresh unconfirmed list and clear detail
+        renderList('unconfirmed');
+        document.querySelector('.detail-title').textContent = '';
+        document.querySelector('.detail-body').innerHTML = '';
+        document.querySelector('.detail-time').textContent = '';
+      }
+    } else if (type === 'confirmed') {
+      // Move from confirmed to resolved
+      const idx = recordData.confirmed.findIndex(r => r.time === time && r.name === name);
+      if (idx !== -1) {
+        const removedRec = recordData.confirmed.splice(idx, 1)[0];
+        recordData.resolved.unshift(removedRec);
+        
+        // 캐시에 처리 상태 저장
+        saveProcessedEventToCache(removedRec.eventId, 'resolved', removedRec);
+        
+        syncSidebarCounts();
+        // Refresh confirmed list and clear detail
+        renderList('confirmed');
+        document.querySelector('.detail-title').textContent = '';
+        document.querySelector('.detail-body').innerHTML = '';
+        document.querySelector('.detail-time').textContent = '';
+      }
+    } else {
+      // For resolved or other types, just re-render detail
+      const detailBody = document.querySelector('.detail-body');
+      const activeType = document.querySelector('.sidebar-menu li.active').dataset.type;
+      detailBody.innerHTML = buildDetailHTML(recObj, activeType === 'unconfirmed', activeType === 'confirmed');
+      attachReplyHandlers();
+    }
   };
   editor.querySelector('.reply-cancel').onclick = ()=>{ textArea.value=''; };
 }
@@ -498,11 +1919,15 @@ if (vacancyDetailBtn && vacancyModal && vacancyModalClose) {
   });
 }
 // Toggle alert-section visibility and highlight top 2 residents when logo is clicked
+// Check if elements exist before adding event listeners
+// 담당자 호출 기능 (logo 클릭) - 주석처리
+/*
 const logoEl = document.querySelector('.hello-logo');
 const alertSectionEl = document.querySelector('.alert-section');
 const residentTbody = document.querySelector('.resident-table tbody');
 
-logoEl.addEventListener('click', () => {
+if (logoEl && alertSectionEl && residentTbody) {
+  logoEl.addEventListener('click', () => {
   const rows = residentTbody.querySelectorAll('tr');
 
   if (alertSectionEl.classList.contains('hidden')) {
@@ -527,8 +1952,8 @@ logoEl.addEventListener('click', () => {
       statusSpan0.classList.add('warning');
       statusSpan0.textContent = '고심박';
     }
-    // 김영수의 심박수(5번째 열, index 4)를 140bpm으로 변경
-    if (rows[0]) rows[0].children[4].textContent = '140bpm';
+    // 김영수의 심박수(6번째 열, index 5)를 140bpm으로 변경
+    if (rows[0]) rows[0].children[5].textContent = '140bpm';
     if (statusSpan1) {
       statusSpan1.classList.remove('daily', 'exercise', 'sleep', 'moving');
       statusSpan1.classList.add('warning');
@@ -540,15 +1965,17 @@ logoEl.addEventListener('click', () => {
       statusSpan0.classList.add('daily');
       statusSpan0.textContent = '일상생활';
     }
-    // 김영수의 심박수(5번째 열, index 4)를 68bpm으로 복원
-    if (rows[0]) rows[0].children[4].textContent = '68bpm';
+    // 김영수의 심박수(6번째 열, index 5)를 68bpm으로 복원
+    if (rows[0]) rows[0].children[5].textContent = '68bpm';
     if (statusSpan1) {
       statusSpan1.classList.remove('warning');
       statusSpan1.classList.add('exercise');
       statusSpan1.textContent = '운동';
     }
   }
-});
+  });
+}
+*/
 
 // ----- Alert "담당자 호출" buttons (modal) -----
 const callModal       = document.getElementById('call-modal');
@@ -585,6 +2012,69 @@ if (callPhoneBtn) {
   });
 }
 document.addEventListener('DOMContentLoaded', () => {
+    // 개발용 키보드 단축키 (Ctrl+Shift+R: 캐시 초기화)
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.shiftKey && e.key === 'R') {
+            e.preventDefault();
+            if (clearAllCache()) {
+                alert('캐시가 초기화되었습니다. 페이지를 새로고침합니다.');
+                location.reload();
+            }
+        }
+    });
+    
+    // 실제 날짜와 시간으로 업데이트
+    const updateDateTime = () => {
+        const dateElements = document.querySelectorAll('.dashboard-date, .record-date');
+        if (dateElements.length > 0) {
+            const today = new Date();
+            const months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+            const days = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+            
+            const month = months[today.getMonth()];
+            const date = today.getDate();
+            const day = days[today.getDay()];
+            
+            // 시간 포맷팅
+            let hours = today.getHours();
+            const minutes = today.getMinutes();
+            const seconds = today.getSeconds();
+            const ampm = hours >= 12 ? '오후' : '오전';
+            hours = hours % 12 || 12; // 0시를 12시로 변환
+            
+            const timeStr = `${ampm} ${hours}시 ${minutes.toString().padStart(2, '0')}분 ${seconds.toString().padStart(2, '0')}초`;
+            
+            dateElements.forEach(element => {
+                element.textContent = `${month} ${date}일 ${day} ${timeStr}`;
+            });
+        }
+    };
+    
+    // 1초마다 시간 업데이트
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+    
+    const updateRefreshTime = () => {
+        const refreshElement = document.querySelector('.last-refresh');
+        if (refreshElement) {
+            const now = new Date();
+            const diff = Math.floor((now - lastRefreshTime) / 1000); // 초 단위
+            
+            if (diff < 60) {
+                refreshElement.textContent = `${diff}초 전 refresh `;
+            } else if (diff < 3600) {
+                const minutes = Math.floor(diff / 60);
+                refreshElement.textContent = `${minutes}분 전 refresh `;
+            } else {
+                const hours = Math.floor(diff / 3600);
+                refreshElement.textContent = `${hours}시간 전 refresh `;
+            }
+        }
+    };
+    
+    // 1초마다 새로고침 시간 업데이트
+    setInterval(updateRefreshTime, 1000);
+
     const floorSelectorBtn = document.getElementById('floor-selector-btn');
     const floorOptions = document.getElementById('floor-options');
     const selectedFloorSpan = document.getElementById('selected-floor');
@@ -596,9 +2086,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const UPDATE_INTERVAL = window.API_CONFIG?.UPDATE_INTERVAL || 5000;
     const ENABLE_MOCK_DATA = window.API_CONFIG?.ENABLE_MOCK_DATA || false;
     
-    // 피보호자 데이터 캐시
-    let wardedUsers = [];
-    let bioDataCache = {};
+    // 피보호자 데이터 캐시 (전역 변수 사용)
+    let lastRefreshTime = new Date(); // 마지막 새로고침 시간 추적
 
     // 목업 데이터 (개발/테스트용)
     const mockData = {
@@ -618,74 +2107,99 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         bioData: {
             'ward001': {
-                heartBeatList: [{ heartBeat: 68 + Math.floor(Math.random() * 10) }],
-                oxygenStatusList: [{ oxygenSaturation: 95 + Math.floor(Math.random() * 5) }],
-                stepsList: [{ steps: 3482 + Math.floor(Math.random() * 500) }]
+                heartBeat: [{ heartBeat: 68 + Math.floor(Math.random() * 10), registrationDateTime: new Date().toISOString() }],
+                oxygenStatus: [],
+                steps: [{ stepsDaily: 3482 + Math.floor(Math.random() * 500), step_date: new Date().toISOString().split('T')[0] }]
             },
             'ward002': {
-                heartBeatList: [{ heartBeat: 72 + Math.floor(Math.random() * 10) }],
-                oxygenStatusList: [{ oxygenSaturation: 94 + Math.floor(Math.random() * 5) }],
-                stepsList: [{ steps: 4200 + Math.floor(Math.random() * 500) }]
+                heartBeat: [{ heartBeat: 72 + Math.floor(Math.random() * 10), registrationDateTime: new Date().toISOString() }],
+                oxygenStatus: [],
+                steps: [{ stepsDaily: 4200 + Math.floor(Math.random() * 500), step_date: new Date().toISOString().split('T')[0] }]
             },
             'ward003': {
-                heartBeatList: [{ heartBeat: 70 + Math.floor(Math.random() * 10) }],
-                oxygenStatusList: [{ oxygenSaturation: 96 + Math.floor(Math.random() * 5) }],
-                stepsList: [{ steps: 3800 + Math.floor(Math.random() * 500) }]
+                heartBeat: [{ heartBeat: 70 + Math.floor(Math.random() * 10), registrationDateTime: new Date().toISOString() }],
+                oxygenStatus: [],
+                steps: [{ stepsDaily: 3800 + Math.floor(Math.random() * 500), step_date: new Date().toISOString().split('T')[0] }]
             },
             'ward004': {
-                heartBeatList: [{ heartBeat: 65 + Math.floor(Math.random() * 10) }],
-                oxygenStatusList: [{ oxygenSaturation: 97 + Math.floor(Math.random() * 5) }],
-                stepsList: [{ steps: 2100 + Math.floor(Math.random() * 500) }]
+                heartBeat: [{ heartBeat: 65 + Math.floor(Math.random() * 10), registrationDateTime: new Date().toISOString() }],
+                oxygenStatus: [],
+                steps: [{ stepsDaily: 2100 + Math.floor(Math.random() * 500), step_date: new Date().toISOString().split('T')[0] }]
             },
             'ward005': {
-                heartBeatList: [{ heartBeat: 69 + Math.floor(Math.random() * 10) }],
-                oxygenStatusList: [{ oxygenSaturation: 95 + Math.floor(Math.random() * 5) }],
-                stepsList: [{ steps: 3300 + Math.floor(Math.random() * 500) }]
+                heartBeat: [{ heartBeat: 69 + Math.floor(Math.random() * 10), registrationDateTime: new Date().toISOString() }],
+                oxygenStatus: [],
+                steps: [{ stepsDaily: 3300 + Math.floor(Math.random() * 500), step_date: new Date().toISOString().split('T')[0] }]
             }
         },
-        events: []
-    };
-
-    // Toggle dropdown visibility
-    floorSelectorBtn.addEventListener('click', (event) => {
-        event.stopPropagation(); // Prevent click from immediately closing dropdown
-        floorOptions.classList.toggle('hidden');
-    });
-
-    // Handle floor selection
-    floorOptions.addEventListener('click', (event) => {
-        if (event.target.classList.contains('floor-option')) {
-            const selectedFloor = event.target.dataset.floor;
-
-            // Update button text
-            selectedFloorSpan.textContent = `${selectedFloor}층`;
-
-            // Hide dropdown
-            floorOptions.classList.add('hidden');
-
-            // Switch active floor plan
-            floorPlans.forEach(plan => {
-                plan.classList.add('hidden');
-                plan.classList.remove('active');
-            });
-
-            const activePlan = document.getElementById(`floor-${selectedFloor}-plan`);
-            if (activePlan) {
-                activePlan.classList.remove('hidden');
-                activePlan.classList.add('active');
+        events: {
+            'FALL_DETECTED': {
+                eventId: 'event_001',
+                eventType: 'FALL_DETECTED',
+                timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString()
+            },
+            'HIGH_HEART_RATE_DETECTED': {
+                eventId: 'event_002',
+                eventType: 'HIGH_HEART_RATE_DETECTED',
+                timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString()
+            },
+            'LOW_HEART_RATE_DETECTED': {
+                eventId: 'event_003',
+                eventType: 'LOW_HEART_RATE_DETECTED',
+                timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString()
             }
         }
-    });
+    };
 
-    // Close dropdown if clicking outside
-    document.addEventListener('click', () => {
-        if (!floorOptions.classList.contains('hidden')) {
-            floorOptions.classList.add('hidden');
-        }
-    });
+    // Toggle dropdown visibility (only if elements exist)
+    if (floorSelectorBtn && floorOptions) {
+        floorSelectorBtn.addEventListener('click', (event) => {
+            event.stopPropagation(); // Prevent click from immediately closing dropdown
+            floorOptions.classList.toggle('hidden');
+        });
+    }
+
+    // Handle floor selection (only if elements exist)
+    if (floorOptions && selectedFloorSpan && floorPlans.length > 0) {
+        floorOptions.addEventListener('click', (event) => {
+            if (event.target.classList.contains('floor-option')) {
+                const selectedFloor = event.target.dataset.floor;
+
+                // Update button text
+                selectedFloorSpan.textContent = `${selectedFloor}층`;
+
+                // Hide dropdown
+                floorOptions.classList.add('hidden');
+
+                // Switch active floor plan
+                floorPlans.forEach(plan => {
+                    plan.classList.add('hidden');
+                    plan.classList.remove('active');
+                });
+
+                const activePlan = document.getElementById(`floor-${selectedFloor}-plan`);
+                if (activePlan) {
+                    activePlan.classList.remove('hidden');
+                    activePlan.classList.add('active');
+                }
+            }
+        });
+
+        // Close dropdown if clicking outside
+        document.addEventListener('click', () => {
+            if (!floorOptions.classList.contains('hidden')) {
+                floorOptions.classList.add('hidden');
+            }
+        });
+    }
 
     // AWS API 호출 함수들
     async function fetchMappings() {
+        console.log('fetchMappings 호출됨');
+        console.log('API_BASE_URL:', API_BASE_URL);
+        console.log('ENABLE_MOCK_DATA:', ENABLE_MOCK_DATA);
+        console.log('Full URL:', `${API_BASE_URL}/watcher/mappings?watcherUserId=${WATCHER_USER_ID}`);
+        
         if (ENABLE_MOCK_DATA) {
             return mockData.mappings;
         }
@@ -694,9 +2208,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`${API_BASE_URL}/watcher/mappings?watcherUserId=${WATCHER_USER_ID}`, {
                 headers: {'Content-Type': 'application/json'}
             });
+            console.log('Response status:', response.status);
             const data = await response.json();
+            console.log('Response data:', data);
             if (data.code === "1000") {
-                return data.response.filter(m => m.activeYn === 'o');
+                console.log('Filtered mappings:', data.response.filter(m => m.activeYn === 'o' || m.activeYn === 'y'));
+                return data.response.filter(m => m.activeYn === 'o' || m.activeYn === 'y');
+            } else {
+                console.log('API returned error code:', data.code, data.message);
             }
         } catch (error) {
             console.error('Error fetching mappings:', error);
@@ -710,10 +2229,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         try {
-            const response = await fetch(`${API_BASE_URL}/ward/user?wardedUserId=${wardedUserId}`, {
+            const url = `${API_BASE_URL}/ward/user?wardedUserId=${wardedUserId}`;
+            console.log('Fetching user info from:', url);
+            
+            const response = await fetch(url, {
                 headers: {'Content-Type': 'application/json'}
             });
+            console.log('User info response status:', response.status);
+            
             const data = await response.json();
+            console.log('User info response:', data);
+            
             if (data.code === "1000") {
                 return data.response;
             }
@@ -731,21 +2257,28 @@ document.addEventListener('DOMContentLoaded', () => {
             
             return {
                 ...baseBio,
-                heartBeatList: [{ heartBeat: baseBio.heartBeatList[0].heartBeat + Math.floor(Math.random() * 10 - 5) }],
-                oxygenStatusList: [{ oxygenSaturation: baseBio.oxygenStatusList[0].oxygenSaturation + Math.floor(Math.random() * 4 - 2) }],
-                stepsList: [{ steps: baseBio.stepsList[0].steps + Math.floor(Math.random() * 100) }]
+                heartBeat: [{ heartBeat: baseBio.heartBeat[0].heartBeat + Math.floor(Math.random() * 10 - 5), registrationDateTime: new Date().toISOString() }],
+                oxygenStatus: [],
+                steps: [{ stepsDaily: baseBio.steps[0].stepsDaily + Math.floor(Math.random() * 100), step_date: new Date().toISOString().split('T')[0] }]
             };
         }
         
         try {
-            const bioTypes = ['heartBeatList', 'oxygenStatusList', 'stepsList'].join(',');
-            const response = await fetch(
-                `${API_BASE_URL}/watcher/latest?wardedUserId=${wardedUserId}&bioDataTypes=${bioTypes}&limit=1`,
-                { headers: {'Content-Type': 'application/json'} }
-            );
+            // 성공한 엔드포인트 사용 (옵션 4)
+            const url = `${API_BASE_URL}/watcher?wardedUserId=${wardedUserId}`;
+            console.log('Fetching bio data from:', url);
+            
+            const response = await fetch(url, { headers: {'Content-Type': 'application/json'} });
+            console.log('Bio data response status:', response.status);
+            
             const data = await response.json();
+            console.log(`Bio data for ${wardedUserId}:`, data);
+            
             if (data.code === "1000") {
+                console.log('Bio data response:', data.response);
                 return data.response;
+            } else {
+                console.log('API error:', data);
             }
         } catch (error) {
             console.error('Error fetching bio data:', error);
@@ -772,26 +2305,233 @@ document.addEventListener('DOMContentLoaded', () => {
         return [];
     }
 
-    // 상태 라벨 결정 함수
-    function determineStatus(bioData, events) {
-        // 이벤트가 있으면 우선 처리
-        const recentEvent = events.find(e => e.wardedUserId === bioData.wardedUserId);
-        if (recentEvent && recentEvent.eventType) {
-            switch(recentEvent.eventType) {
-                case 'FALL_DETECTION': return { class: 'warning', text: '낙상' };
-                case 'HIGH_HEART_RATE': return { class: 'warning', text: '고심박' };
-                case 'LOW_OXYGEN': return { class: 'warning', text: '저산소' };
-            }
+    // 나이를 연령대로 변환하는 함수
+    function formatAge(age) {
+        // age가 문자열일 수 있으므로 숫자로 변환
+        const ageStr = String(age);
+        
+        // 4자리 형식 (예: 7079)인 경우
+        if (ageStr.length === 4) {
+            const ageGroup = ageStr.substring(0, 2);
+            return `${ageGroup}대`;
         }
         
-        // 생체 데이터 기반 상태 결정
-        const heartRate = bioData.heartBeatList?.[0]?.heartBeat || 0;
-        const steps = bioData.stepsList?.[0]?.steps || 0;
+        // 2자리 또는 3자리 숫자인 경우
+        const ageNum = parseInt(ageStr);
+        if (!isNaN(ageNum)) {
+            const ageGroup = Math.floor(ageNum / 10) * 10;
+            return `${ageGroup}대`;
+        }
         
-        if (heartRate > 100) return { class: 'exercise', text: '운동' };
-        if (steps < 100) return { class: 'sleep', text: '수면' };
-        if (steps > 3000) return { class: 'moving', text: '이동' };
-        return { class: 'daily', text: '일상생활' };
+        // 기본값
+        return ageStr + '세';
+    }
+
+    // 상태 맵핑 테이블
+    const statusMapping = {
+        statusUnknown: '확인중',
+        statusRelax: '일상생활',
+        statusWalk: '일상생활',
+        statusRun: '운동',
+        statusExercise: '운동',
+        statusBicycle: '이동',
+        statusCar: '이동',
+        statusSleep: '수면'
+    };
+
+    const statusMappingPhoneLatest = {
+        'USER_ACTIVITY_PASSIVE': {
+            'ActivityType.STILL': 'statusRelax',
+            'ActivityType.WALKING': 'statusWalk',
+            'ActivityType.RUNNING': 'statusRun',
+            'ActivityType.ON_BICYCLE': 'statusBicycle',
+            'ActivityType.IN_VEHICLE': 'statusCar',
+            'ActivityType.UNKNOWN': 'statusRelax',
+        },
+        'USER_ACTIVITY_EXERCISE': {
+            'ActivityType.STILL': 'statusRelax',
+            'ActivityType.WALKING': 'statusWalk',
+            'ActivityType.RUNNING': 'statusRun',
+            'ActivityType.ON_BICYCLE': 'statusBicycle',
+            'ActivityType.IN_VEHICLE': 'statusCar',
+            'ActivityType.UNKNOWN': 'statusExercise',
+        },
+        'USER_ACTIVITY_ASLEEP': {
+            'ActivityType.STILL': 'statusSleep',
+            'ActivityType.WALKING': 'statusWalk',
+            'ActivityType.RUNNING': 'statusRun',
+            'ActivityType.ON_BICYCLE': 'statusBicycle',
+            'ActivityType.IN_VEHICLE': 'statusCar',
+            'ActivityType.UNKNOWN': 'statusSleep',
+        },
+        'USER_ACTIVITY_UNKNOWN': {
+            'ActivityType.STILL': 'statusRelax',
+            'ActivityType.WALKING': 'statusWalk',
+            'ActivityType.RUNNING': 'statusRun',
+            'ActivityType.ON_BICYCLE': 'statusBicycle',
+            'ActivityType.IN_VEHICLE': 'statusCar',
+            'ActivityType.UNKNOWN': 'statusUnknown',
+        }
+    };
+
+    // 상태 클래스 맵핑
+    const statusClassMap = {
+        '확인중': 'unknown',
+        '일상생활': 'daily',
+        '운동': 'exercise',
+        '이동': 'moving',
+        '수면': 'sleep'
+    };
+
+    // 날짜 차이를 표시하는 함수 (걸음수용)
+    function dateAgo(dateString) {
+        const date = new Date(dateString);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        date.setHours(0, 0, 0, 0);
+        
+        const difference = today - date; // milliseconds
+        const days = Math.floor(difference / 86400000);
+        
+        if (days === 0) {
+            return '오늘';
+        } else if (days === 1) {
+            return '1일전';
+        } else {
+            return `${days}일전`;
+        }
+    }
+
+    // 시간 차이를 표시하는 함수
+    function timeAgo(dateString, isCalculated = false) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const difference = now - date; // milliseconds
+        
+        const minutes = Math.floor(difference / 60000);
+        const hours = Math.floor(difference / 3600000);
+        const days = Math.floor(difference / 86400000);
+        
+        if (isCalculated && minutes > 60) {
+            if (minutes % 15 === 0) {
+                return '방금 전';
+            }
+            return `${minutes % 15}분 전`;
+        }
+        
+        if (days > 1) {
+            return `${days}일 전`;
+        } else if (days === 1) {
+            return '1일 전';
+        } else if (hours > 1) {
+            return `${hours}시간 전`;
+        } else if (hours === 1) {
+            return '1시간 전';
+        } else if (minutes > 1) {
+            return `${minutes}분 전`;
+        } else if (minutes === 1) {
+            return '1분 전';
+        } else {
+            return '방금 전';
+        }
+    }
+
+    // 툴팁을 표시하는 함수
+    function showTooltip(element, text) {
+        // 기존 툴팁 제거
+        const existingTooltip = document.querySelector('.bio-tooltip');
+        if (existingTooltip) {
+            existingTooltip.remove();
+        }
+        
+        // 새 툴팁 생성
+        const tooltip = document.createElement('div');
+        tooltip.className = 'bio-tooltip';
+        tooltip.textContent = text;
+        document.body.appendChild(tooltip);
+        
+        // 위치 계산
+        const rect = element.getBoundingClientRect();
+        tooltip.style.left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2) + 'px';
+        tooltip.style.top = rect.top - tooltip.offsetHeight - 8 + 'px';
+        
+        // 화면 밖으로 나가지 않도록 조정
+        if (tooltip.offsetLeft < 5) {
+            tooltip.style.left = '5px';
+        }
+        if (tooltip.offsetLeft + tooltip.offsetWidth > window.innerWidth - 5) {
+            tooltip.style.left = (window.innerWidth - tooltip.offsetWidth - 5) + 'px';
+        }
+    }
+
+    // 툴팁을 숨기는 함수
+    function hideTooltip() {
+        const tooltip = document.querySelector('.bio-tooltip');
+        if (tooltip) {
+            tooltip.remove();
+        }
+    }
+
+    // 상태 라벨 결정 함수
+    function determineStatus(bioData, events) {
+        // 해당 사용자의 모든 이벤트 찾기
+        const userEvents = events.filter(e => e.wardedUserId === bioData.wardedUserId);
+        
+        if (userEvents.length > 0) {
+            // 시간순으로 정렬 (최신순)
+            userEvents.sort((a, b) => new Date(b.registrationDateTime || b.timestamp) - new Date(a.registrationDateTime || a.timestamp));
+            
+            console.log(`👤 ${bioData.wardedUserId}의 이벤트 ${userEvents.length}개:`, userEvents.map(e => ({
+                eventId: e.eventId,
+                eventType: e.eventType,
+                time: e.registrationDateTime || e.timestamp
+            })));
+            
+            // 각 이벤트를 시간순으로 확인하여 미처리된 가장 최근 이벤트 찾기
+            for (const event of userEvents) {
+                const cachedStatus = getProcessedEventFromCache(event.eventId);
+                
+                // 이벤트가 처리되지 않았으면 경고 상태 표시
+                if (!cachedStatus || cachedStatus.category === 'unconfirmed') {
+                    console.log(`⚠️ 미처리 이벤트 발견: ${event.eventId} (${event.eventType})`);
+                    switch(event.eventType) {
+                        case 'FALL_DETECTED': return { class: 'warning', text: '낙상' };
+                        case 'HIGH_HEART_RATE_DETECTED': return { class: 'warning', text: '빈맥' };
+                        case 'LOW_HEART_RATE_DETECTED': return { class: 'warning', text: '서맥' };
+                    }
+                } else {
+                    console.log(`✅ 처리된 이벤트: ${event.eventId} (${cachedStatus.category})`);
+                }
+            }
+            
+            console.log(`✨ ${bioData.wardedUserId}: 모든 이벤트가 처리되어 일반 상태로 표시`);
+        }
+        
+        // userActionStatus와 phoneUserStatus 조합으로 상태 결정
+        let userAction = 'USER_ACTIVITY_UNKNOWN';
+        let phoneStatus = 'ActivityType.UNKNOWN';
+        
+        // 가장 최신 userActionStatus 가져오기
+        if (bioData.userActionStatus && bioData.userActionStatus.length > 0) {
+            userAction = bioData.userActionStatus[0].userActionStatus || 'USER_ACTIVITY_UNKNOWN';
+            console.log('Latest userActionStatus:', userAction);
+        }
+        
+        // 가장 최신 phoneUserStatus 가져오기
+        if (bioData.phoneUserStatus && bioData.phoneUserStatus.length > 0) {
+            phoneStatus = bioData.phoneUserStatus[0].type || 'ActivityType.UNKNOWN';
+            console.log('Latest phoneUserStatus:', phoneStatus);
+        }
+        
+        // 맵핑 테이블에서 상태 키 가져오기
+        const statusKey = statusMappingPhoneLatest[userAction]?.[phoneStatus] || 'statusUnknown';
+        console.log(`Status mapping: ${userAction} + ${phoneStatus} = ${statusKey}`);
+        
+        // 상태 텍스트와 클래스 결정
+        const statusText = statusMapping[statusKey] || '확인중';
+        const statusClass = statusClassMap[statusText] || 'unknown';
+        
+        return { class: statusClass, text: statusText };
     }
 
     // 테이블 렌더링 함수
@@ -804,6 +2544,8 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // 1. 매핑 정보 가져오기
             const mappings = await fetchMappings();
+            console.log('전체 매핑 정보:', mappings);
+            
             if (mappings.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">등록된 피보호자가 없습니다.</td></tr>';
                 return;
@@ -812,13 +2554,17 @@ document.addEventListener('DOMContentLoaded', () => {
             // 2. 각 피보호자 정보 가져오기
             wardedUsers = [];
             for (const mapping of mappings) {
-                const userInfo = await fetchWardedUserInfo(mapping.wardedUserId);
-                if (userInfo) {
-                    wardedUsers.push({
-                        ...userInfo,
-                        room: mapping.room || '미지정' // API에 room 정보가 있다고 가정
-                    });
-                }
+                console.log('개별 매핑 정보:', mapping);
+                // 매핑 데이터에 이미 사용자 정보가 포함되어 있음
+                wardedUsers.push({
+                    wardedUserId: mapping.wardedUserId,
+                    userName: mapping.userName,
+                    age: mapping.age,
+                    profileUrl: mapping.userProfileUrl,
+                    gender: mapping.gender,
+                    phoneNo: mapping.phoneNo,
+                    room: mapping.room || '미지정' // API에 room 정보가 있다고 가정
+                });
             }
 
             // 3. 이벤트 데이터 가져오기
@@ -830,24 +2576,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><img src="${user.profileUrl || 'assets/status_01.png'}" alt="${user.userName} 프로필" class="profile-img"> ${user.userName}</td>
-                    <td>${user.age}세</td>
+                    <td>${formatAge(user.age)}</td>
                     <td><span class="status-label daily">일상생활</span></td>
-                    <td>${user.room}</td>
+                    <!-- <td>${user.room}</td> -->
+                    <td class="location">--</td>
+                    <td class="outing-report">--</td>
                     <td class="heart-rate">--bpm</td>
-                    <td class="spo2">--%</td>
-                    <td class="sleep">--h</td>
+                    <!-- <td class="spo2">--%</td> -->
+                    <!-- <td class="sleep">--h</td> -->
                     <td class="steps">--</td>
-                    <td>...</td>
                 `;
                 tbody.appendChild(tr);
             });
 
             // 5. 생체 데이터 업데이트 시작
             updateResidentVitals(events);
+            
+            // 초기 로드 시 마지막 새로고침 시간 설정
+            lastRefreshTime = new Date();
 
         } catch (error) {
             console.error('Error rendering table:', error);
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">데이터 로드 실패</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">데이터 로드 실패</td></tr>';
         }
     }
 
@@ -864,28 +2614,170 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 const bioData = await fetchLatestBioData(user.wardedUserId);
+                console.log(`Processing bio data for ${user.userName}:`, bioData);
+                
                 if (bioData) {
                     // 캐시 업데이트
                     bioDataCache[user.wardedUserId] = bioData;
 
-                    // 생체 데이터 업데이트
-                    const heartRate = bioData.heartBeatList?.[0]?.heartBeat || '--';
-                    const spo2 = bioData.oxygenStatusList?.[0]?.oxygenSaturation || '--';
-                    const steps = bioData.stepsList?.[0]?.steps || '--';
+                    // 생체 데이터 업데이트 - 실제 API 응답 구조에 맞게 수정
+                    let heartRate = '--';
+                    let spo2 = '--';
+                    let steps = '--';
+                    let heartRateTime = null;
+                    let spo2Time = null;
+                    let stepsDate = null;
+                    let location = '--';
+                    let locationTime = null;
+                    let statusTime = null;
                     
-                    // 수면 시간은 현재 API에 없으므로 더미 데이터 사용
-                    const sleepHours = (6 + Math.random() * 3).toFixed(1); // 6~9시간 사이의 랜덤 값
+                    // 위치 데이터 - location 배열의 첫 번째 값 (가장 최근)
+                    let latestGpsData = null;
+                    let locationInfo = null;
+                    if (bioData.location && bioData.location.length > 0) {
+                        latestGpsData = bioData.location;
+                        console.log(`위치 데이터 ${bioData.location.length}개 수신:`, bioData.location);
+                        const lat = bioData.location[0].latitude;
+                        const lng = bioData.location[0].longitude;
+                        locationTime = bioData.location[0].registrationDateTime;
+                        // 실제로는 역지오코딩 API가 필요하지만, 데모용으로 간단히 처리
+                        locationInfo = await getLocationName(lat, lng);
+                        location = locationInfo.simple;
+                    }
+                    
+                    // 심박수 - heartBeat 배열의 첫 번째 값 (가장 최근)
+                    if (bioData.heartBeat && bioData.heartBeat.length > 0) {
+                        console.log('heartBeat array:', bioData.heartBeat[0]);
+                        heartRate = bioData.heartBeat[0].heartBeat;
+                        heartRateTime = bioData.heartBeat[0].registrationDateTime;
+                    }
+                    
+                    // 산소포화도 - oxygenStatus 배열의 첫 번째 값
+                    if (bioData.oxygenStatus && bioData.oxygenStatus.length > 0) {
+                        console.log('oxygenStatus array:', bioData.oxygenStatus[0]);
+                        spo2 = bioData.oxygenStatus[0].oxygenSaturation;
+                        spo2Time = bioData.oxygenStatus[0].registrationDateTime;
+                    } else if (ENABLE_MOCK_DATA) {
+                        // 목업 데이터일 때만 기본값 사용
+                        spo2 = 95 + Math.floor(Math.random() * 5);
+                        console.log('No oxygenStatus data, using default:', spo2);
+                    }
+                    
+                    // 걸음수 - steps 배열의 첫 번째 값 (가장 최근 날짜)
+                    if (bioData.steps && bioData.steps.length > 0) {
+                        console.log('steps array:', bioData.steps[0]);
+                        steps = bioData.steps[0].stepsDaily;
+                        stepsDate = bioData.steps[0].step_date;
+                    }
+                    
+                    console.log(`Extracted values - HR: ${heartRate}, SpO2: ${spo2}, Steps: ${steps}`);
+                    
+                    // 수면 시간은 현재 API에 없으므로 목업 데이터일 때만 표시
+                    let sleepHours = '--';
+                    if (ENABLE_MOCK_DATA) {
+                        sleepHours = (6 + Math.random() * 3).toFixed(1) + 'h'; // 6~9시간 사이의 랜덤 값
+                    }
 
-                    row.children[4].textContent = heartRate !== '--' ? `${heartRate}bpm` : '--bpm';
-                    row.children[5].textContent = spo2 !== '--' ? `${spo2}%` : '--%';
-                    row.children[6].textContent = `${sleepHours}h`; // 수면 시간
-                    row.children[7].textContent = steps !== '--' ? steps.toLocaleString() : '--';
+                    // 상태 업데이트 및 시간 가져오기
+                    const statusData = { ...bioData, wardedUserId: user.wardedUserId };
+                    const status = determineStatus(statusData, events);
+                    
+                    // 상태 툴팁용 최신 시간 결정
+                    if (bioData.userActionStatus && bioData.userActionStatus.length > 0) {
+                        const userActionTime = new Date(bioData.userActionStatus[0].registrationDateTime);
+                        if (!statusTime || userActionTime > new Date(statusTime)) {
+                            statusTime = bioData.userActionStatus[0].registrationDateTime;
+                        }
+                    }
+                    if (bioData.phoneUserStatus && bioData.phoneUserStatus.length > 0) {
+                        const phoneTime = new Date(bioData.phoneUserStatus[0].registrationDateTime);
+                        if (!statusTime || phoneTime > new Date(statusTime)) {
+                            statusTime = bioData.phoneUserStatus[0].registrationDateTime;
+                        }
+                    }
 
+                    // 테이블 셀 업데이트
+                    const statusCell = row.children[2];
+                    const locationCell = row.children[3];  // 호수 제거로 인덱스 변경
+                    const outingReportCell = row.children[4];  // 외출 리포트 셀 추가
+                    const heartRateCell = row.children[5];  // 인덱스 변경
+                    // const spo2Cell = row.children[6];  // 주석처리
+                    // const sleepCell = row.children[7];  // 주석처리
+                    const stepsCell = row.children[6];  // 인덱스 변경
+                    
                     // 상태 업데이트
-                    const status = determineStatus(bioData, events);
-                    const statusLabel = row.querySelector('.status-label');
+                    const statusLabel = statusCell.querySelector('.status-label');
                     statusLabel.className = `status-label ${status.class}`;
                     statusLabel.textContent = status.text;
+                    
+                    // 위치 및 기타 데이터 업데이트
+                    // dashboard-poc.html에서는 위치에 이모지와 거리 정보 표시
+                    if (window.location.pathname.includes('dashboard-poc.html')) {
+                        if (location !== '위치 정보 없음' && location !== '--' && latestGpsData && latestGpsData.length > 0) {
+                            const gps = latestGpsData[0];
+                            locationCell.innerHTML = formatLocationWithDistance(gps.latitude, gps.longitude, location);
+                            locationCell.classList.add('location-cell');
+                            
+                            // 위치 클릭 이벤트 리스너 추가
+                            locationCell.onclick = () => {
+                                const userName = row.children[0].textContent.trim();
+                                // 최신 위치 정보 사용
+                                const latestGps = latestGpsData[0];
+                                const latestTime = new Date(latestGps.registrationDateTime);
+                                const timeStr = `${latestTime.getHours().toString().padStart(2, '0')}:${latestTime.getMinutes().toString().padStart(2, '0')}`;
+                                showLocationMapWithTime(latestGps.latitude, latestGps.longitude, locationInfo, userName, timeStr);
+                            };
+                        } else {
+                            locationCell.textContent = location;
+                        }
+                        
+                        // 외출 리포트 분석 및 업데이트 (Period API 데이터 사용)
+                        const todayLocationData = await fetchTodayLocationData(user.wardedUserId);
+                        const outingReport = analyzeOutingReport(todayLocationData);
+                        outingReportCell.innerHTML = `<span class="outing-report-cell ${outingReport.hasOuting ? 'outing-status-yes' : 'outing-status-no'}">${outingReport.status}</span>`;
+                        outingReportCell.classList.add('outing-report-cell');
+                        
+                        // 외출 리포트 클릭 이벤트 (이미 가져온 데이터 재사용)
+                        outingReportCell.onclick = async () => {
+                            const userName = row.children[0].textContent.trim();
+                            console.log(`🎯 외출 리포트 클릭: ${userName} (${user.wardedUserId})`);
+                            console.log(`📍 사용할 오늘 위치 데이터: ${todayLocationData.length}개`);
+                            console.log(`📊 외출 리포트 분석 결과:`, outingReport);
+                            
+                            showOutingReport(userName, user.wardedUserId, todayLocationData, outingReport);
+                        };
+                    } else {
+                        locationCell.textContent = location;
+                        outingReportCell.textContent = '--';
+                    }
+                    
+                    heartRateCell.textContent = heartRate !== '--' ? `${heartRate}bpm` : '--bpm';
+                    // spo2Cell.textContent = spo2 !== '--' ? `${spo2}%` : '--%';  // 주석처리
+                    // sleepCell.textContent = sleepHours !== '--' ? sleepHours : '--h';  // 주석처리
+                    stepsCell.textContent = steps !== '--' ? steps.toLocaleString() : '--';
+                    
+                    // 툴팁용 데이터 속성 추가
+                    if (statusTime) {
+                        statusLabel.setAttribute('data-time', statusTime);
+                        statusLabel.classList.add('has-tooltip');
+                    }
+                    if (locationTime) {
+                        locationCell.setAttribute('data-time', locationTime);
+                        locationCell.classList.add('has-tooltip');
+                    }
+                    if (heartRateTime) {
+                        heartRateCell.setAttribute('data-time', heartRateTime);
+                        heartRateCell.classList.add('has-tooltip');
+                    }
+                    // if (spo2Time) {  // 주석처리
+                    //     spo2Cell.setAttribute('data-time', spo2Time);
+                    //     spo2Cell.classList.add('has-tooltip');
+                    // }
+                    if (stepsDate) {
+                        // 걸음수는 날짜 툴팁 사용
+                        stepsCell.setAttribute('data-date', stepsDate);
+                        stepsCell.classList.add('has-date-tooltip');
+                    }
                 }
             } catch (error) {
                 console.error(`Error updating vitals for ${user.wardedUserId}:`, error);
@@ -939,12 +2831,45 @@ document.addEventListener('DOMContentLoaded', () => {
             // 생체 데이터 업데이트
             await updateResidentVitals(events);
             
+            // 관리기록 페이지가 활성화되어 있으면 record data도 업데이트
+            if (window.location.pathname.includes('record.html') || window.location.pathname.endsWith('record.html')) {
+                await updateRecordDataIfNeeded();
+            }
+            
+            // 마지막 새로고침 시간 업데이트
+            lastRefreshTime = new Date();
+            
             // 층별 거주 인원 업데이트 (데모용 유지)
             updateFloor1Occupancy();
         } catch (error) {
             console.error('Error in periodic update:', error);
         }
     }, UPDATE_INTERVAL); // 설정된 주기로 업데이트
+
+    // 중복 함수 제거됨 - 상단의 async getLocationName 함수 사용
+
+    // 툴팁 이벤트 리스너 추가
+    document.addEventListener('mouseover', (e) => {
+        if (e.target.classList.contains('has-tooltip')) {
+            const time = e.target.getAttribute('data-time');
+            if (time) {
+                const timeText = timeAgo(time);
+                showTooltip(e.target, timeText);
+            }
+        } else if (e.target.classList.contains('has-date-tooltip')) {
+            const date = e.target.getAttribute('data-date');
+            if (date) {
+                const dateText = dateAgo(date);
+                showTooltip(e.target, dateText);
+            }
+        }
+    });
+
+    document.addEventListener('mouseout', (e) => {
+        if (e.target.classList.contains('has-tooltip') || e.target.classList.contains('has-date-tooltip')) {
+            hideTooltip();
+        }
+    });
 
     // Nutrition card swipe logic (rewritten for wrapper and two-card slide)
     const nutritionStates = [
@@ -1057,7 +2982,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const wrapper = document.querySelector('.card-nutrition-wrapper');
-    let currentCard = wrapper.querySelector('.card-nutrition');
+    let currentCard = wrapper ? wrapper.querySelector('.card-nutrition') : null;
     const leftStack = document.querySelector('.cards-top-left-stack');
     function syncCardHeights() {
       if (!leftStack || !wrapper) return;
@@ -1105,6 +3030,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function attachArrowListeners() {
+      if (!currentCard) return;
       const leftBtn = currentCard.querySelector('#slide-left');
       const rightBtn = currentCard.querySelector('#slide-right');
       if (leftBtn && rightBtn) {
@@ -1254,7 +3180,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Function to set active GNB button based on current page
   function setActiveGnbButton() {
-    const currentPage = window.location.pathname.split('/').pop(); // Gets 'index.html', 'record.html', etc.
+    const currentPage = window.location.pathname.split('/').pop(); // Gets 'dashboard.html', 'record.html', etc.
     gnbBtns.forEach(btn => {
       const pageName = btn.dataset.page;
       if (pageName === currentPage) {
@@ -1263,7 +3189,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.classList.remove('active');
       }
       // Special case for root path, activate dashboard
-      if (currentPage === '' && pageName === 'index.html') {
+      if (currentPage === '' && pageName === 'dashboard.html') {
         btn.classList.add('active');
       }
     });
@@ -1485,4 +3411,112 @@ function attachDetailBtns(callerName) {
       }
     };
   });
+}
+
+async function getLocationName(lat, lng) {
+    // 캐시 키 생성 (좌표를 3자리로 반올림하여 캐시 효율성 증대)
+    const cacheKey = `${lat.toFixed(3)},${lng.toFixed(3)}`;
+    
+    // 캐시 확인
+    if (window.API_CONFIG.KAKAO_API.ENABLE_CACHE && window.locationCache[cacheKey]) {
+        const cached = window.locationCache[cacheKey];
+        const now = Date.now();
+        
+        // 캐시가 유효한지 확인 (5분 이내)
+        if (now - cached.timestamp < window.API_CONFIG.KAKAO_API.CACHE_DURATION) {
+            if (window.API_CONFIG.DEBUG_MODE) {
+                console.log('위치 캐시 사용:', cached.location);
+            }
+            return { simple: cached.location, full: cached.fullAddress || cached.location, building: cached.buildingName || '' };
+        }
+    }
+    
+    // 카카오맵 API 호출
+    try {
+        const url = `${window.API_CONFIG.KAKAO_API.GEOCODING_URL}?x=${lng}&y=${lat}`;
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `KakaoAK ${window.API_CONFIG.KAKAO_API.REST_API_KEY}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`API 응답 오류: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.documents && data.documents.length > 0) {
+            const address = data.documents[0].address;
+            const roadAddress = data.documents[0].road_address;
+            
+            // 도로명 주소가 있으면 우선 사용, 없으면 지번 주소 사용
+            let fullAddress = '';
+            if (roadAddress) {
+                fullAddress = roadAddress.address_name;
+            } else {
+                fullAddress = address.address_name;
+            }
+            
+            // 건물/아파트명 추출
+            const buildingName = (roadAddress && roadAddress.building_name) || (address && address.building_name) || '';
+            
+            // 테이블 표시용 간단 주소
+            const simpleLocation = `${address.region_1depth_name} ${address.region_2depth_name}`;
+            
+            // 캐시에 저장 (전체 주소와 간단 주소, 건물명 모두)
+            if (window.API_CONFIG.KAKAO_API.ENABLE_CACHE) {
+                window.locationCache[cacheKey] = {
+                    location: simpleLocation,
+                    fullAddress: fullAddress,
+                    buildingName: buildingName,
+                    timestamp: Date.now()
+                };
+            }
+            
+            if (window.API_CONFIG.DEBUG_MODE) {
+                console.log('카카오맵 API 위치 결과:', simpleLocation);
+                console.log('카카오맵 API 전체 주소:', fullAddress);
+                console.log('카카오맵 API 건물명:', buildingName);
+            }
+            
+            return { simple: simpleLocation, full: fullAddress, building: buildingName };
+        } else {
+            throw new Error('위치 데이터를 찾을 수 없음');
+        }
+    } catch (error) {
+        console.error('카카오맵 API 오류:', error);
+        
+        // Fallback: 기존 하드코딩 방식 사용
+        return getLocationNameFallback(lat, lng);
+    }
+}
+
+// Fallback 함수 (기존 하드코딩 방식)
+function getLocationNameFallback(lat, lng) {
+    const locations = [
+        { lat: 37.272, lng: 127.118, name: '용인시 수지구', fullName: '경기도 용인시 수지구', building: '' },
+        { lat: 37.273, lng: 127.118, name: '용인시 기흥구', fullName: '경기도 용인시 기흥구', building: '' },
+        { lat: 37.271, lng: 127.118, name: '용인시 처인구', fullName: '경기도 용인시 처인구', building: '' },
+        { lat: 37.5665, lng: 126.9780, name: '서울시 중구', fullName: '서울특별시 중구', building: '' },
+        { lat: 37.5172, lng: 127.0473, name: '서울시 강남구', fullName: '서울특별시 강남구', building: '' },
+        { lat: 37.4837, lng: 127.0324, name: '서울시 서초구', fullName: '서울특별시 서초구', building: '' } // 서초구 추가
+    ];
+    
+    let closestLocation = locations[0];
+    let minDistance = Number.MAX_VALUE;
+    
+    locations.forEach(loc => {
+        const distance = Math.sqrt(Math.pow(lat - loc.lat, 2) + Math.pow(lng - loc.lng, 2));
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestLocation = loc;
+        }
+    });
+    
+    if (window.API_CONFIG.DEBUG_MODE) {
+        console.log('Fallback 위치 사용:', closestLocation.name);
+    }
+    
+    return { simple: closestLocation.name, full: closestLocation.fullName, building: closestLocation.building };
 }

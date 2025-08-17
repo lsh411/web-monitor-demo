@@ -10,8 +10,7 @@ window.API_CONFIG = {
   },
   
   // Update intervals (in milliseconds)
-  UPDATE_INTERVAL: 10000, // 10 seconds (dashboard default)
-  RECORD_UPDATE_INTERVAL: 20000, // 20 seconds (record page)
+  UPDATE_INTERVAL: 10000, // 10 seconds
   
   // Feature flags
   ENABLE_MOCK_DATA: false, // false로 설정하여 실제 API 사용
