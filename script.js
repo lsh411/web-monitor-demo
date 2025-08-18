@@ -672,6 +672,12 @@ async function fetchMappings() {
     console.log('📡 API_BASE_URL:', API_BASE_URL);
     console.log('🎭 ENABLE_MOCK_DATA:', ENABLE_MOCK_DATA);
     
+    // 데모 컨트롤러가 있으면 우선적으로 사용
+    if (window.demoController && typeof window.demoController.getDemoMappings === 'function') {
+        console.log('🎮 데모 컨트롤러 모드: 26명 데이터 반환');
+        return window.demoController.getDemoMappings();
+    }
+    
     if (ENABLE_MOCK_DATA) {
         console.log('🎭 목업 모드: mockData.mappings 반환');
         return mockData.mappings;
@@ -715,6 +721,12 @@ async function fetchEvents() {
     const WATCHER_USER_ID = window.API_CONFIG?.WATCHER_USER_ID || 'watcher_001';
     const ENABLE_MOCK_DATA = window.API_CONFIG?.ENABLE_MOCK_DATA || false;
     
+    // 데모 컨트롤러가 있으면 우선적으로 사용
+    if (window.demoController && typeof window.demoController.getDemoEvents === 'function') {
+        console.log('🎮 데모 컨트롤러 모드: 이벤트 데이터 반환');
+        return await window.demoController.getDemoEvents();
+    }
+    
     if (ENABLE_MOCK_DATA) {
         return mockData.events;
     }
@@ -736,6 +748,12 @@ async function fetchEvents() {
 async function fetchLatestBioData(wardedUserId) {
     const API_BASE_URL = window.API_CONFIG?.BASE_URL || 'https://your-api-endpoint.com';
     const ENABLE_MOCK_DATA = window.API_CONFIG?.ENABLE_MOCK_DATA || false;
+    
+    // 데모 컨트롤러가 있으면 우선적으로 사용
+    if (window.demoController && typeof window.demoController.getDemoBioData === 'function') {
+        console.log('🎮 데모 컨트롤러 모드: 바이오 데이터 반환');
+        return window.demoController.getDemoBioData(wardedUserId);
+    }
     
     if (ENABLE_MOCK_DATA) {
         // 목업 데이터에 약간의 변동 추가
@@ -771,6 +789,12 @@ async function fetchLatestBioData(wardedUserId) {
     }
     return null;
 }
+
+// 전역 스코프에 함수들 즉시 노출 (데모 모드를 위해)
+window.fetchMappings = fetchMappings;
+window.fetchEvents = fetchEvents;
+window.fetchLatestBioData = fetchLatestBioData;
+window.fetchTodayLocationData = fetchTodayLocationData;
 
 // 목업 데이터 (개발/테스트용)
 const mockData = {
@@ -1155,6 +1179,8 @@ function analyzeOutingReport(locationData) {
         return { hasOuting: false, status: '데이터 없음', outings: [], totalDuration: 0 };
     }
     
+    console.log('📊 외출 분석 시작, 위치 데이터 개수:', locationData.length);
+    
     const today = new Date();
     const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     
@@ -1179,6 +1205,8 @@ function analyzeOutingReport(locationData) {
         const loc = todayLocations[i];
         const distance = calculateDistance(FACILITY_LOCATION.lat, FACILITY_LOCATION.lng, loc.latitude, loc.longitude);
         const isOutside = distance > FACILITY_LOCATION.buffer;
+        
+        console.log(`📍 위치 ${i+1}: lat=${loc.latitude}, lng=${loc.longitude}, 거리=${distance.toFixed(3)}km, 외출=${isOutside}`);
         
         if (isOutside) {
             // 외출 위치 발견
@@ -1222,6 +1250,12 @@ function analyzeOutingReport(locationData) {
 async function fetchTodayLocationData(wardedUserId) {
     const API_BASE_URL = window.API_CONFIG?.BASE_URL || 'http://localhost:3001';
     const ENABLE_MOCK_DATA = window.API_CONFIG?.ENABLE_MOCK_DATA || false;
+    
+    // 데모 컨트롤러가 있으면 우선적으로 사용
+    if (window.demoController && typeof window.demoController.getDemoLocationData === 'function') {
+        console.log('🎮 데모 컨트롤러 모드: 위치 데이터 반환');
+        return window.demoController.getDemoLocationData(wardedUserId);
+    }
     
     if (ENABLE_MOCK_DATA) {
         // 목업 데이터에서 오늘 날짜의 위치 데이터 생성
@@ -1302,10 +1336,10 @@ async function fetchTodayLocationData(wardedUserId) {
 // 외출 리포트 모달 표시 함수
 async function showOutingReport(userName, wardedUserId, locationData, outingReport) {
     const modal = document.getElementById('outing-report-modal');
-    const residentNameEl = document.getElementById('report-resident-name');
-    const reportDateEl = document.getElementById('report-date');
-    const reportStatusEl = document.getElementById('report-status');
-    const outingListEl = document.getElementById('outing-list');
+    const residentNameEl = document.getElementById('outing-report-name');
+    const reportDateEl = document.getElementById('outing-report-date');
+    const reportStatusEl = document.getElementById('outing-report-status');
+    const outingListEl = document.getElementById('outing-report-list');
     
     if (!modal) return;
     
@@ -1324,10 +1358,10 @@ async function showOutingReport(userName, wardedUserId, locationData, outingRepo
         const durationText = outingReport.totalDuration > 0 ? 
             formatOutingDuration(outingReport.totalDuration) : '0분';
         reportStatusEl.textContent = `총 ${durationText}의 외출이 확인되었습니다.`;
-        reportStatusEl.className = 'outing-status-yes';
+        reportStatusEl.className = 'outing-report-status outing-status-yes';
     } else {
         reportStatusEl.textContent = '오늘 외출이 확인되지 않았습니다.';
-        reportStatusEl.className = 'outing-status-no';
+        reportStatusEl.className = 'outing-report-status outing-status-no';
     }
     
     // 외출 목록 생성 (최근 시간부터 정렬)
@@ -1339,7 +1373,8 @@ async function showOutingReport(userName, wardedUserId, locationData, outingRepo
             new Date(b.time) - new Date(a.time)
         );
         
-        for (const outing of sortedOutings) {
+        for (let i = 0; i < sortedOutings.length; i++) {
+            const outing = sortedOutings[i];
             try {
                 const locationInfo = await getLocationName(outing.latitude, outing.longitude);
                 const outingItem = document.createElement('div');
@@ -1360,11 +1395,108 @@ async function showOutingReport(userName, wardedUserId, locationData, outingRepo
                     <div class="outing-time-main">${timeStr}</div>
                     <div class="outing-location-sub">${locationText}</div>
                     <div class="outing-distance-sub">기관에서 ${distanceText}</div>
+                    <div class="outing-map-container" id="outing-map-${i}" style="display: none; grid-column: 1 / -1; height: 200px; margin-top: 12px; border-radius: 8px; overflow: hidden;"></div>
                 `;
                 
-                // 클릭 시 지도 표시
-                outingItem.onclick = () => {
-                    showLocationMapWithTime(outing.latitude, outing.longitude, locationInfo, userName, timeStr);
+                // 클릭 시 지도 토글
+                outingItem.onclick = (e) => {
+                    const mapContainer = document.getElementById(`outing-map-${i}`);
+                    
+                    // 지도 컨테이너가 클릭된 경우 이벤트 전파 중지
+                    if (e.target.closest('.outing-map-container')) {
+                        return;
+                    }
+                    
+                    if (mapContainer.style.display === 'none') {
+                        // 다른 모든 지도 숨기기
+                        document.querySelectorAll('.outing-map-container').forEach(m => {
+                            m.style.display = 'none';
+                        });
+                        
+                        // 이 지도 표시
+                        mapContainer.style.display = 'block';
+                        
+                        // 카카오맵 초기화
+                        if (window.kakao && window.kakao.maps) {
+                            setTimeout(() => {
+                                const mapOption = {
+                                    center: new kakao.maps.LatLng(outing.latitude, outing.longitude),
+                                    level: 3
+                                };
+                                
+                                const map = new kakao.maps.Map(mapContainer, mapOption);
+                                
+                                // 마커 생성
+                                const marker = new kakao.maps.Marker({
+                                    position: new kakao.maps.LatLng(outing.latitude, outing.longitude)
+                                });
+                                marker.setMap(map);
+                                
+                                // 인포윈도우
+                                const iwContent = `<div style="padding:10px; font-size:12px;">
+                                                     <strong>${timeStr}</strong><br>
+                                                     ${locationText}
+                                                   </div>`;
+                                const infowindow = new kakao.maps.InfoWindow({
+                                    content: iwContent
+                                });
+                                infowindow.open(map, marker);
+                                
+                                // 요양원 위치도 표시 (외출인 경우)
+                                if (outing.distance > 0.04) {
+                                    // 요양원 마커 이미지 설정 (파란색)
+                                    const facilityImageSize = new kakao.maps.Size(35, 35);
+                                    const facilityImageOption = {offset: new kakao.maps.Point(17, 35)};
+                                    const facilityMarkerImage = new kakao.maps.MarkerImage(
+                                        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png',
+                                        facilityImageSize,
+                                        facilityImageOption
+                                    );
+                                    
+                                    const facilityMarker = new kakao.maps.Marker({
+                                        position: new kakao.maps.LatLng(FACILITY_LOCATION.lat, FACILITY_LOCATION.lng),
+                                        image: facilityMarkerImage,
+                                        title: '헬로온 요양원'
+                                    });
+                                    facilityMarker.setMap(map);
+                                    
+                                    // 요양원 인포윈도우
+                                    const facilityIwContent = `<div style="padding:8px; font-size:11px;">
+                                                                 <strong>헬로온 요양원</strong>
+                                                               </div>`;
+                                    const facilityInfowindow = new kakao.maps.InfoWindow({
+                                        content: facilityIwContent
+                                    });
+                                    facilityInfowindow.open(map, facilityMarker);
+                                    
+                                    // 두 마커가 모두 보이도록 조정
+                                    const bounds = new kakao.maps.LatLngBounds();
+                                    bounds.extend(new kakao.maps.LatLng(outing.latitude, outing.longitude));
+                                    bounds.extend(new kakao.maps.LatLng(FACILITY_LOCATION.lat, FACILITY_LOCATION.lng));
+                                    map.setBounds(bounds);
+                                    
+                                    // 두 지점 사이에 선 그리기
+                                    const linePath = [
+                                        new kakao.maps.LatLng(FACILITY_LOCATION.lat, FACILITY_LOCATION.lng),
+                                        new kakao.maps.LatLng(outing.latitude, outing.longitude)
+                                    ];
+                                    
+                                    const polyline = new kakao.maps.Polyline({
+                                        path: linePath,
+                                        strokeWeight: 2,
+                                        strokeColor: '#FF0000',
+                                        strokeOpacity: 0.5,
+                                        strokeStyle: 'dashed'
+                                    });
+                                    
+                                    polyline.setMap(map);
+                                }
+                            }, 100);
+                        }
+                    } else {
+                        // 지도 숨기기
+                        mapContainer.style.display = 'none';
+                    }
                 };
                 
                 outingListEl.appendChild(outingItem);
@@ -1567,8 +1699,14 @@ if (sidebarMenuItems.length && recordListBody) {
     });
   });
   
-  // Initialize with real data
-  initializeRecordData();
+  // Initialize with real data (only if not already initialized by demo controller)
+  const urlParams = new URLSearchParams(window.location.search);
+  const isDemoMode = urlParams.get('demo') === 'true';
+  
+  // 데모 모드가 아닐 때만 초기화 (데모 모드에서는 demo-controller가 초기화 담당)
+  if (!isDemoMode) {
+    initializeRecordData();
+  }
 }
 // ===== Record list → detail view sync =====
 function attachRecordRowListeners(){
@@ -2199,8 +2337,17 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('API_BASE_URL:', API_BASE_URL);
         console.log('ENABLE_MOCK_DATA:', ENABLE_MOCK_DATA);
         console.log('Full URL:', `${API_BASE_URL}/watcher/mappings?watcherUserId=${WATCHER_USER_ID}`);
+        console.log('window.fetchMappings exists:', typeof window.fetchMappings);
+        console.log('window.fetchMappings === fetchMappings:', window.fetchMappings === fetchMappings);
+        
+        // 데모 모드에서는 window.fetchMappings 사용 (demo-controller가 오버라이드함)
+        if (ENABLE_MOCK_DATA && window.fetchMappings && window.fetchMappings !== fetchMappings) {
+            console.log('🎭 데모 컨트롤러의 fetchMappings 사용');
+            return window.fetchMappings();
+        }
         
         if (ENABLE_MOCK_DATA) {
+            console.log('📦 기본 mockData.mappings 사용');
             return mockData.mappings;
         }
         
@@ -2250,6 +2397,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchLatestBioData(wardedUserId) {
+        // 데모 모드에서는 window.fetchLatestBioData 사용 (demo-controller가 오버라이드함)
+        if (ENABLE_MOCK_DATA && window.fetchLatestBioData !== fetchLatestBioData) {
+            console.log('🎭 데모 컨트롤러의 fetchLatestBioData 사용');
+            return window.fetchLatestBioData(wardedUserId);
+        }
+        
         if (ENABLE_MOCK_DATA) {
             // 목업 데이터에 약간의 변동 추가
             const baseBio = mockData.bioData[wardedUserId];
@@ -2287,6 +2440,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchEvents() {
+        // 데모 모드에서는 window.fetchEvents 사용 (demo-controller가 오버라이드함)
+        if (ENABLE_MOCK_DATA && window.fetchEvents !== fetchEvents) {
+            console.log('🎭 데모 컨트롤러의 fetchEvents 사용');
+            return window.fetchEvents();
+        }
+        
         if (ENABLE_MOCK_DATA) {
             return mockData.events;
         }
@@ -2474,6 +2633,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 상태 라벨 결정 함수
     function determineStatus(bioData, events) {
+        // 데모 모드의 특수 상태 체크
+        if (bioData.specialStatus) {
+            const specialStatusMap = {
+                'FALL': { class: 'warning', text: '낙상' },
+                'EMERGENCY': { class: 'warning', text: '긴급확인' },
+                'WANDERING': { class: 'warning', text: '배회중' },
+                'ATTENTION': { class: 'caution', text: '주의필요' },
+                'CRITICAL': { class: 'danger', text: '응급' }
+            };
+            
+            if (specialStatusMap[bioData.specialStatus]) {
+                return specialStatusMap[bioData.specialStatus];
+            }
+        }
+        
+        // 데모 모드에서 직접 상태가 설정된 경우
+        if (bioData.status) {
+            const statusClassMap = {
+                '낙상': 'warning',
+                '긴급확인': 'warning',
+                '배회중': 'warning',
+                '주의필요': 'caution',
+                '응급': 'danger',
+                '일상생활': 'daily',
+                '운동': 'exercise',
+                '이동': 'moving',
+                '수면': 'sleep'
+            };
+            return { class: statusClassMap[bioData.status] || 'unknown', text: bioData.status };
+        }
+        
+        // events가 배열인지 확인
+        if (!Array.isArray(events)) {
+            console.warn('determineStatus: events is not an array:', events);
+            return { status: '정상', eventCount: 0 };
+        }
+        
         // 해당 사용자의 모든 이벤트 찾기
         const userEvents = events.filter(e => e.wardedUserId === bioData.wardedUserId);
         
@@ -2542,8 +2738,8 @@ document.addEventListener('DOMContentLoaded', () => {
         tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">데이터 로딩 중...</td></tr>';
 
         try {
-            // 1. 매핑 정보 가져오기
-            const mappings = await fetchMappings();
+            // 1. 매핑 정보 가져오기 (무조건 window.fetchMappings 사용 - 데모 모드 체크가 내부에 있음)
+            const mappings = await window.fetchMappings();
             console.log('전체 매핑 정보:', mappings);
             
             if (mappings.length === 0) {
@@ -2567,30 +2763,84 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // 3. 이벤트 데이터 가져오기
-            const events = await fetchEvents();
+            // 3. 이벤트 데이터 가져오기 (window를 통해 호출하여 데모 오버라이드 가능)
+            const events = await (window.fetchEvents || fetchEvents)();
+            
+            // 3-1. 각 사용자의 생체 데이터를 미리 가져와서 특수 상태 확인
+            const usersWithBioData = [];
+            for (const user of wardedUsers) {
+                const bioData = await (window.fetchLatestBioData || fetchLatestBioData)(user.wardedUserId);
+                usersWithBioData.push({
+                    ...user,
+                    bioData: bioData,
+                    hasSpecialStatus: bioData && (bioData.specialStatus || 
+                        ['낙상', '긴급확인', '배회중', '주의필요', '응급'].includes(bioData.status))
+                });
+            }
+            
+            // 3-2. 특수 상태가 있는 사용자를 먼저 정렬
+            usersWithBioData.sort((a, b) => {
+                if (a.hasSpecialStatus && !b.hasSpecialStatus) return -1;
+                if (!a.hasSpecialStatus && b.hasSpecialStatus) return 1;
+                return 0;
+            });
 
-            // 4. 초기 테이블 렌더링
+            // 4. 초기 테이블 렌더링 - dashboard.html 새 컬럼 구조에 맞춤
             tbody.innerHTML = '';
-            wardedUsers.forEach((user, index) => {
+            usersWithBioData.forEach((user, index) => {
                 const tr = document.createElement('tr');
+                
+                // 특수 상태가 있는 경우 row에 클래스 추가
+                if (user.hasSpecialStatus) {
+                    tr.classList.add('special-status-row');
+                    // 상태별 구분
+                    if (user.bioData) {
+                        if (user.bioData.status === '응급' || user.bioData.specialStatus === 'CRITICAL') {
+                            tr.classList.add('emergency-row');
+                        } else if (user.bioData.status === '낙상' || user.bioData.specialStatus === 'FALL') {
+                            tr.classList.add('fall-row');
+                        } else if (user.bioData.status === '긴급확인' || user.bioData.specialStatus === 'EMERGENCY') {
+                            tr.classList.add('alert-row');
+                        } else if (user.bioData.status === '배회중' || user.bioData.specialStatus === 'WANDERING') {
+                            tr.classList.add('wandering-row');
+                        } else if (user.bioData.status === '주의필요' || user.bioData.specialStatus === 'ATTENTION') {
+                            tr.classList.add('attention-row');
+                        }
+                    }
+                }
+                
                 tr.innerHTML = `
                     <td><img src="${user.profileUrl || 'assets/status_01.png'}" alt="${user.userName} 프로필" class="profile-img"> ${user.userName}</td>
                     <td>${formatAge(user.age)}</td>
                     <td><span class="status-label daily">일상생활</span></td>
-                    <!-- <td>${user.room}</td> -->
                     <td class="location">--</td>
                     <td class="outing-report">--</td>
+                    <td class="temperature">--°C</td>
+                    <td class="blood-pressure">--/--</td>
                     <td class="heart-rate">--bpm</td>
-                    <!-- <td class="spo2">--%</td> -->
-                    <!-- <td class="sleep">--h</td> -->
+                    <td class="spo2">--%</td>
+                    <td class="sleep-quality">--</td>
                     <td class="steps">--</td>
                 `;
                 tbody.appendChild(tr);
             });
 
             // 5. 생체 데이터 업데이트 시작
-            updateResidentVitals(events);
+            // events가 Promise인 경우 await 처리
+            const resolvedEvents = await Promise.resolve(events);
+            
+            // wardedUsers를 정렬된 순서로 업데이트
+            wardedUsers = usersWithBioData.map(u => ({
+                wardedUserId: u.wardedUserId,
+                userName: u.userName,
+                age: u.age,
+                profileUrl: u.profileUrl,
+                gender: u.gender,
+                phoneNo: u.phoneNo,
+                room: u.room
+            }));
+            
+            updateResidentVitals(Array.isArray(resolvedEvents) ? resolvedEvents : []);
             
             // 초기 로드 시 마지막 새로고침 시간 설정
             lastRefreshTime = new Date();
@@ -2613,7 +2863,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (row.classList.contains('detail-row')) continue;
 
             try {
-                const bioData = await fetchLatestBioData(user.wardedUserId);
+                const bioData = await (window.fetchLatestBioData || fetchLatestBioData)(user.wardedUserId);
                 console.log(`Processing bio data for ${user.userName}:`, bioData);
                 
                 if (bioData) {
@@ -2624,6 +2874,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     let heartRate = '--';
                     let spo2 = '--';
                     let steps = '--';
+                    let temperature = '--';
+                    let bloodPressure = '--/--';
+                    let sleepQuality = '--';
                     let heartRateTime = null;
                     let spo2Time = null;
                     let stepsDate = null;
@@ -2634,7 +2887,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     // 위치 데이터 - location 배열의 첫 번째 값 (가장 최근)
                     let latestGpsData = null;
                     let locationInfo = null;
-                    if (bioData.location && bioData.location.length > 0) {
+                    
+                    // 데모 모드에서 실내 위치 사용
+                    if (bioData.indoorLocation) {
+                        location = bioData.indoorLocation;
+                        console.log(`데모 모드 실내 위치: ${location}`);
+                    } else if (bioData.location && bioData.location.length > 0) {
                         latestGpsData = bioData.location;
                         console.log(`위치 데이터 ${bioData.location.length}개 수신:`, bioData.location);
                         const lat = bioData.location[0].latitude;
@@ -2670,7 +2928,45 @@ document.addEventListener('DOMContentLoaded', () => {
                         stepsDate = bioData.steps[0].step_date;
                     }
                     
-                    console.log(`Extracted values - HR: ${heartRate}, SpO2: ${spo2}, Steps: ${steps}`);
+                    // 체온 - temperature 배열의 첫 번째 값
+                    if (bioData.temperature && bioData.temperature.length > 0) {
+                        temperature = bioData.temperature[0].temperature;
+                    } else if (ENABLE_MOCK_DATA || window.demoController) {
+                        temperature = (36.2 + Math.random() * 0.6).toFixed(1);
+                    }
+                    
+                    // 혈압 - bloodPressure 배열의 첫 번째 값
+                    if (bioData.bloodPressure && bioData.bloodPressure.length > 0) {
+                        const bp = bioData.bloodPressure[0];
+                        bloodPressure = `${bp.systolic}/${bp.diastolic}`;
+                    } else if (ENABLE_MOCK_DATA || window.demoController) {
+                        bloodPressure = `${110 + Math.floor(Math.random() * 30)}/${70 + Math.floor(Math.random() * 20)}`;
+                    }
+                    
+                    // 수면질 - sleep 객체 처리
+                    if (bioData.sleep) {
+                        if (bioData.sleep.score !== undefined) {
+                            const score = bioData.sleep.score;
+                            if (score >= 70) {
+                                sleepQuality = `양호(${score}점)`;
+                            } else if (score >= 40) {
+                                sleepQuality = `주의(${score}점)`;
+                            } else {
+                                sleepQuality = `불량(${score}점)`;
+                            }
+                        }
+                    } else if (ENABLE_MOCK_DATA || window.demoController) {
+                        const score = 40 + Math.floor(Math.random() * 60);
+                        if (score >= 70) {
+                            sleepQuality = `양호(${score}점)`;
+                        } else if (score >= 40) {
+                            sleepQuality = `주의(${score}점)`;
+                        } else {
+                            sleepQuality = `불량(${score}점)`;
+                        }
+                    }
+                    
+                    console.log(`Extracted values - HR: ${heartRate}, SpO2: ${spo2}, Steps: ${steps}, Temp: ${temperature}, BP: ${bloodPressure}, Sleep: ${sleepQuality}`);
                     
                     // 수면 시간은 현재 API에 없으므로 목업 데이터일 때만 표시
                     let sleepHours = '--';
@@ -2696,14 +2992,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
 
-                    // 테이블 셀 업데이트
+                    // 테이블 셀 업데이트 - dashboard.html 새 컬럼 구조
                     const statusCell = row.children[2];
-                    const locationCell = row.children[3];  // 호수 제거로 인덱스 변경
-                    const outingReportCell = row.children[4];  // 외출 리포트 셀 추가
-                    const heartRateCell = row.children[5];  // 인덱스 변경
-                    // const spo2Cell = row.children[6];  // 주석처리
-                    // const sleepCell = row.children[7];  // 주석처리
-                    const stepsCell = row.children[6];  // 인덱스 변경
+                    const locationCell = row.children[3];
+                    const outingReportCell = row.children[4];
+                    const temperatureCell = row.children[5];
+                    const bloodPressureCell = row.children[6];
+                    const heartRateCell = row.children[7];
+                    const spo2Cell = row.children[8];
+                    const sleepQualityCell = row.children[9];
+                    const stepsCell = row.children[10];
                     
                     // 상태 업데이트
                     const statusLabel = statusCell.querySelector('.status-label');
@@ -2711,8 +3009,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     statusLabel.textContent = status.text;
                     
                     // 위치 및 기타 데이터 업데이트
-                    // dashboard-poc.html에서는 위치에 이모지와 거리 정보 표시
-                    if (window.location.pathname.includes('dashboard-poc.html')) {
+                    // dashboard-poc.html 또는 dashboard.html에서는 위치에 이모지와 거리 정보 표시
+                    if (window.location.pathname.includes('dashboard-poc.html') || window.location.pathname.includes('dashboard.html')) {
                         if (location !== '위치 정보 없음' && location !== '--' && latestGpsData && latestGpsData.length > 0) {
                             const gps = latestGpsData[0];
                             locationCell.innerHTML = formatLocationWithDistance(gps.latitude, gps.longitude, location);
@@ -2732,9 +3030,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                         
                         // 외출 리포트 분석 및 업데이트 (Period API 데이터 사용)
-                        const todayLocationData = await fetchTodayLocationData(user.wardedUserId);
+                        const todayLocationData = await (window.fetchTodayLocationData || fetchTodayLocationData)(user.wardedUserId);
                         const outingReport = analyzeOutingReport(todayLocationData);
-                        outingReportCell.innerHTML = `<span class="outing-report-cell ${outingReport.hasOuting ? 'outing-status-yes' : 'outing-status-no'}">${outingReport.status}</span>`;
+                        
+                        if (outingReport.hasOuting) {
+                            // 외출이 있는 경우 - 아이콘과 언더라인 표시
+                            outingReportCell.innerHTML = `<span class="outing-report-cell outing-status-yes" style="text-decoration: underline; cursor: pointer; color: #3B82F6;">🚶 외출</span>`;
+                        } else {
+                            // 외출이 없는 경우 - 기존처럼 --
+                            outingReportCell.innerHTML = '--';
+                        }
                         outingReportCell.classList.add('outing-report-cell');
                         
                         // 외출 리포트 클릭 이벤트 (이미 가져온 데이터 재사용)
@@ -2751,10 +3056,22 @@ document.addEventListener('DOMContentLoaded', () => {
                         outingReportCell.textContent = '--';
                     }
                     
+                    // 새 컬럼 데이터 업데이트
+                    temperatureCell.textContent = temperature !== '--' ? `${temperature}°C` : '--°C';
+                    bloodPressureCell.textContent = bloodPressure;
                     heartRateCell.textContent = heartRate !== '--' ? `${heartRate}bpm` : '--bpm';
-                    // spo2Cell.textContent = spo2 !== '--' ? `${spo2}%` : '--%';  // 주석처리
-                    // sleepCell.textContent = sleepHours !== '--' ? sleepHours : '--h';  // 주석처리
+                    spo2Cell.textContent = spo2 !== '--' ? `${spo2}%` : '--%';
+                    sleepQualityCell.textContent = sleepQuality;
                     stepsCell.textContent = steps !== '--' ? steps.toLocaleString() : '--';
+                    
+                    // 수면질에 따른 색상 적용
+                    if (sleepQuality.includes('양호')) {
+                        sleepQualityCell.style.color = '#10b981';
+                    } else if (sleepQuality.includes('주의')) {
+                        sleepQualityCell.style.color = '#f59e0b';
+                    } else if (sleepQuality.includes('불량')) {
+                        sleepQualityCell.style.color = '#ef4444';
+                    }
                     
                     // 툴팁용 데이터 속성 추가
                     if (statusTime) {
@@ -2818,6 +3135,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         currentOccupancyCase = (currentOccupancyCase + 1) % floor1OccupancyCases.length;
     }
+    
+    // renderResidentTable은 DOMContentLoaded 내부에서만 정의되므로 여기서 노출
+    window.renderResidentTable = renderResidentTable;
 
     // 초기 로드 시 테이블 렌더링
     renderResidentTable();
@@ -2825,8 +3145,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 주기적으로 데이터 업데이트
     setInterval(async () => {
         try {
-            // 이벤트 데이터 다시 가져오기
-            const events = await fetchEvents();
+            // 이벤트 데이터 다시 가져오기 (window를 통해 호출하여 데모 오버라이드 가능)
+            const events = await (window.fetchEvents || fetchEvents)();
             
             // 생체 데이터 업데이트
             await updateResidentVitals(events);
@@ -3203,10 +3523,15 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => {
       const pageToNavigate = btn.dataset.page;
       if (pageToNavigate) {
-        // Prevent navigation if already on the page (optional, but good UX)
-        // However, for simplicity now, we'll just navigate.
-        // Consider adding: if (window.location.pathname.endsWith(pageToNavigate)) return;
-        window.location.href = pageToNavigate;
+        // Check if demo mode is active and preserve it
+        const urlParams = new URLSearchParams(window.location.search);
+        const isDemoMode = urlParams.get('demo') === 'true';
+        
+        if (isDemoMode) {
+          window.location.href = pageToNavigate + '?demo=true';
+        } else {
+          window.location.href = pageToNavigate;
+        }
       } else {
         // Fallback for buttons without data-page, or for future single-page-app style views
         console.warn('GNB button clicked without a data-page attribute:', btn.textContent);
