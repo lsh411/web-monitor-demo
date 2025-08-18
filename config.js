@@ -26,7 +26,7 @@ window.API_CONFIG = {
   
   // Kakao Maps API configuration
   KAKAO_API: {
-    REST_API_KEY: '38dfbdeae184d57cbb2aa76b517a5a64',
+    REST_API_KEY: '***REMOVED***',
     GEOCODING_URL: 'https://dapi.kakao.com/v2/local/geo/coord2address.json',
     CACHE_DURATION: 300000, // 5분 캐시
     ENABLE_CACHE: true

@@ -23,11 +23,11 @@
       <div class="logo-nav">
         <img src="assets/hello-on_logotype.png" alt="헬로온 로고" class="hello-logo" />
         <nav class="gnb">
-          <button class="gnb-btn" data-page="dashboard.html" onclick="window.location.href='dashboard.html'"><span class="icon dashboard"></span>대시보드</button>
+          <button class="gnb-btn" data-page="dashboard.html" onclick="navigateTo('dashboard.html')"><span class="icon dashboard"></span>대시보드</button>
           <button class="gnb-btn active" data-page="record.html"><span class="icon record"></span>관리기록</button>
-          <button class="gnb-btn" data-page="status.html"><span class="icon status"></span>전체상태</button>
-          <button class="gnb-btn" data-page="guardian.html"><span class="icon guardian"></span>보호자</button>
-          <button class="gnb-btn" data-page="disease.html"><span class="icon disease"></span>유병확률</button>
+          <button class="gnb-btn" data-page="status.html" onclick="navigateTo('status.html')"><span class="icon status"></span>전체상태</button>
+          <button class="gnb-btn" data-page="guardian.html" onclick="navigateTo('guardian.html')"><span class="icon guardian"></span>보호자</button>
+          <button class="gnb-btn" data-page="disease.html" onclick="navigateTo('disease.html')"><span class="icon disease"></span>유병확률</button>
         </nav>
       </div>
       <div class="header-actions">
@@ -196,11 +196,31 @@
       window.location.href = 'index.html';
   }
   
+  // 데모 모드를 유지하면서 페이지 이동
+  function navigateTo(page) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isDemoMode = urlParams.get('demo') === 'true';
+      
+      if (isDemoMode) {
+          window.location.href = page + '?demo=true';
+      } else {
+          window.location.href = page;
+      }
+  }
+  
   document.addEventListener("DOMContentLoaded", function() {
     // Record initialization is handled in script.js
     console.log('Record page loaded');
   });
 </script>
+
+<!-- 데모 모드 컨트롤러를 먼저 로드 (URL에 ?demo=true가 있을 때만) -->
+<script>
+if (new URLSearchParams(window.location.search).get('demo') === 'true') {
+    document.write('<script src="demo-controller.js"><\/script>');
+}
+</script>
+
 <script src="script.js"></script>
 </body>
 </html>
