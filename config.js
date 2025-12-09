@@ -13,7 +13,7 @@ window.API_CONFIG = {
   UPDATE_INTERVAL: 10000, // 10 seconds
   
   // Feature flags
-  ENABLE_MOCK_DATA: false, // false로 설정하여 실제 API 사용
+  ENABLE_MOCK_DATA: new URLSearchParams(window.location.search).get('demo') === 'true' ? true : false, // 데모 모드면 자동으로 목업 데이터 사용
   ENABLE_REAL_TIME_UPDATES: true,
   
   // Debug settings

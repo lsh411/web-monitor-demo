@@ -1988,3 +1988,491 @@ body {
 .outing-report-list::-webkit-scrollbar-thumb:hover {
   background: #6b7280;
 }
+
+/* Status History Modal Styles */
+.status-history-modal {
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.status-history-header {
+    padding: 15px 0;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 20px;
+}
+
+.status-history-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 8px 0;
+}
+
+.status-history-header p {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0;
+}
+
+.status-history-section {
+    margin-bottom: 25px;
+}
+
+.section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #374151;
+    margin: 0 0 15px 0;
+}
+
+/* Events List */
+.status-events-list {
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 20px;
+}
+
+.status-event-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #fecaca;
+}
+
+.status-event-item:last-child {
+    border-bottom: none;
+}
+
+.event-time {
+    font-size: 13px;
+    color: #dc2626;
+    font-weight: 500;
+    min-width: 60px;
+}
+
+.event-type {
+    font-size: 14px;
+    color: #7f1d1d;
+    margin-left: 12px;
+}
+
+/* Status Timeline */
+.status-timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.status-timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background: #e5e7eb;
+}
+
+.timeline-item {
+    position: relative;
+    padding: 10px 0;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.timeline-item:hover {
+    background-color: #f9fafb;
+    margin-left: -10px;
+    padding-left: 10px;
+    margin-right: -10px;
+    padding-right: 10px;
+    border-radius: 4px;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: -26px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid #9ca3af;
+}
+
+.timeline-dot.phone {
+    border-color: #3b82f6;
+    background: #dbeafe;
+}
+
+.timeline-dot.watch {
+    border-color: #10b981;
+    background: #d1fae5;
+}
+
+.timeline-time {
+    font-size: 13px;
+    color: #6b7280;
+    min-width: 60px;
+    margin-right: 15px;
+}
+
+.timeline-source {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+}
+
+.source-icon {
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+}
+
+.source-icon.phone {
+    background: #3b82f6;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.source-icon.watch {
+    background: #10b981;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.timeline-status {
+    font-size: 14px;
+    color: #1f2937;
+    font-weight: 500;
+}
+
+.timeline-detail {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-left: 10px;
+}
+
+/* Make status cells clickable */
+.resident-table td:nth-child(3) {
+    cursor: pointer;
+}
+
+.resident-table td:nth-child(3):hover .status-label {
+    transform: scale(1.05);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 심박수 히스토리 모달 스타일 */
+#heartRateModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+#heartRateModal .modal-content {
+    position: relative;
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 900px;
+    height: 80vh;
+    max-height: 700px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+#heartRateModal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+#heartRateModal .modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+#heartRateModal .modal-close {
+    font-size: 24px;
+    color: #6b7280;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    background: none;
+    border: none;
+}
+
+#heartRateModal .modal-close:hover {
+    color: #111827;
+}
+
+#heartRateModal .modal-body {
+    padding: 20px;
+    height: calc(100% - 80px);
+    overflow-y: auto;
+}
+
+/* 차트 컨트롤 */
+.chart-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.time-range-selector {
+    display: flex;
+    gap: 8px;
+}
+
+.range-btn {
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.range-btn:hover {
+    background: #f3f4f6;
+}
+
+.range-btn.active {
+    background: #2A6AA6;
+    color: white;
+    border-color: #2A6AA6;
+}
+
+/* 심박수 통계 */
+.heart-rate-stats {
+    display: flex;
+    gap: 24px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.stat-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+/* 차트 캔버스 */
+#heartRateChart {
+    width: 100%;
+    height: 400px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+/* 심박수 이벤트 */
+.heart-rate-events {
+    margin-top: 20px;
+}
+
+.heart-rate-events h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 12px;
+}
+
+.hr-event {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: #f9fafb;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    border-left: 3px solid;
+}
+
+.hr-event.high {
+    border-left-color: #ef4444;
+    background: #fef2f2;
+}
+
+.hr-event.low {
+    border-left-color: #3b82f6;
+    background: #eff6ff;
+}
+
+.event-time {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.event-type {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.hr-event.high .event-type {
+    color: #ef4444;
+}
+
+.hr-event.low .event-type {
+    color: #3b82f6;
+}
+
+/* 심박수 셀 호버 효과 (7번째 컬럼) */
+.resident-table td:nth-child(7) {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.resident-table td:nth-child(7):hover {
+    background-color: #f3f4f6;
+}
+
+/* 체온 히스토리 모달 스타일 */
+#temperatureModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+#temperatureModal .modal-content {
+    position: relative;
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 900px;
+    height: 80vh;
+    max-height: 700px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+#temperatureModal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+#temperatureModal .modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+#temperatureModal .modal-close {
+    font-size: 24px;
+    color: #6b7280;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    background: none;
+    border: none;
+}
+
+#temperatureModal .modal-close:hover {
+    color: #111827;
+}
+
+#temperatureModal .modal-body {
+    padding: 20px;
+    height: calc(100% - 80px);
+    overflow-y: auto;
+}
+
+/* 체온 통계 */
+.temperature-stats {
+    display: flex;
+    gap: 24px;
+}
+
+/* 차트 범례 */
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin: 20px 0;
+    padding: 10px;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    color: #4b5563;
+}
+
+.legend-color {
+    width: 20px;
+    height: 3px;
+    border-radius: 2px;
+}
+
+/* 체온 차트 캔버스 */
+#temperatureChart {
+    width: 100%;
+    height: 400px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+/* 체온 셀 호버 효과 (6번째 컬럼) */
+.resident-table td:nth-child(6) {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.resident-table td:nth-child(6):hover {
+    background-color: #f3f4f6;
+}

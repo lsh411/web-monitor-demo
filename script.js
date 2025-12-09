@@ -701,9 +701,29 @@ async function fetchMappings() {
         console.log('📋 Response data:', data);
         
         if (data.code === "1000") {
-            const filtered = data.response.filter(m => m.activeYn === 'o' || m.activeYn === 'y');
-            console.log('✅ 필터링된 매핑:', filtered);
-            return filtered;
+            // 임시로 하드코딩된 피보호자 ID만 필터링
+            const hardcodedWardedIds = ['4413234689', '3736040963', '4405481384'];
+            const filtered = data.response.filter(m => 
+                hardcodedWardedIds.includes(m.wardedUserId) && 
+                (m.activeYn === 'o' || m.activeYn === 'y')
+            );
+            
+            // 하윤정 -> 김호중 하드코딩 변경
+            const transformedMappings = filtered.map(mapping => {
+                if (mapping.userName === '하윤정') {
+                    console.log('🔄 하윤정 -> 김호중으로 변경');
+                    return {
+                        ...mapping,
+                        userName: '김호중',
+                        age: '50'  // 50대로 변경
+                    };
+                }
+                return mapping;
+            });
+            
+            console.log('✅ 하드코딩된 ID로 필터링된 매핑:', transformedMappings);
+            console.log('📌 하드코딩된 ID:', hardcodedWardedIds);
+            return transformedMappings;
         } else {
             console.warn('⚠️ API returned error code:', data.code, data.message);
         }
@@ -780,6 +800,31 @@ async function fetchLatestBioData(wardedUserId) {
         
         if (data.code === "1000") {
             console.log('Bio data response:', data.response);
+            
+            // bodyTemperature가 비어있으면 period API로 피부온 데이터 가져오기
+            if ((!data.response.bodyTemperature || data.response.bodyTemperature.length === 0)) {
+                const today = new Date();
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const fromDate = today.toISOString().split('T')[0];
+                const toDate = tomorrow.toISOString().split('T')[0];
+                
+                const tempUrl = `${API_BASE_URL}/watcher/period?wardedUserId=${wardedUserId}&bioDataTypes=BODY_TEMPERATURE&fromDate=${fromDate}&toDate=${toDate}`;
+                console.log('Fetching temperature data from period API:', tempUrl);
+                
+                try {
+                    const tempResponse = await fetch(tempUrl, { headers: {'Content-Type': 'application/json'} });
+                    const tempData = await tempResponse.json();
+                    
+                    if (tempData.code === "1000" && tempData.response && tempData.response.bodyTemperature) {
+                        console.log(`Temperature data found: ${tempData.response.bodyTemperature.length} records`);
+                        data.response.bodyTemperature = tempData.response.bodyTemperature;
+                    }
+                } catch (tempError) {
+                    console.error('Error fetching temperature data:', tempError);
+                }
+            }
+            
             return data.response;
         } else {
             console.log('API error:', data);
@@ -859,6 +904,26 @@ const mockData = {
 };
 
 // Global utility functions
+
+/**
+ * Estimate core body temperature (°C) from skin temp, air temp, and heart rate.
+ * Model: Tcore = Tskin + a + b*(Tskin - Tair) + c*(HR - HR0)
+ * Adjusted parameters to compensate for watch ambient temperature being higher than actual
+ * Defaults: a=4.3, b=0.30, c=0.011, HR0=60 bpm
+ */
+function estimateCoreTemp3(skinTemp, airTemp, heartRate, opts = {}) {
+    const a   = Number.isFinite(opts.a)   ? opts.a   : 4.3;  // Middle ground between 3.8 and 4.8
+    const b   = Number.isFinite(opts.b)   ? opts.b   : 0.30; // Middle ground between 0.25 and 0.35
+    const c   = Number.isFinite(opts.c)   ? opts.c   : 0.011; // Middle ground between 0.010 and 0.012
+    const HR0 = Number.isFinite(opts.HR0) ? opts.HR0 : 60;
+
+    const tcore = skinTemp + a + b * (skinTemp - airTemp) + c * (heartRate - HR0);
+
+    // 물리적으로 말이 되는 범위로 클램프
+    const clamped = Math.min(Math.max(tcore, 34.5), 41.5); // Minimum at 34.5
+    return Number(clamped.toFixed(1)); // 소수점 1자리
+}
+
 function timeAgo(dateString, isCalculated = false) {
     const date = new Date(dateString);
     const now = new Date();
@@ -2359,8 +2424,28 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             console.log('Response data:', data);
             if (data.code === "1000") {
-                console.log('Filtered mappings:', data.response.filter(m => m.activeYn === 'o' || m.activeYn === 'y'));
-                return data.response.filter(m => m.activeYn === 'o' || m.activeYn === 'y');
+                // 임시로 하드코딩된 피보호자 ID만 필터링
+                const hardcodedWardedIds = ['4413234689', '3736040963', '4405481384'];
+                const filtered = data.response.filter(m => 
+                    hardcodedWardedIds.includes(m.wardedUserId) && 
+                    (m.activeYn === 'o' || m.activeYn === 'y')
+                );
+                
+                // 하윤정 -> 김호중 하드코딩 변경
+                const transformedMappings = filtered.map(mapping => {
+                    if (mapping.userName === '하윤정') {
+                        console.log('🔄 하윤정 -> 김호중으로 변경');
+                        return {
+                            ...mapping,
+                            userName: '김호중',
+                            age: '50'  // 50대로 변경
+                        };
+                    }
+                    return mapping;
+                });
+                
+                console.log('Filtered mappings (hardcoded IDs):', transformedMappings);
+                return transformedMappings;
             } else {
                 console.log('API returned error code:', data.code, data.message);
             }
@@ -2507,6 +2592,14 @@ document.addEventListener('DOMContentLoaded', () => {
             'ActivityType.IN_VEHICLE': 'statusCar',
             'ActivityType.UNKNOWN': 'statusRelax',
         },
+        'USER_ACTIVITY_WORKING': {
+            'ActivityType.STILL': 'statusRelax',
+            'ActivityType.WALKING': 'statusWalk',
+            'ActivityType.RUNNING': 'statusRun',
+            'ActivityType.ON_BICYCLE': 'statusBicycle',
+            'ActivityType.IN_VEHICLE': 'statusCar',
+            'ActivityType.UNKNOWN': 'statusRelax',
+        },
         'USER_ACTIVITY_EXERCISE': {
             'ActivityType.STILL': 'statusRelax',
             'ActivityType.WALKING': 'statusWalk',
@@ -2515,7 +2608,23 @@ document.addEventListener('DOMContentLoaded', () => {
             'ActivityType.IN_VEHICLE': 'statusCar',
             'ActivityType.UNKNOWN': 'statusExercise',
         },
+        'USER_ACTIVITY_EXERCISING': {
+            'ActivityType.STILL': 'statusExercise',
+            'ActivityType.WALKING': 'statusExercise',
+            'ActivityType.RUNNING': 'statusRun',
+            'ActivityType.ON_BICYCLE': 'statusBicycle',
+            'ActivityType.IN_VEHICLE': 'statusCar',
+            'ActivityType.UNKNOWN': 'statusExercise',
+        },
         'USER_ACTIVITY_ASLEEP': {
+            'ActivityType.STILL': 'statusSleep',
+            'ActivityType.WALKING': 'statusWalk',
+            'ActivityType.RUNNING': 'statusRun',
+            'ActivityType.ON_BICYCLE': 'statusBicycle',
+            'ActivityType.IN_VEHICLE': 'statusCar',
+            'ActivityType.UNKNOWN': 'statusSleep',
+        },
+        'USER_ACTIVITY_SLEEPING': {
             'ActivityType.STILL': 'statusSleep',
             'ActivityType.WALKING': 'statusWalk',
             'ActivityType.RUNNING': 'statusRun',
@@ -2789,6 +2898,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tbody.innerHTML = '';
             usersWithBioData.forEach((user, index) => {
                 const tr = document.createElement('tr');
+                tr.setAttribute('data-warded-id', user.wardedUserId); // wardedUserId 추가
                 
                 // 특수 상태가 있는 경우 row에 클래스 추가
                 if (user.hasSpecialStatus) {
@@ -2928,11 +3038,41 @@ document.addEventListener('DOMContentLoaded', () => {
                         stepsDate = bioData.steps[0].step_date;
                     }
                     
-                    // 체온 - temperature 배열의 첫 번째 값
-                    if (bioData.temperature && bioData.temperature.length > 0) {
-                        temperature = bioData.temperature[0].temperature;
+                    // 피부온(대기온) 표시
+                    if (bioData.bodyTemperature && bioData.bodyTemperature.length > 0) {
+                        // 정상 범위의 피부온 데이터 찾기 (30도 이상)
+                        let validTempData = null;
+                        for (const tempData of bioData.bodyTemperature) {
+                            if (tempData.bodyTemperature && tempData.bodyTemperature >= 30) {
+                                validTempData = tempData;
+                                break;
+                            }
+                        }
+                        
+                        if (!validTempData && bioData.bodyTemperature.length > 0) {
+                            // 유효한 데이터가 없으면 첫 번째 데이터 사용
+                            validTempData = bioData.bodyTemperature[0];
+                        }
+                        
+                        if (validTempData) {
+                            // bodyTemperature와 ambientTemperature가 있는 경우 (실제 API 필드명)
+                            if (validTempData.bodyTemperature !== undefined && validTempData.ambientTemperature !== undefined) {
+                                const bodyTemp = parseFloat(validTempData.bodyTemperature).toFixed(1);
+                                const ambientTemp = parseFloat(validTempData.ambientTemperature).toFixed(1);
+                                temperature = `${bodyTemp}/${ambientTemp}`;
+                                console.log(`Using temperature data: ${temperature} from ${validTempData.registrationDateTime}`);
+                            } else if (validTempData.skinTemperature !== undefined && validTempData.ambientTemperature !== undefined) {
+                                // skinTemperature와 ambientTemperature가 있는 경우
+                                temperature = `${validTempData.skinTemperature}/${validTempData.ambientTemperature}`;
+                            } else if (validTempData.temperature !== undefined) {
+                                // temperature 필드만 있는 경우
+                                temperature = validTempData.temperature;
+                            }
+                        }
                     } else if (ENABLE_MOCK_DATA || window.demoController) {
-                        temperature = (36.2 + Math.random() * 0.6).toFixed(1);
+                        const skinTemp = (32.0 + Math.random() * 2.0).toFixed(1);
+                        const ambientTemp = (22.0 + Math.random() * 3.0).toFixed(1);
+                        temperature = `${skinTemp}/${ambientTemp}`;
                     }
                     
                     // 혈압 - bloodPressure 배열의 첫 번째 값
@@ -2993,15 +3133,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     // 테이블 셀 업데이트 - dashboard.html 새 컬럼 구조
+                    // 순서: 이름(0) - 나이(1) - 상태(2) - 위치(3) - 외출(4) - 체온(5) - 심박수(6) - 걸음수(7) - 혈압(8) - SpO2(9) - 수면질(10)
                     const statusCell = row.children[2];
                     const locationCell = row.children[3];
                     const outingReportCell = row.children[4];
                     const temperatureCell = row.children[5];
-                    const bloodPressureCell = row.children[6];
-                    const heartRateCell = row.children[7];
-                    const spo2Cell = row.children[8];
-                    const sleepQualityCell = row.children[9];
-                    const stepsCell = row.children[10];
+                    const heartRateCell = row.children[6];
+                    const stepsCell = row.children[7];
+                    const bloodPressureCell = row.children[8];
+                    const spo2Cell = row.children[9];
+                    const sleepQualityCell = row.children[10];
                     
                     // 상태 업데이트
                     const statusLabel = statusCell.querySelector('.status-label');
@@ -3057,7 +3198,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     
                     // 새 컬럼 데이터 업데이트
-                    temperatureCell.textContent = temperature !== '--' ? `${temperature}°C` : '--°C';
+                    // 피부온(대기온) 형식으로 표시
+                    if (temperature !== '--' && temperature.includes('/')) {
+                        const [bodyTemp, ambientTemp] = temperature.split('/');
+                        temperatureCell.textContent = `${bodyTemp}(${ambientTemp})°C`;
+                    } else if (temperature !== '--') {
+                        temperatureCell.textContent = `${temperature}°C`;
+                    } else {
+                        temperatureCell.textContent = '--°C';
+                    }
                     bloodPressureCell.textContent = bloodPressure;
                     heartRateCell.textContent = heartRate !== '--' ? `${heartRate}bpm` : '--bpm';
                     spo2Cell.textContent = spo2 !== '--' ? `${spo2}%` : '--%';
@@ -3168,6 +3317,726 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 중복 함수 제거됨 - 상단의 async getLocationName 함수 사용
 
+    // 상태 히스토리 모달 기능 추가
+    function setupStatusHistoryModal() {
+        const modal = document.getElementById('status-history-modal');
+        const modalClose = document.getElementById('status-history-modal-close');
+        const modalName = document.getElementById('status-history-name');
+        const modalPeriod = document.getElementById('status-history-period');
+        const eventsSection = document.getElementById('status-history-events');
+        const eventsList = document.getElementById('status-events-list');
+        const timeline = document.getElementById('status-timeline');
+        
+        if (!modal || !modalClose) return;
+        
+        // 모달 닫기
+        modalClose.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+        
+        // 모달 바깥 클릭시 닫기
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.add('hidden');
+            }
+        });
+    }
+    
+    // 상태 히스토리 데이터 가져오기
+    async function fetchStatusHistory(wardedUserId, userName) {
+        try {
+            const now = new Date();
+            const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+            
+            // 어제부터 내일까지로 범위 설정 (오늘 데이터 확실히 포함)
+            const fromDate = yesterday.toISOString().split('T')[0];
+            const toDate = tomorrow.toISOString().split('T')[0];
+            
+            console.log(`Fetching status history from ${fromDate} to ${toDate} for ${userName}`);
+            
+            const API_BASE_URL = window.API_CONFIG?.BASE_URL || '';
+            
+            // 24시간 이벤트 데이터 가져오기
+            const eventUrl = `${API_BASE_URL}/watcher/event?watcherUserId=${window.API_CONFIG?.WATCHER_USER_ID || '3743690826'}&fromDate=${fromDate}&toDate=${toDate}`;
+            console.log('Event API URL:', eventUrl);
+            const eventResponse = await fetch(eventUrl);
+            const eventData = await eventResponse.json();
+            const userEvents = eventData.response?.filter(e => e.wardedUserId === wardedUserId) || [];
+            console.log(`Found ${userEvents.length} events for user`);
+            
+            // 24시간 상태 데이터 가져오기
+            const statusUrl = `${API_BASE_URL}/watcher/period?wardedUserId=${wardedUserId}&bioDataTypes=USER_ACTION_STATUS,PHONE_USER_STATUS&fromDate=${fromDate}&toDate=${toDate}`;
+            console.log('Status API URL:', statusUrl);
+            const statusResponse = await fetch(statusUrl);
+            const statusData = await statusResponse.json();
+            console.log('Status data:', statusData.response);
+            
+            // 24시간 이내 데이터만 필터링
+            const cutoffTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            
+            const filteredEvents = userEvents.filter(e => 
+                new Date(e.registrationDateTime) >= cutoffTime
+            );
+            
+            const filteredUserActionStatus = (statusData.response?.userActionStatus || []).filter(s =>
+                new Date(s.registrationDateTime) >= cutoffTime
+            );
+            
+            const filteredPhoneUserStatus = (statusData.response?.phoneUserStatus || []).filter(s =>
+                new Date(s.registrationDateTime) >= cutoffTime
+            );
+            
+            console.log(`Filtered to last 24 hours: ${filteredEvents.length} events, ${filteredUserActionStatus.length} userAction, ${filteredPhoneUserStatus.length} phoneStatus`);
+            
+            return {
+                events: filteredEvents,
+                userActionStatus: filteredUserActionStatus,
+                phoneUserStatus: filteredPhoneUserStatus
+            };
+        } catch (error) {
+            console.error('Error fetching status history:', error);
+            return { events: [], userActionStatus: [], phoneUserStatus: [] };
+        }
+    }
+    
+    // 상태 히스토리 표시
+    async function showStatusHistory(wardedUserId, userName) {
+        const modal = document.getElementById('status-history-modal');
+        const modalName = document.getElementById('status-history-name');
+        const modalPeriod = document.getElementById('status-history-period');
+        const eventsSection = document.getElementById('status-history-events');
+        const eventsList = document.getElementById('status-events-list');
+        const timeline = document.getElementById('status-timeline');
+        
+        if (!modal) return;
+        
+        // 모달 헤더 업데이트
+        modalName.textContent = userName || '피보호자';
+        modalPeriod.textContent = '지난 24시간';
+        
+        // 데이터 가져오기
+        const historyData = await fetchStatusHistory(wardedUserId, userName);
+        
+        // 이벤트 섹션 표시 (최신순으로 정렬)
+        if (historyData.events && historyData.events.length > 0) {
+            eventsSection.classList.remove('hidden');
+            // 최신순으로 정렬
+            const sortedEvents = historyData.events.sort((a, b) => 
+                new Date(b.registrationDateTime) - new Date(a.registrationDateTime)
+            );
+            
+            eventsList.innerHTML = sortedEvents.map(event => {
+                const eventDate = new Date(event.registrationDateTime);
+                const dateStr = eventDate.toLocaleDateString('ko-KR', {
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+                const timeStr = eventDate.toLocaleTimeString('ko-KR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                const eventTypeMap = {
+                    'FALL_DETECTED': '낙상 감지',
+                    'HIGH_HEART_RATE_DETECTED': '빈맥 감지',
+                    'LOW_HEART_RATE_DETECTED': '서맥 감지'
+                };
+                return `
+                    <div class="status-event-item">
+                        <span class="event-time">${dateStr} ${timeStr}</span>
+                        <span class="event-type">${eventTypeMap[event.eventType] || event.eventType}</span>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            eventsSection.classList.add('hidden');
+        }
+        
+        // 상태 타임라인 표시
+        const statusItems = [];
+        
+        // userActionStatus 데이터 추가
+        historyData.userActionStatus.forEach(status => {
+            statusItems.push({
+                time: new Date(status.registrationDateTime),
+                source: 'watch',
+                status: status.userActionStatus,
+                detail: 'Galaxy Watch'
+            });
+        });
+        
+        // phoneUserStatus 데이터 추가
+        historyData.phoneUserStatus.forEach(status => {
+            statusItems.push({
+                time: new Date(status.registrationDateTime),
+                source: 'phone',
+                status: status.type,
+                detail: 'Phone'
+            });
+        });
+        
+        // 시간순으로 정렬 (최신순)
+        statusItems.sort((a, b) => b.time - a.time);
+        
+        // 타임라인 렌더링 (날짜 포함, 최신순)
+        let currentDate = '';
+        timeline.innerHTML = statusItems.slice(0, 50).map((item, index) => {
+            // 날짜와 시간 분리
+            const itemDate = item.time.toLocaleDateString('ko-KR', {
+                month: '2-digit',
+                day: '2-digit',
+                weekday: 'short'
+            });
+            const timeStr = item.time.toLocaleTimeString('ko-KR', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            const statusTextMap = {
+                // Watch 상태 (USER_ACTIVITY_)
+                'USER_ACTIVITY_PASSIVE': '일상생활',
+                'USER_ACTIVITY_WORKING': '활동',
+                'USER_ACTIVITY_EXERCISING': '운동',
+                'USER_ACTIVITY_EXERCISE': '운동',
+                'USER_ACTIVITY_SLEEPING': '수면',
+                'USER_ACTIVITY_ASLEEP': '수면',
+                'USER_ACTIVITY_UNKNOWN': '확인중',
+                // Phone 상태 (ActivityType.)
+                'ActivityType.STILL': '일상생활',
+                'ActivityType.WALKING': '걷기',
+                'ActivityType.RUNNING': '달리기',
+                'ActivityType.ON_BICYCLE': '자전거',
+                'ActivityType.IN_VEHICLE': '차량이동',
+                'ActivityType.UNKNOWN': '확인중'
+            };
+            
+            const sourceIcon = item.source === 'phone' ? '📱' : '⌚';
+            const statusText = statusTextMap[item.status] || item.status;
+            
+            // 날짜가 바뀌면 날짜 구분선 추가
+            let dateHeader = '';
+            if (itemDate !== currentDate) {
+                currentDate = itemDate;
+                dateHeader = `<div style="font-weight: 600; color: #6b7280; padding: 10px 0 5px 0; margin-top: ${index === 0 ? '0' : '15px'}; border-top: ${index === 0 ? 'none' : '1px solid #e5e7eb'};">${itemDate}</div>`;
+            }
+            
+            return `
+                ${dateHeader}
+                <div class="timeline-item">
+                    <div class="timeline-dot ${item.source}"></div>
+                    <span class="timeline-time">${timeStr}</span>
+                    <div class="timeline-source">
+                        <div class="source-icon ${item.source}">${sourceIcon}</div>
+                    </div>
+                    <span class="timeline-status">${statusText}</span>
+                    <span class="timeline-detail">${item.detail}</span>
+                </div>
+            `;
+        }).join('') || '<div style="text-align: center; color: #9ca3af;">최근 24시간 동안 기록된 상태가 없습니다.</div>';
+        
+        // 모달 표시
+        modal.classList.remove('hidden');
+    }
+    
+    // 심박수 히스토리 모달 표시
+    async function showHeartRateHistory(wardedUserId, userName) {
+        const modal = document.getElementById('heartRateModal');
+        if (!modal) return;
+        
+        const modalTitle = document.getElementById('heartRateModalTitle');
+        if (modalTitle) {
+            modalTitle.textContent = `${userName} - 심박수 히스토리`;
+        }
+        
+        modal.style.display = 'flex';
+        
+        // 24시간 전부터 현재까지의 데이터 가져오기
+        const now = new Date();
+        const dayBefore = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        
+        const fromDate = dayBefore.toISOString().split('T')[0];
+        const toDate = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        
+        try {
+            const url = `${API_BASE_URL}/watcher/period?wardedUserId=${wardedUserId}&bioDataTypes=HEART_BEAT&fromDate=${fromDate}&toDate=${toDate}`;
+            const response = await fetch(url, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            const data = await response.json();
+            
+            if (data.code === "1000" && data.response && data.response.heartBeat) {
+                // 24시간 이내 데이터만 필터링
+                const filteredData = data.response.heartBeat.filter(item => {
+                    const itemTime = new Date(item.registrationDateTime);
+                    return itemTime >= dayBefore && itemTime <= now;
+                });
+                
+                renderHeartRateChart(filteredData);
+                updateHeartRateStats(filteredData);
+                
+                // 심박수 관련 이벤트 표시
+                await fetchHeartRateEvents(wardedUserId, fromDate, toDate);
+            }
+        } catch (error) {
+            console.error('Error fetching heart rate history:', error);
+        }
+    }
+    
+    // 심박수 차트 렌더링
+    function renderHeartRateChart(heartRateData) {
+        const canvas = document.getElementById('heartRateChart');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, width, height);
+        
+        if (!heartRateData || heartRateData.length === 0) {
+            ctx.font = '16px Pretendard';
+            ctx.fillStyle = '#9CA3AF';
+            ctx.textAlign = 'center';
+            ctx.fillText('데이터가 없습니다', width / 2, height / 2);
+            return;
+        }
+        
+        // 시간순으로 정렬
+        heartRateData.sort((a, b) => new Date(a.registrationDateTime) - new Date(b.registrationDateTime));
+        
+        // 그래프 설정
+        const padding = { top: 40, right: 60, bottom: 60, left: 60 };
+        const chartWidth = width - padding.left - padding.right;
+        const chartHeight = height - padding.top - padding.bottom;
+        
+        // 최대/최소값 찾기
+        const values = heartRateData.map(d => d.heartBeat);
+        const minValue = Math.min(...values) - 10;
+        const maxValue = Math.max(...values) + 10;
+        
+        // 시간 범위
+        const startTime = new Date(heartRateData[0].registrationDateTime);
+        const endTime = new Date(heartRateData[heartRateData.length - 1].registrationDateTime);
+        const timeRange = endTime - startTime;
+        
+        // 그리드 그리기
+        ctx.strokeStyle = '#E5E7EB';
+        ctx.lineWidth = 0.5;
+        
+        // Y축 그리드 (심박수)
+        for (let i = 0; i <= 5; i++) {
+            const y = padding.top + (chartHeight / 5) * i;
+            ctx.beginPath();
+            ctx.moveTo(padding.left, y);
+            ctx.lineTo(width - padding.right, y);
+            ctx.stroke();
+            
+            // Y축 레이블
+            const value = Math.round(maxValue - ((maxValue - minValue) / 5) * i);
+            ctx.fillStyle = '#6B7280';
+            ctx.font = '12px Pretendard';
+            ctx.textAlign = 'right';
+            ctx.fillText(value + ' bpm', padding.left - 10, y + 4);
+        }
+        
+        // X축 그리드 (시간)
+        const hourInterval = Math.ceil(timeRange / (1000 * 60 * 60 * 6)); // 6개 구간
+        for (let i = 0; i <= 6; i++) {
+            const x = padding.left + (chartWidth / 6) * i;
+            ctx.beginPath();
+            ctx.moveTo(x, padding.top);
+            ctx.lineTo(x, height - padding.bottom);
+            ctx.stroke();
+            
+            // X축 레이블
+            const time = new Date(startTime.getTime() + (timeRange / 6) * i);
+            ctx.fillStyle = '#6B7280';
+            ctx.font = '12px Pretendard';
+            ctx.textAlign = 'center';
+            ctx.fillText(time.getHours() + ':' + String(time.getMinutes()).padStart(2, '0'), x, height - padding.bottom + 20);
+        }
+        
+        // 정상 범위 배경
+        const normalMin = 60;
+        const normalMax = 100;
+        const normalMinY = padding.top + chartHeight * (1 - (normalMin - minValue) / (maxValue - minValue));
+        const normalMaxY = padding.top + chartHeight * (1 - (normalMax - minValue) / (maxValue - minValue));
+        
+        ctx.fillStyle = 'rgba(34, 197, 94, 0.1)';
+        ctx.fillRect(padding.left, normalMaxY, chartWidth, normalMinY - normalMaxY);
+        
+        // 데이터 라인 그리기
+        ctx.strokeStyle = '#EF4444';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        
+        heartRateData.forEach((data, index) => {
+            const x = padding.left + (chartWidth * ((new Date(data.registrationDateTime) - startTime) / timeRange));
+            const y = padding.top + chartHeight * (1 - (data.heartBeat - minValue) / (maxValue - minValue));
+            
+            if (index === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+            
+            // 데이터 포인트
+            ctx.fillStyle = data.heartBeat < 60 || data.heartBeat > 100 ? '#EF4444' : '#22C55E';
+            ctx.beginPath();
+            ctx.arc(x, y, 3, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        
+        ctx.stroke();
+        
+        // 제목
+        ctx.fillStyle = '#111827';
+        ctx.font = 'bold 14px Pretendard';
+        ctx.textAlign = 'left';
+        ctx.fillText('심박수 (bpm)', padding.left, 25);
+    }
+    
+    // 심박수 통계 업데이트
+    function updateHeartRateStats(heartRateData) {
+        if (!heartRateData || heartRateData.length === 0) {
+            document.getElementById('hrAvg').textContent = '--';
+            document.getElementById('hrMax').textContent = '--';
+            document.getElementById('hrMin').textContent = '--';
+            return;
+        }
+        
+        const values = heartRateData.map(d => d.heartBeat);
+        const avg = Math.round(values.reduce((a, b) => a + b, 0) / values.length);
+        const max = Math.max(...values);
+        const min = Math.min(...values);
+        
+        document.getElementById('hrAvg').textContent = avg + ' bpm';
+        document.getElementById('hrMax').textContent = max + ' bpm';
+        document.getElementById('hrMin').textContent = min + ' bpm';
+    }
+    
+    // 심박수 관련 이벤트 가져오기
+    async function fetchHeartRateEvents(wardedUserId, fromDate, toDate) {
+        try {
+            const url = `${API_BASE_URL}/watcher/event?watcherUserId=${WATCHER_USER_ID}`;
+            const response = await fetch(url, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            const data = await response.json();
+            const eventsContainer = document.getElementById('heartRateEvents');
+            
+            if (data.code === "1000" && data.response) {
+                const heartRateEvents = data.response.filter(event => 
+                    event.wardedUserId === wardedUserId &&
+                    (event.eventType === 'HIGH_HEART_RATE_DETECTED' || 
+                     event.eventType === 'LOW_HEART_RATE_DETECTED')
+                );
+                
+                if (heartRateEvents.length > 0) {
+                    eventsContainer.innerHTML = '<h4>심박수 이상 감지 이벤트</h4>' +
+                        heartRateEvents.map(event => {
+                            const time = new Date(event.registrationDateTime);
+                            const type = event.eventType === 'HIGH_HEART_RATE_DETECTED' ? '빈맥' : '서맥';
+                            const className = event.eventType === 'HIGH_HEART_RATE_DETECTED' ? 'high' : 'low';
+                            return `
+                                <div class="hr-event ${className}">
+                                    <span class="event-time">${time.toLocaleString('ko-KR')}</span>
+                                    <span class="event-type">${type}</span>
+                                </div>
+                            `;
+                        }).join('');
+                } else {
+                    eventsContainer.innerHTML = '';
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching heart rate events:', error);
+        }
+    }
+    
+    // 심박수 모달 닫기
+    window.closeHeartRateModal = function() {
+        const modal = document.getElementById('heartRateModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+    
+    // 체온 히스토리 모달 표시
+    async function showTemperatureHistory(wardedUserId, userName) {
+        const modal = document.getElementById('temperatureModal');
+        if (!modal) return;
+        
+        const modalTitle = document.getElementById('temperatureModalTitle');
+        if (modalTitle) {
+            modalTitle.textContent = `${userName} - 체온 히스토리`;
+        }
+        
+        modal.style.display = 'flex';
+        
+        // 24시간 전부터 현재까지의 데이터 가져오기
+        const now = new Date();
+        const dayBefore = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        
+        const fromDate = dayBefore.toISOString().split('T')[0];
+        const toDate = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        
+        try {
+            // 체온 데이터와 심박수 데이터 함께 가져오기
+            const tempUrl = `${API_BASE_URL}/watcher/period?wardedUserId=${wardedUserId}&bioDataTypes=BODY_TEMPERATURE&fromDate=${fromDate}&toDate=${toDate}`;
+            const hrUrl = `${API_BASE_URL}/watcher/period?wardedUserId=${wardedUserId}&bioDataTypes=HEART_BEAT&fromDate=${fromDate}&toDate=${toDate}`;
+            
+            const [tempResponse, hrResponse] = await Promise.all([
+                fetch(tempUrl, { headers: { 'Content-Type': 'application/json' } }),
+                fetch(hrUrl, { headers: { 'Content-Type': 'application/json' } })
+            ]);
+            
+            const tempData = await tempResponse.json();
+            const hrData = await hrResponse.json();
+            
+            if (tempData.code === "1000" && tempData.response && tempData.response.bodyTemperature) {
+                // 24시간 이내 데이터만 필터링
+                const filteredTempData = tempData.response.bodyTemperature.filter(item => {
+                    const itemTime = new Date(item.registrationDateTime);
+                    return itemTime >= dayBefore && itemTime <= now;
+                });
+                
+                // 심박수 데이터도 필터링
+                let filteredHrData = [];
+                if (hrData.code === "1000" && hrData.response && hrData.response.heartBeat) {
+                    filteredHrData = hrData.response.heartBeat.filter(item => {
+                        const itemTime = new Date(item.registrationDateTime);
+                        return itemTime >= dayBefore && itemTime <= now;
+                    });
+                }
+                
+                renderTemperatureChart(filteredTempData, filteredHrData);
+                updateTemperatureStats(filteredTempData, filteredHrData);
+            }
+        } catch (error) {
+            console.error('Error fetching temperature history:', error);
+        }
+    }
+    
+    // 체온 차트 렌더링 (2개 라인: 피부온, 대기온)
+    function renderTemperatureChart(tempData, hrData) {
+        const canvas = document.getElementById('temperatureChart');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, width, height);
+        
+        if (!tempData || tempData.length === 0) {
+            ctx.font = '16px Pretendard';
+            ctx.fillStyle = '#9CA3AF';
+            ctx.textAlign = 'center';
+            ctx.fillText('데이터가 없습니다', width / 2, height / 2);
+            return;
+        }
+        
+        // 시간순으로 정렬
+        tempData.sort((a, b) => new Date(a.registrationDateTime) - new Date(b.registrationDateTime));
+        
+        // 그래프 설정
+        const padding = { top: 40, right: 60, bottom: 60, left: 60 };
+        const chartWidth = width - padding.left - padding.right;
+        const chartHeight = height - padding.top - padding.bottom;
+        
+        // 피부온과 대기온 데이터 준비
+        const skinTemps = [];
+        const ambientTemps = [];
+        
+        tempData.forEach(item => {
+            const time = new Date(item.registrationDateTime);
+            const skinTemp = parseFloat(item.bodyTemperature || item.skinTemperature || 32);
+            const ambientTemp = parseFloat(item.ambientTemperature || 25);
+            
+            skinTemps.push({ time, value: skinTemp });
+            ambientTemps.push({ time, value: ambientTemp });
+        });
+        
+        // 최대/최소값 찾기
+        const allValues = [...skinTemps.map(d => d.value), ...ambientTemps.map(d => d.value)];
+        const minValue = Math.min(...allValues) - 2;
+        const maxValue = Math.max(...allValues) + 2;
+        
+        // 시간 범위
+        const startTime = skinTemps[0].time;
+        const endTime = skinTemps[skinTemps.length - 1].time;
+        const timeRange = endTime - startTime;
+        
+        // 그리드 그리기
+        ctx.strokeStyle = '#E5E7EB';
+        ctx.lineWidth = 0.5;
+        
+        // Y축 그리드
+        for (let i = 0; i <= 5; i++) {
+            const y = padding.top + (chartHeight / 5) * i;
+            ctx.beginPath();
+            ctx.moveTo(padding.left, y);
+            ctx.lineTo(width - padding.right, y);
+            ctx.stroke();
+            
+            // Y축 레이블
+            const value = (maxValue - ((maxValue - minValue) / 5) * i).toFixed(1);
+            ctx.fillStyle = '#6B7280';
+            ctx.font = '12px Pretendard';
+            ctx.textAlign = 'right';
+            ctx.fillText(value + '°C', padding.left - 10, y + 4);
+        }
+        
+        // X축 그리드
+        for (let i = 0; i <= 6; i++) {
+            const x = padding.left + (chartWidth / 6) * i;
+            ctx.beginPath();
+            ctx.moveTo(x, padding.top);
+            ctx.lineTo(x, height - padding.bottom);
+            ctx.stroke();
+            
+            // X축 레이블
+            const time = new Date(startTime.getTime() + (timeRange / 6) * i);
+            ctx.fillStyle = '#6B7280';
+            ctx.font = '12px Pretendard';
+            ctx.textAlign = 'center';
+            ctx.fillText(time.getHours() + ':' + String(time.getMinutes()).padStart(2, '0'), x, height - padding.bottom + 20);
+        }
+        
+        // 라인 그리기 함수
+        function drawLine(data, color, lineWidth = 2) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            ctx.beginPath();
+            
+            data.forEach((item, index) => {
+                const x = padding.left + (chartWidth * ((item.time - startTime) / timeRange));
+                const y = padding.top + chartHeight * (1 - (item.value - minValue) / (maxValue - minValue));
+                
+                if (index === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            
+            ctx.stroke();
+            
+            // 데이터 포인트
+            ctx.fillStyle = color;
+            data.forEach(item => {
+                const x = padding.left + (chartWidth * ((item.time - startTime) / timeRange));
+                const y = padding.top + chartHeight * (1 - (item.value - minValue) / (maxValue - minValue));
+                ctx.beginPath();
+                ctx.arc(x, y, 2, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+        
+        // 각 라인 그리기
+        drawLine(ambientTemps, '#10B981', 2);   // 대기온 - 초록
+        drawLine(skinTemps, '#3B82F6', 2);      // 피부온 - 파랑
+        
+        // 제목
+        ctx.fillStyle = '#111827';
+        ctx.font = 'bold 14px Pretendard';
+        ctx.textAlign = 'left';
+        ctx.fillText('온도 (°C)', padding.left, 25);
+    }
+    
+    // 체온 통계 업데이트
+    function updateTemperatureStats(tempData, hrData) {
+        if (!tempData || tempData.length === 0) {
+            document.getElementById('tempSkinAvg').textContent = '--';
+            document.getElementById('tempAmbientAvg').textContent = '--';
+            return;
+        }
+        
+        let skinTempSum = 0;
+        let ambientTempSum = 0;
+        
+        tempData.forEach(item => {
+            const skinTemp = parseFloat(item.bodyTemperature || item.skinTemperature || 32);
+            const ambientTemp = parseFloat(item.ambientTemperature || 25);
+            
+            skinTempSum += skinTemp;
+            ambientTempSum += ambientTemp;
+        });
+        
+        const count = tempData.length;
+        document.getElementById('tempSkinAvg').textContent = (skinTempSum / count).toFixed(1) + '°C';
+        document.getElementById('tempAmbientAvg').textContent = (ambientTempSum / count).toFixed(1) + '°C';
+    }
+    
+    // 체온 모달 닫기
+    window.closeTemperatureModal = function() {
+        const modal = document.getElementById('temperatureModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+    
+    // 상태 셀 클릭 이벤트 리스너 추가
+    document.addEventListener('click', (e) => {
+        // 상태 라벨 또는 상태 셀 클릭 감지
+        const statusCell = e.target.closest('.resident-table td:nth-child(3)');
+        if (statusCell) {
+            const row = statusCell.closest('tr');
+            const nameCell = row.querySelector('td:first-child');
+            const userName = nameCell?.textContent.trim();
+            
+            // wardedUserId 찾기 (데이터 속성에서 가져오거나 wardedUsers에서 검색)
+            const wardedUserId = row.getAttribute('data-warded-id') || 
+                                 wardedUsers.find(u => u.userName === userName)?.wardedUserId;
+            
+            if (wardedUserId) {
+                showStatusHistory(wardedUserId, userName);
+            }
+        }
+    });
+    
+    // 심박수 셀 클릭 이벤트 리스너 추가 (7번째 컬럼)
+    document.addEventListener('click', (e) => {
+        const heartRateCell = e.target.closest('.resident-table td:nth-child(7)');
+        if (heartRateCell && heartRateCell.textContent !== '--bpm') {
+            const row = heartRateCell.closest('tr');
+            const nameCell = row.querySelector('td:first-child');
+            const userName = nameCell?.textContent.trim();
+            
+            const wardedUserId = row.getAttribute('data-warded-id') || 
+                                 wardedUsers.find(u => u.userName === userName)?.wardedUserId;
+            
+            if (wardedUserId) {
+                showHeartRateHistory(wardedUserId, userName);
+            }
+        }
+    });
+    
+    // 체온 셀 클릭 이벤트 리스너 추가 (6번째 컬럼)
+    document.addEventListener('click', (e) => {
+        const temperatureCell = e.target.closest('.resident-table td:nth-child(6)');
+        if (temperatureCell && temperatureCell.textContent !== '--°C') {
+            const row = temperatureCell.closest('tr');
+            const nameCell = row.querySelector('td:first-child');
+            const userName = nameCell?.textContent.trim();
+            
+            const wardedUserId = row.getAttribute('data-warded-id') || 
+                                 wardedUsers.find(u => u.userName === userName)?.wardedUserId;
+            
+            if (wardedUserId) {
+                showTemperatureHistory(wardedUserId, userName);
+            }
+        }
+    });
+    
+    // 모달 초기화
+    setupStatusHistoryModal();
+    
     // 툴팁 이벤트 리스너 추가
     document.addEventListener('mouseover', (e) => {
         if (e.target.classList.contains('has-tooltip')) {

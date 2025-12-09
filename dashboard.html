@@ -45,7 +45,7 @@
     </header>
     <main class="dashboard-main" id="main-content">
       <section class="dashboard-status-bar">
-        <span class="dashboard-title">대시보드</span>
+        <span class="dashboard-title">스마트 요양원 대시보드</span>
         <span class="dashboard-desc">시설의 전체 현황을 한눈에 볼 수 있는 페이지 입니다. 필요사항을 보기 쉽게 변경/추가할 수 있습니다.</span>
         <span class="dashboard-date">5월 8일 목요일</span>
       </section>
@@ -214,12 +214,12 @@
                   <th>상태</th>
                   <th>위치</th>
                   <th>외출</th>
-                  <th>체온</th>
-                  <th>혈압</th>
+                  <th>피부온(대기온)</th>
                   <th>심박수</th>
+                  <th>걸음수</th>
+                  <th>혈압</th>
                   <th>SpO2</th>
                   <th>수면질</th>
-                  <th>걸음수</th>
                 </tr>
               </thead>
               <tbody>
@@ -567,6 +567,109 @@
     </div>
     <div class="outing-report-list" id="outing-report-list">
       <!-- 외출 항목이 여기에 동적으로 추가됨 -->
+    </div>
+  </div>
+</div>
+
+<!-- Status History Modal -->
+<div id="status-history-modal" class="modal-overlay hidden">
+  <div class="modal-content status-history-modal">
+    <button id="status-history-modal-close" class="modal-close">✕</button>
+    <h2 class="modal-title">상태 히스토리</h2>
+    <div class="status-history-header">
+      <h3 id="status-history-name">피보호자</h3>
+      <p id="status-history-period">지난 24시간</p>
+    </div>
+    
+    <!-- Events Section -->
+    <div id="status-history-events" class="status-history-section hidden">
+      <h4 class="section-title">⚠️ 이벤트</h4>
+      <div id="status-events-list" class="status-events-list">
+        <!-- 이벤트가 여기에 동적으로 추가됨 -->
+      </div>
+    </div>
+    
+    <!-- Status Timeline -->
+    <div class="status-history-section">
+      <h4 class="section-title">📊 상태 변화</h4>
+      <div id="status-timeline" class="status-timeline">
+        <!-- 상태 히스토리가 여기에 동적으로 추가됨 -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Temperature History Modal -->
+<div id="temperatureModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="temperatureModalTitle">체온 히스토리</h2>
+      <span class="modal-close" onclick="closeTemperatureModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="chart-controls">
+        <div class="time-range-selector">
+          <button class="range-btn active" data-range="24h">24시간</button>
+        </div>
+        <div class="temperature-stats">
+          <div class="stat-item">
+            <span class="stat-label">피부온 평균</span>
+            <span id="tempSkinAvg" class="stat-value">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">대기온 평균</span>
+            <span id="tempAmbientAvg" class="stat-value">--</span>
+          </div>
+        </div>
+      </div>
+      <div class="chart-legend">
+        <div class="legend-item">
+          <span class="legend-color" style="background: #3B82F6;"></span>
+          <span>피부온</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color" style="background: #10B981;"></span>
+          <span>대기온</span>
+        </div>
+      </div>
+      <canvas id="temperatureChart" width="800" height="400"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Heart Rate History Modal -->
+<div id="heartRateModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="heartRateModalTitle">심박수 히스토리</h2>
+      <span class="modal-close" onclick="closeHeartRateModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="chart-controls">
+        <div class="time-range-selector">
+          <button class="range-btn active" data-range="24h">24시간</button>
+          <!-- <button class="range-btn" data-range="12h">12시간</button>
+          <button class="range-btn" data-range="6h">6시간</button> -->
+        </div>
+        <div class="heart-rate-stats">
+          <div class="stat-item">
+            <span class="stat-label">평균</span>
+            <span id="hrAvg" class="stat-value">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">최고</span>
+            <span id="hrMax" class="stat-value">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">최저</span>
+            <span id="hrMin" class="stat-value">--</span>
+          </div>
+        </div>
+      </div>
+      <canvas id="heartRateChart" width="800" height="400"></canvas>
+      <div id="heartRateEvents" class="heart-rate-events">
+        <!-- 심박수 관련 이벤트 표시 -->
+      </div>
     </div>
   </div>
 </div>

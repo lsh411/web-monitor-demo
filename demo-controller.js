@@ -958,7 +958,11 @@ class DemoController {
             heartBeat: [{ heartBeat: resident.hr, registrationDateTime: new Date().toISOString() }],
             oxygenStatus: [{ oxygenSaturation: resident.spo2, registrationDateTime: new Date().toISOString() }],
             steps: [{ stepsDaily: stepsDaily, step_date: new Date().toISOString().split('T')[0] }],
-            temperature: [{ temperature: resident.temp, registrationDateTime: new Date().toISOString() }],
+            bodyTemperature: [{ 
+                bodyTemperature: parseFloat((31.0 + Math.random() * 2.5).toFixed(1)), // 피부온도 31-33.5도
+                ambientTemperature: parseFloat((22.0 + Math.random() * 3.0).toFixed(1)), // 대기온도 22-25도
+                registrationDateTime: new Date().toISOString() 
+            }],
             bloodPressure: [{ 
                 systolic: systolic, 
                 diastolic: diastolic, 
