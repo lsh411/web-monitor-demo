@@ -9,7 +9,13 @@
       "Bash(pkill:*)",
       "Bash(cp:*)",
       "Bash(ls:*)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(git checkout:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: API 키 보안 및 기능 통합\n\n- config.js에서 OpenAI/Kakao API 키 제거 \\(백엔드 Parameter Store 사용\\)\n- AI 요약/리포트: 백엔드 프록시 \\(/watcher/ai/summary, /watcher/ai/report\\)\n- 역지오코딩: 백엔드 프록시 \\(/watcher/geocode/reverse\\)\n- 외출 리포트, 출퇴근 리포트, AI 리포트 페이지 추가\n- 데모 모드 컨트롤러 추가\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(git merge:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }
