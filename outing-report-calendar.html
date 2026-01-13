@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>헬로온 외출 리포트 (캘린더)</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    /* 외출 리포트 전용 스타일 */
+    .outing-report-main {
+      max-width: 100%;
+      padding: 10px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .outing-report-status-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #FFFFFF;
+      border-radius: 12px;
+      padding: 16px 24px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.03), 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .outing-report-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .outing-report-desc {
+      color: #6B7280;
+      font-size: 0.875rem;
+      font-weight: 400;
+      flex: 1;
+    }
+
+    /* 필터 영역 */
+    .outing-filters {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: #FFFFFF;
+      padding: 16px 24px;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      flex-wrap: wrap;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #374151;
+    }
+
+    .filter-select {
+      padding: 8px 12px;
+      border: 1px solid #E5E7EB;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: 'Pretendard', sans-serif;
+      background: #fff;
+      min-width: 150px;
+    }
+
+    .btn-print {
+      padding: 8px 20px;
+      background: #F3F4F6;
+      color: #374151;
+      border: 1px solid #E5E7EB;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-left: auto;
+    }
+
+    .btn-print:hover {
+      background: #E5E7EB;
+    }
+
+    /* 요약 카드 */
+    .outing-summary-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .summary-card {
+      background: #FFFFFF;
+      border-radius: 12px;
+      padding: 20px 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .summary-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .summary-icon.blue { background: #EFF6FF; }
+    .summary-icon.green { background: #ECFDF5; }
+    .summary-icon.purple { background: #F5F3FF; }
+    .summary-icon.orange { background: #FFF7ED; }
+
+    .summary-info {
+      flex: 1;
+    }
+
+    .summary-label {
+      font-size: 13px;
+      color: #6B7280;
+      margin-bottom: 4px;
+    }
+
+    .summary-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .summary-sub {
+      font-size: 12px;
+      color: #9CA3AF;
+      margin-top: 2px;
+    }
+
+    /* 캘린더 컨테이너 */
+    .calendar-container {
+      background: #FFFFFF;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .calendar-nav {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .calendar-nav-btn {
+      width: 36px;
+      height: 36px;
+      border: 1px solid #E5E7EB;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .calendar-nav-btn:hover {
+      background: #F3F4F6;
+      border-color: #D1D5DB;
+    }
+
+    .calendar-month-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #111827;
+      min-width: 180px;
+      text-align: center;
+    }
+
+    .calendar-legend {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #6B7280;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .legend-dot.outing { background: #3B82F6; }
+    .legend-dot.multiple { background: #8B5CF6; }
+    .legend-dot.warning { background: #F59E0B; }
+
+    /* 캘린더 그리드 */
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+      background: #E5E7EB;
+      border: 1px solid #E5E7EB;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .calendar-weekday {
+      background: #F9FAFB;
+      padding: 12px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: #6B7280;
+    }
+
+    .calendar-weekday.sunday { color: #EF4444; }
+    .calendar-weekday.saturday { color: #3B82F6; }
+
+    .calendar-day {
+      background: #FFFFFF;
+      min-height: 100px;
+      padding: 8px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .calendar-day:hover {
+      background: #F9FAFB;
+    }
+
+    .calendar-day.other-month {
+      background: #F9FAFB;
+    }
+
+    .calendar-day.other-month .day-number {
+      color: #D1D5DB;
+    }
+
+    .calendar-day.today {
+      background: #EFF6FF;
+    }
+
+    .calendar-day.today .day-number {
+      background: #3B82F6;
+      color: white;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .day-number {
+      font-size: 14px;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 4px;
+    }
+
+    .calendar-day.sunday .day-number { color: #EF4444; }
+    .calendar-day.saturday .day-number { color: #3B82F6; }
+
+    /* 외출 이벤트 - 이름+시간 스타일 */
+    .day-events {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-top: 4px;
+    }
+
+    .day-outing-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      padding: 2px 4px;
+      border-radius: 3px;
+      background: #EFF6FF;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .day-outing-item:hover {
+      background: #DBEAFE;
+    }
+
+    .day-outing-item.warning {
+      background: #FEF3C7;
+    }
+
+    .day-outing-item.warning:hover {
+      background: #FDE68A;
+    }
+
+    .day-outing-name {
+      font-weight: 500;
+      color: #1E40AF;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 50px;
+    }
+
+    .day-outing-item.warning .day-outing-name {
+      color: #B45309;
+    }
+
+    .day-outing-duration {
+      font-size: 10px;
+      color: #6B7280;
+      white-space: nowrap;
+    }
+
+    .day-outing-item.warning .day-outing-duration {
+      color: #92400E;
+    }
+
+    .day-more {
+      font-size: 10px;
+      color: #6B7280;
+      text-align: center;
+      padding: 2px;
+      cursor: pointer;
+    }
+
+    .day-more:hover {
+      color: #374151;
+      text-decoration: underline;
+    }
+
+    .day-event {
+      font-size: 11px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+    }
+
+    .day-event.outing {
+      background: #DBEAFE;
+      color: #1D4ED8;
+    }
+
+    .day-event.multiple {
+      background: #EDE9FE;
+      color: #6D28D9;
+    }
+
+    .day-event.warning {
+      background: #FEF3C7;
+      color: #92400E;
+    }
+
+    .day-event-more {
+      font-size: 11px;
+      color: #6B7280;
+      padding: 2px 4px;
+      cursor: pointer;
+    }
+
+    .day-event-more:hover {
+      color: #3B82F6;
+      text-decoration: underline;
+    }
+
+    /* 외출 있는 날 배경 하이라이트 */
+    .calendar-day.has-outing {
+      background: #F0F9FF;
+    }
+
+    .calendar-day.has-outing:hover {
+      background: #E0F2FE;
+    }
+
+    .calendar-day.has-warning {
+      background: #FFFBEB;
+    }
+
+    .calendar-day.has-warning:hover {
+      background: #FEF3C7;
+    }
+
+    /* 상세 모달 */
+    .day-detail-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .day-detail-modal.active {
+      display: flex;
+    }
+
+    .day-detail-content {
+      background: #FFFFFF;
+      border-radius: 12px;
+      padding: 24px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+
+    .day-detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #E5E7EB;
+    }
+
+    .day-detail-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .day-detail-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: #F3F4F6;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .day-detail-close:hover {
+      background: #E5E7EB;
+    }
+
+    .day-detail-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .day-detail-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: #F9FAFB;
+      border-radius: 8px;
+    }
+
+    .detail-profile {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .detail-info {
+      flex: 1;
+    }
+
+    .detail-name {
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .detail-meta {
+      font-size: 13px;
+      color: #6B7280;
+    }
+
+    .detail-time {
+      text-align: right;
+    }
+
+    .detail-time-value {
+      font-weight: 600;
+      color: #2A6AA6;
+    }
+
+    .detail-time-label {
+      font-size: 12px;
+      color: #9CA3AF;
+    }
+
+    /* 인쇄 스타일 */
+    @media print {
+      .main-header,
+      .outing-filters,
+      .btn-print,
+      .calendar-nav-btn,
+      .no-print {
+        display: none !important;
+      }
+
+      .main-bg {
+        background: white;
+      }
+
+      .outing-report-main {
+        padding: 0;
+      }
+
+      .calendar-container,
+      .summary-card {
+        box-shadow: none;
+        border: 1px solid #E5E7EB;
+      }
+
+      .calendar-day {
+        min-height: 80px;
+      }
+
+      @page {
+        margin: 1cm;
+        size: landscape;
+      }
+    }
+
+    /* 모바일 반응형 */
+    @media (max-width: 1024px) {
+      .outing-summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .outing-report-main {
+        padding: 10px 16px;
+      }
+
+      .outing-report-status-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .outing-summary-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .outing-filters {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn-print {
+        margin-left: 0;
+        width: 100%;
+      }
+
+      .calendar-day {
+        min-height: 60px;
+        padding: 4px;
+      }
+
+      .day-number {
+        font-size: 12px;
+      }
+
+      .day-event {
+        font-size: 10px;
+        padding: 2px 4px;
+      }
+
+      .calendar-legend {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="main-bg">
+    <header class="main-header">
+      <div class="logo-nav">
+        <img src="assets/hello-on_logotype.png" alt="헬로온 로고" class="hello-logo" />
+        <nav class="gnb">
+          <button class="gnb-btn" data-page="dashboard.html" onclick="navigateTo('dashboard-v2.html')"><span class="icon dashboard"></span>대시보드</button>
+          <button class="gnb-btn active" data-page="outing-report.html"><span class="icon record"></span>외출리포트</button>
+          <button class="gnb-btn" data-page="record.html" onclick="navigateTo('record.html')"><span class="icon record"></span>관리기록</button>
+        </nav>
+      </div>
+      <div class="header-actions">
+        <button class="settings-btn" title="인원 관리">
+          <span class="icon settings"></span>
+        </button>
+        <div class="user-menu">
+          <span class="user-name" id="user-display-name">silvercare2</span>
+          <button class="logout-btn" onclick="logout()">로그아웃</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="outing-report-main">
+      <!-- 상태바 -->
+      <section class="outing-report-status-bar">
+        <span class="outing-report-title">외출 리포트</span>
+        <span class="outing-report-desc">입소자의 월별 외출 현황을 캘린더로 확인하고 출력할 수 있습니다.</span>
+      </section>
+
+      <!-- 필터 영역 -->
+      <section class="outing-filters no-print">
+        <div class="filter-group">
+          <span class="filter-label">입소자</span>
+          <select id="filter-resident" class="filter-select">
+            <option value="">전체 입소자</option>
+            <option value="ward001">김영수 (101호)</option>
+            <option value="ward002">박순자 (102호)</option>
+            <option value="ward003">이철수 (103호)</option>
+          </select>
+        </div>
+        <button class="btn-print" onclick="window.print()">🖨️ 인쇄</button>
+      </section>
+
+      <!-- 요약 카드 -->
+      <section class="outing-summary-cards">
+        <div class="summary-card">
+          <div class="summary-icon blue">🚶</div>
+          <div class="summary-info">
+            <div class="summary-label">총 외출 건수</div>
+            <div class="summary-value">24건</div>
+            <div class="summary-sub">이번 달 전체</div>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon green">⏱️</div>
+          <div class="summary-info">
+            <div class="summary-label">총 외출 시간</div>
+            <div class="summary-value">18시간 35분</div>
+            <div class="summary-sub">평균 46분/회</div>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon purple">👥</div>
+          <div class="summary-info">
+            <div class="summary-label">외출 입소자</div>
+            <div class="summary-value">8명 / 26명</div>
+            <div class="summary-sub">30.8% 외출 경험</div>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon orange">📅</div>
+          <div class="summary-info">
+            <div class="summary-label">외출 있는 날</div>
+            <div class="summary-value">12일</div>
+            <div class="summary-sub">이번 달 기준</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 캘린더 -->
+      <section class="calendar-container">
+        <div class="calendar-header">
+          <div class="calendar-nav">
+            <button class="calendar-nav-btn" onclick="changeMonth(-1)">◀</button>
+            <span class="calendar-month-title" id="calendar-title">2025년 12월</span>
+            <button class="calendar-nav-btn" onclick="changeMonth(1)">▶</button>
+          </div>
+          <div class="calendar-legend">
+            <div class="legend-item">
+              <span class="legend-dot outing"></span>
+              <span>외출 1회</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot multiple"></span>
+              <span>외출 2회+</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot warning"></span>
+              <span>장시간 외출</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="calendar-grid" id="calendar-grid">
+          <!-- 요일 헤더 -->
+          <div class="calendar-weekday sunday">일</div>
+          <div class="calendar-weekday">월</div>
+          <div class="calendar-weekday">화</div>
+          <div class="calendar-weekday">수</div>
+          <div class="calendar-weekday">목</div>
+          <div class="calendar-weekday">금</div>
+          <div class="calendar-weekday saturday">토</div>
+
+          <!-- 캘린더 날짜 (동적 생성) -->
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 날짜 상세 모달 -->
+  <div class="day-detail-modal" id="day-detail-modal">
+    <div class="day-detail-content">
+      <div class="day-detail-header">
+        <span class="day-detail-title" id="detail-title">12월 3일 (화) 외출 내역</span>
+        <button class="day-detail-close" onclick="closeDayDetail()">✕</button>
+      </div>
+      <div class="day-detail-list" id="detail-list">
+        <!-- 동적 생성 -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 현재 표시 중인 년/월
+    let currentYear = 2025;
+    let currentMonth = 12;
+
+    // 외출 데이터 (목업) - 12월 전체
+    const outingData = {
+      '2025-12-01': [
+        { name: '이철수', age: 72, room: '103호', time: '08:30~09:20', duration: '50분', location: '용인시 기흥구', profile: 'assets/status_03.png' }
+      ],
+      '2025-12-02': [
+        { name: '김영수', age: 77, room: '101호', time: '09:00~09:40', duration: '40분', location: '용인시 기흥구', profile: 'assets/status_01.png' },
+        { name: '박순자', age: 84, room: '102호', time: '10:30~11:00', duration: '30분', location: '용인시 수지구', profile: 'assets/status_02.png' }
+      ],
+      '2025-12-03': [
+        { name: '김영수', age: 77, room: '101호', time: '10:30~11:15', duration: '45분', location: '용인시 기흥구', profile: 'assets/status_01.png' }
+      ],
+      '2025-12-04': [
+        { name: '이철수', age: 72, room: '103호', time: '10:15~11:00', duration: '45분', location: '용인시 수지구', profile: 'assets/status_03.png' },
+        { name: '정미숙', age: 79, room: '105호', time: '14:00~14:45', duration: '45분', location: '용인시 기흥구', profile: 'assets/status_05.png' }
+      ],
+      '2025-12-05': [
+        { name: '박순자', age: 84, room: '102호', time: '10:00~10:40', duration: '40분', location: '용인시 수지구 공원', profile: 'assets/status_02.png' }
+      ],
+      '2025-12-06': [
+        { name: '이철수', age: 72, room: '103호', time: '14:00~14:50', duration: '50분', location: '용인시 기흥구', profile: 'assets/status_03.png' },
+        { name: '김영수', age: 77, room: '101호', time: '09:00~09:35', duration: '35분', location: '용인시 기흥구', profile: 'assets/status_01.png' },
+        { name: '홍길동', age: 81, room: '106호', time: '11:00~11:40', duration: '40분', location: '용인시 수지구', profile: 'assets/status_06.png' }
+      ],
+      '2025-12-07': [
+        { name: '김영수', age: 77, room: '101호', time: '14:20~15:05', duration: '45분', location: '용인시 수지구', profile: 'assets/status_01.png' },
+        { name: '최영희', age: 80, room: '104호', time: '09:00~11:30', duration: '2시간 30분', location: '용인시 처인구 병원', profile: 'assets/status_04.png', warning: true }
+      ],
+      '2025-12-08': [
+        { name: '이철수', age: 72, room: '103호', time: '09:00~09:45', duration: '45분', location: '용인시 기흥구', profile: 'assets/status_03.png' }
+      ],
+      '2025-12-09': [
+        { name: '이철수', age: 72, room: '103호', time: '15:30~16:20', duration: '50분', location: '용인시 수지구 병원', profile: 'assets/status_03.png' },
+        { name: '정미숙', age: 79, room: '105호', time: '10:00~10:30', duration: '30분', location: '용인시 기흥구', profile: 'assets/status_05.png' }
+      ],
+      '2025-12-10': [
+        { name: '김영수', age: 77, room: '101호', time: '09:00~09:30', duration: '30분', location: '용인시 기흥구', profile: 'assets/status_01.png' },
+        { name: '최영희', age: 80, room: '104호', time: '11:20~11:45', duration: '25분', location: '용인시 기흥구', profile: 'assets/status_04.png' }
+      ],
+      '2025-12-11': [
+        { name: '박순자', age: 84, room: '102호', time: '14:00~14:35', duration: '35분', location: '용인시 기흥구', profile: 'assets/status_02.png' }
+      ],
+      '2025-12-12': [
+        { name: '김영수', age: 77, room: '101호', time: '15:45~16:30', duration: '45분', location: '용인시 기흥구 병원', profile: 'assets/status_01.png' },
+        { name: '이철수', age: 72, room: '103호', time: '10:00~10:35', duration: '35분', location: '용인시 수지구', profile: 'assets/status_03.png' },
+        { name: '박순자', age: 84, room: '102호', time: '09:00~09:25', duration: '25분', location: '용인시 기흥구', profile: 'assets/status_02.png' },
+        { name: '최영희', age: 80, room: '104호', time: '14:00~14:40', duration: '40분', location: '용인시 기흥구', profile: 'assets/status_04.png' }
+      ],
+      '2025-12-13': [
+        { name: '박순자', age: 84, room: '102호', time: '09:30~10:05', duration: '35분', location: '용인시 기흥구', profile: 'assets/status_02.png' },
+        { name: '이철수', age: 72, room: '103호', time: '10:00~10:45', duration: '45분', location: '용인시 기흥구', profile: 'assets/status_03.png' },
+        { name: '최영희', age: 80, room: '104호', time: '14:00~14:30', duration: '30분', location: '용인시 기흥구', profile: 'assets/status_04.png' }
+      ],
+      '2025-12-14': [
+        { name: '김영수', age: 77, room: '101호', time: '11:00~11:35', duration: '35분', location: '용인시 기흥구', profile: 'assets/status_01.png' },
+        { name: '홍길동', age: 81, room: '106호', time: '09:00~12:00', duration: '3시간', location: '용인시 처인구 종합병원', profile: 'assets/status_06.png', warning: true },
+        { name: '정미숙', age: 79, room: '105호', time: '14:30~15:10', duration: '40분', location: '용인시 수지구', profile: 'assets/status_05.png' },
+        { name: '박순자', age: 84, room: '102호', time: '10:00~10:25', duration: '25분', location: '용인시 기흥구', profile: 'assets/status_02.png' },
+        { name: '이철수', age: 72, room: '103호', time: '15:00~15:40', duration: '40분', location: '용인시 기흥구', profile: 'assets/status_03.png' }
+      ],
+      '2025-12-15': [
+        { name: '이철수', age: 72, room: '103호', time: '08:00~10:30', duration: '2시간 30분', location: '용인시 처인구', profile: 'assets/status_03.png', warning: true }
+      ],
+      '2025-12-16': [
+        { name: '김영수', age: 77, room: '101호', time: '10:00~10:40', duration: '40분', location: '용인시 기흥구', profile: 'assets/status_01.png' },
+        { name: '박순자', age: 84, room: '102호', time: '14:00~14:30', duration: '30분', location: '용인시 수지구', profile: 'assets/status_02.png' }
+      ],
+      '2025-12-17': [
+        { name: '정미숙', age: 79, room: '105호', time: '09:30~10:15', duration: '45분', location: '용인시 기흥구', profile: 'assets/status_05.png' }
+      ],
+      '2025-12-18': [
+        { name: '이철수', age: 72, room: '103호', time: '11:00~11:45', duration: '45분', location: '용인시 수지구', profile: 'assets/status_03.png' },
+        { name: '최영희', age: 80, room: '104호', time: '15:00~15:35', duration: '35분', location: '용인시 기흥구', profile: 'assets/status_04.png' }
+      ],
+      '2025-12-19': [
+        { name: '김영수', age: 77, room: '101호', time: '09:00~09:30', duration: '30분', location: '용인시 기흥구', profile: 'assets/status_01.png' },
+        { name: '박순자', age: 84, room: '102호', time: '10:30~11:00', duration: '30분', location: '용인시 기흥구', profile: 'assets/status_02.png' },
+        { name: '홍길동', age: 81, room: '106호', time: '14:00~14:45', duration: '45분', location: '용인시 수지구', profile: 'assets/status_06.png' }
+      ],
+      '2025-12-20': [
+        { name: '이철수', age: 72, room: '103호', time: '10:00~10:50', duration: '50분', location: '용인시 기흥구', profile: 'assets/status_03.png' }
+      ],
+      '2025-12-21': [
+        { name: '김영수', age: 77, room: '101호', time: '09:00~09:40', duration: '40분', location: '용인시 기흥구', profile: 'assets/status_01.png' },
+        { name: '박순자', age: 84, room: '102호', time: '10:00~10:30', duration: '30분', location: '용인시 수지구', profile: 'assets/status_02.png' },
+        { name: '이철수', age: 72, room: '103호', time: '14:00~14:45', duration: '45분', location: '용인시 기흥구', profile: 'assets/status_03.png' },
+        { name: '최영희', age: 80, room: '104호', time: '11:00~13:30', duration: '2시간 30분', location: '용인시 처인구 병원', profile: 'assets/status_04.png', warning: true },
+        { name: '정미숙', age: 79, room: '105호', time: '15:30~16:00', duration: '30분', location: '용인시 기흥구', profile: 'assets/status_05.png' },
+        { name: '홍길동', age: 81, room: '106호', time: '09:30~10:10', duration: '40분', location: '용인시 수지구', profile: 'assets/status_06.png' }
+      ],
+      '2025-12-22': [
+        { name: '정미숙', age: 79, room: '105호', time: '10:00~10:35', duration: '35분', location: '용인시 기흥구', profile: 'assets/status_05.png' }
+      ],
+      '2025-12-23': [
+        { name: '김영수', age: 77, room: '101호', time: '11:00~11:40', duration: '40분', location: '용인시 수지구', profile: 'assets/status_01.png' },
+        { name: '이철수', age: 72, room: '103호', time: '09:00~09:45', duration: '45분', location: '용인시 기흥구', profile: 'assets/status_03.png' }
+      ],
+      '2025-12-24': [
+        { name: '박순자', age: 84, room: '102호', time: '14:00~14:30', duration: '30분', location: '용인시 기흥구', profile: 'assets/status_02.png' },
+        { name: '최영희', age: 80, room: '104호', time: '10:00~10:40', duration: '40분', location: '용인시 수지구', profile: 'assets/status_04.png' },
+        { name: '홍길동', age: 81, room: '106호', time: '15:00~15:45', duration: '45분', location: '용인시 기흥구', profile: 'assets/status_06.png' }
+      ],
+      '2025-12-25': [
+        { name: '김영수', age: 77, room: '101호', time: '10:00~10:30', duration: '30분', location: '용인시 기흥구', profile: 'assets/status_01.png' },
+        { name: '박순자', age: 84, room: '102호', time: '11:00~11:25', duration: '25분', location: '용인시 기흥구', profile: 'assets/status_02.png' },
+        { name: '이철수', age: 72, room: '103호', time: '09:00~09:35', duration: '35분', location: '용인시 수지구', profile: 'assets/status_03.png' },
+        { name: '최영희', age: 80, room: '104호', time: '14:00~14:40', duration: '40분', location: '용인시 기흥구', profile: 'assets/status_04.png' }
+      ],
+      '2025-12-26': [
+        { name: '정미숙', age: 79, room: '105호', time: '10:30~11:15', duration: '45분', location: '용인시 기흥구', profile: 'assets/status_05.png' }
+      ],
+      '2025-12-27': [
+        { name: '이철수', age: 72, room: '103호', time: '09:00~09:50', duration: '50분', location: '용인시 기흥구', profile: 'assets/status_03.png' },
+        { name: '홍길동', age: 81, room: '106호', time: '14:00~14:40', duration: '40분', location: '용인시 수지구', profile: 'assets/status_06.png' }
+      ],
+      '2025-12-28': [
+        { name: '김영수', age: 77, room: '101호', time: '10:00~10:45', duration: '45분', location: '용인시 기흥구', profile: 'assets/status_01.png' },
+        { name: '박순자', age: 84, room: '102호', time: '11:30~12:00', duration: '30분', location: '용인시 수지구', profile: 'assets/status_02.png' },
+        { name: '최영희', age: 80, room: '104호', time: '09:00~11:30', duration: '2시간 30분', location: '용인시 처인구 병원', profile: 'assets/status_04.png', warning: true }
+      ],
+      '2025-12-29': [
+        { name: '이철수', age: 72, room: '103호', time: '14:00~14:50', duration: '50분', location: '용인시 기흥구', profile: 'assets/status_03.png' }
+      ],
+      '2025-12-30': [
+        { name: '김영수', age: 77, room: '101호', time: '09:30~10:10', duration: '40분', location: '용인시 기흥구', profile: 'assets/status_01.png' },
+        { name: '정미숙', age: 79, room: '105호', time: '11:00~11:35', duration: '35분', location: '용인시 수지구', profile: 'assets/status_05.png' }
+      ],
+      '2025-12-31': [
+        { name: '박순자', age: 84, room: '102호', time: '10:00~10:30', duration: '30분', location: '용인시 기흥구', profile: 'assets/status_02.png' },
+        { name: '이철수', age: 72, room: '103호', time: '15:00~15:40', duration: '40분', location: '용인시 기흥구', profile: 'assets/status_03.png' },
+        { name: '홍길동', age: 81, room: '106호', time: '09:00~09:45', duration: '45분', location: '용인시 수지구', profile: 'assets/status_06.png' }
+      ]
+    };
+
+    // 캘린더 렌더링
+    function renderCalendar() {
+      const grid = document.getElementById('calendar-grid');
+
+      // 요일 헤더 유지
+      const weekdayHtml = `
+        <div class="calendar-weekday sunday">일</div>
+        <div class="calendar-weekday">월</div>
+        <div class="calendar-weekday">화</div>
+        <div class="calendar-weekday">수</div>
+        <div class="calendar-weekday">목</div>
+        <div class="calendar-weekday">금</div>
+        <div class="calendar-weekday saturday">토</div>
+      `;
+
+      // 해당 월의 첫째 날과 마지막 날
+      const firstDay = new Date(currentYear, currentMonth - 1, 1);
+      const lastDay = new Date(currentYear, currentMonth, 0);
+      const startDayOfWeek = firstDay.getDay();
+      const daysInMonth = lastDay.getDate();
+
+      // 이전 달의 날짜들
+      const prevMonthLastDay = new Date(currentYear, currentMonth - 1, 0).getDate();
+
+      let daysHtml = '';
+
+      // 이전 달 날짜
+      for (let i = startDayOfWeek - 1; i >= 0; i--) {
+        const day = prevMonthLastDay - i;
+        daysHtml += `<div class="calendar-day other-month"><span class="day-number">${day}</span></div>`;
+      }
+
+      // 현재 달 날짜
+      const today = new Date();
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(currentYear, currentMonth - 1, day);
+        const dayOfWeek = date.getDay();
+        const dateKey = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const events = outingData[dateKey] || [];
+
+        let dayClass = 'calendar-day';
+        if (dayOfWeek === 0) dayClass += ' sunday';
+        if (dayOfWeek === 6) dayClass += ' saturday';
+        if (today.getFullYear() === currentYear && today.getMonth() === currentMonth - 1 && today.getDate() === day) {
+          dayClass += ' today';
+        }
+
+        let eventsHtml = '';
+        let hasWarning = events.some(e => e.warning);
+
+        if (events.length > 0) {
+          dayClass += ' has-outing';
+          if (hasWarning) dayClass += ' has-warning';
+
+          eventsHtml = '<div class="day-events">';
+
+          // 모든 외출 내역 표시
+          events.forEach(event => {
+            let itemClass = 'day-outing-item';
+            if (event.warning) itemClass += ' warning';
+            eventsHtml += `
+              <div class="${itemClass}">
+                <span class="day-outing-name">${event.name}</span>
+                <span class="day-outing-duration">${event.duration}</span>
+              </div>`;
+          });
+
+          eventsHtml += '</div>'; // day-events
+        }
+
+        daysHtml += `
+          <div class="${dayClass}" onclick="showDayDetail('${dateKey}')">
+            <span class="day-number">${day}</span>
+            ${eventsHtml}
+          </div>
+        `;
+      }
+
+      // 다음 달 날짜
+      const totalCells = startDayOfWeek + daysInMonth;
+      const remainingCells = (7 - (totalCells % 7)) % 7;
+      for (let i = 1; i <= remainingCells; i++) {
+        daysHtml += `<div class="calendar-day other-month"><span class="day-number">${i}</span></div>`;
+      }
+
+      grid.innerHTML = weekdayHtml + daysHtml;
+
+      // 타이틀 업데이트
+      document.getElementById('calendar-title').textContent = `${currentYear}년 ${currentMonth}월`;
+    }
+
+    // 월 변경
+    function changeMonth(delta) {
+      currentMonth += delta;
+      if (currentMonth > 12) {
+        currentMonth = 1;
+        currentYear++;
+      } else if (currentMonth < 1) {
+        currentMonth = 12;
+        currentYear--;
+      }
+      renderCalendar();
+    }
+
+    // 날짜 상세 보기
+    function showDayDetail(dateKey) {
+      const events = outingData[dateKey];
+      if (!events || events.length === 0) return;
+
+      const [year, month, day] = dateKey.split('-');
+      const date = new Date(year, month - 1, day);
+      const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+      const dayName = dayNames[date.getDay()];
+
+      document.getElementById('detail-title').textContent =
+        `${parseInt(month)}월 ${parseInt(day)}일 (${dayName}) 외출 내역`;
+
+      let listHtml = '';
+      events.forEach(event => {
+        listHtml += `
+          <div class="day-detail-item">
+            <img src="${event.profile}" class="detail-profile" alt="프로필">
+            <div class="detail-info">
+              <div class="detail-name">${event.name}</div>
+              <div class="detail-meta">${event.age}세 · ${event.room} · ${event.location}</div>
+            </div>
+            <div class="detail-time">
+              <div class="detail-time-value">${event.duration}</div>
+              <div class="detail-time-label">${event.time}</div>
+            </div>
+          </div>
+        `;
+      });
+
+      document.getElementById('detail-list').innerHTML = listHtml;
+      document.getElementById('day-detail-modal').classList.add('active');
+    }
+
+    // 모달 닫기
+    function closeDayDetail() {
+      document.getElementById('day-detail-modal').classList.remove('active');
+    }
+
+    // 모달 외부 클릭시 닫기
+    document.getElementById('day-detail-modal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeDayDetail();
+      }
+    });
+
+    // 네비게이션
+    function navigateTo(page) {
+      window.location.href = page;
+    }
+
+    // 로그아웃
+    function logout() {
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('userType');
+      window.location.href = 'index.html';
+    }
+
+    // 초기화
+    document.addEventListener('DOMContentLoaded', function() {
+      const now = new Date();
+      currentYear = now.getFullYear();
+      currentMonth = now.getMonth() + 1;
+      renderCalendar();
+    });
+  </script>
+</body>
+</html>

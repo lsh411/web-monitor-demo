@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Demo Debug Test</title>
+</head>
+<body>
+    <h1>Demo Controller Debug Test</h1>
+    <div id="log"></div>
+    
+    <script src="config.js"></script>
+    <script>
+        const log = document.getElementById('log');
+        function addLog(msg) {
+            log.innerHTML += '<div>' + msg + '</div>';
+        }
+        
+        addLog('1. config.js loaded');
+        addLog('API_CONFIG exists: ' + (typeof window.API_CONFIG !== 'undefined'));
+    </script>
+    
+    <script src="demo-controller.js"></script>
+    <script>
+        addLog('2. demo-controller.js loaded');
+        addLog('demoController exists: ' + (typeof window.demoController !== 'undefined'));
+    </script>
+    
+    <script src="script.js"></script>
+    <script>
+        addLog('3. script.js loaded');
+        addLog('fetchMappings exists: ' + (typeof window.fetchMappings !== 'undefined'));
+        addLog('renderResidentTable exists: ' + (typeof window.renderResidentTable !== 'undefined'));
+        
+        // Test demo functions
+        if (window.demoController) {
+            addLog('4. Testing demo functions:');
+            const mappings = window.demoController.getDemoMappings();
+            addLog('getDemoMappings returned ' + mappings.length + ' items');
+            
+            // Test if fetchMappings is overridden
+            addLog('5. Testing fetchMappings override:');
+            window.fetchMappings().then(data => {
+                addLog('fetchMappings returned ' + data.length + ' items');
+            });
+        }
+    </script>
+</body>
+</html>

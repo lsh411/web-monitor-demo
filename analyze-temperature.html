@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temperature Analysis</title>
+    <style>
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+            padding: 20px;
+            background: #f3f4f6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #111827;
+            margin-bottom: 30px;
+        }
+        .analysis-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+        .analysis-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 15px;
+        }
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .data-label {
+            font-weight: 500;
+            color: #6b7280;
+        }
+        .data-value {
+            font-weight: 600;
+            color: #111827;
+        }
+        .highest { background: #fef2f2; }
+        .lowest { background: #eff6ff; }
+        .median { background: #f0fdf4; }
+        button {
+            background: #2A6AA6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            background: #1f4f80;
+        }
+        #status {
+            padding: 10px;
+            background: #fef3c7;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>피보호자 체온 데이터 분석 (24시간)</h1>
+        
+        <button onclick="analyzeTemperature()">데이터 분석 시작</button>
+        
+        <div id="status"></div>
+        
+        <div id="results"></div>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+        // Core temperature estimation function (same as in script.js)
+        function estimateCoreTemp3(skinTemp, airTemp, heartRate, opts = {}) {
+            const a   = Number.isFinite(opts.a)   ? opts.a   : 4.3;
+            const b   = Number.isFinite(opts.b)   ? opts.b   : 0.30;
+            const c   = Number.isFinite(opts.c)   ? opts.c   : 0.011;
+            const HR0 = Number.isFinite(opts.HR0) ? opts.HR0 : 60;
+
+            const tcore = skinTemp + a + b * (skinTemp - airTemp) + c * (heartRate - HR0);
+
+            const clamped = Math.min(Math.max(tcore, 34.5), 41.5);
+            return Number(clamped.toFixed(1));
+        }
+
+        async function analyzeTemperature() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            
+            statusDiv.textContent = '데이터를 가져오는 중...';
+            
+            try {
+                // Configuration
+                const API_BASE_URL = window.API_CONFIG?.BASE_URL || 'https://lsh411.synology.me/api';
+                const WATCHER_USER_ID = window.API_CONFIG?.WATCHER_USER_ID || '3736091189';
+                
+                // Get mappings first to find the protected person
+                const mappingsUrl = `${API_BASE_URL}/watcher/mappings?watcherUserId=${WATCHER_USER_ID}`;
+                const mappingsResponse = await fetch(mappingsUrl);
+                const mappingsData = await mappingsResponse.json();
+                
+                if (mappingsData.code !== "1000" || !mappingsData.response) {
+                    statusDiv.textContent = '매핑 데이터를 가져올 수 없습니다.';
+                    return;
+                }
+                
+                // Find 피보호자
+                const protectedPerson = mappingsData.response.find(person => 
+                    person.userName === '피보호자' || person.userName.includes('피보호')
+                );
+                
+                if (!protectedPerson) {
+                    statusDiv.textContent = '피보호자를 찾을 수 없습니다. 사용 가능한 사용자: ' + 
+                        mappingsData.response.map(p => p.userName).join(', ');
+                    return;
+                }
+                
+                const wardedUserId = protectedPerson.wardedUserId;
+                statusDiv.textContent = `피보호자(${protectedPerson.userName}) 데이터 분석 중... ID: ${wardedUserId}`;
+                
+                // Get 24-hour data
+                const now = new Date();
+                const dayBefore = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+                const fromDate = dayBefore.toISOString().split('T')[0];
+                const toDate = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                
+                // Fetch temperature and heart rate data
+                const tempUrl = `${API_BASE_URL}/watcher/period?wardedUserId=${wardedUserId}&bioDataTypes=BODY_TEMPERATURE&fromDate=${fromDate}&toDate=${toDate}`;
+                const hrUrl = `${API_BASE_URL}/watcher/period?wardedUserId=${wardedUserId}&bioDataTypes=HEART_BEAT&fromDate=${fromDate}&toDate=${toDate}`;
+                
+                const [tempResponse, hrResponse] = await Promise.all([
+                    fetch(tempUrl),
+                    fetch(hrUrl)
+                ]);
+                
+                const tempData = await tempResponse.json();
+                const hrData = await hrResponse.json();
+                
+                if (tempData.code !== "1000" || !tempData.response?.bodyTemperature) {
+                    statusDiv.textContent = '체온 데이터를 가져올 수 없습니다.';
+                    return;
+                }
+                
+                // Filter data within 24 hours
+                const tempRecords = tempData.response.bodyTemperature.filter(item => {
+                    const itemTime = new Date(item.registrationDateTime);
+                    return itemTime >= dayBefore && itemTime <= now;
+                });
+                
+                const hrRecords = hrData.response?.heartBeat?.filter(item => {
+                    const itemTime = new Date(item.registrationDateTime);
+                    return itemTime >= dayBefore && itemTime <= now;
+                }) || [];
+                
+                if (tempRecords.length === 0) {
+                    statusDiv.textContent = '24시간 이내 체온 데이터가 없습니다.';
+                    return;
+                }
+                
+                // Calculate core temperatures for all records
+                const analyzedData = tempRecords.map(tempRecord => {
+                    const time = new Date(tempRecord.registrationDateTime);
+                    const skinTemp = parseFloat(tempRecord.bodyTemperature || tempRecord.skinTemperature || 32);
+                    const ambientTemp = parseFloat(tempRecord.ambientTemperature || 25);
+                    
+                    // Find closest heart rate
+                    let heartRate = 70;
+                    if (hrRecords.length > 0) {
+                        const closestHr = hrRecords.reduce((prev, curr) => {
+                            const prevDiff = Math.abs(new Date(prev.registrationDateTime) - time);
+                            const currDiff = Math.abs(new Date(curr.registrationDateTime) - time);
+                            return currDiff < prevDiff ? curr : prev;
+                        });
+                        heartRate = closestHr.heartBeat || 70;
+                    }
+                    
+                    const coreTemp = estimateCoreTemp3(skinTemp, ambientTemp, heartRate);
+                    
+                    return {
+                        time: time.toLocaleString('ko-KR'),
+                        coreTemp,
+                        skinTemp,
+                        ambientTemp,
+                        heartRate
+                    };
+                });
+                
+                // Sort by core temperature
+                analyzedData.sort((a, b) => a.coreTemp - b.coreTemp);
+                
+                // Get highest, lowest, and median
+                const lowest = analyzedData[0];
+                const highest = analyzedData[analyzedData.length - 1];
+                const medianIndex = Math.floor(analyzedData.length / 2);
+                const median = analyzedData[medianIndex];
+                
+                // Display results
+                resultsDiv.innerHTML = `
+                    <div class="analysis-section highest">
+                        <div class="analysis-title">🔴 체온 예측치가 가장 높았을 때</div>
+                        <div class="data-row">
+                            <span class="data-label">시간:</span>
+                            <span class="data-value">${highest.time}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">체온 예측치:</span>
+                            <span class="data-value">${highest.coreTemp}°C</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">피부온:</span>
+                            <span class="data-value">${highest.skinTemp.toFixed(1)}°C</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">대기온:</span>
+                            <span class="data-value">${highest.ambientTemp.toFixed(1)}°C</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">심박수:</span>
+                            <span class="data-value">${highest.heartRate} bpm</span>
+                        </div>
+                    </div>
+                    
+                    <div class="analysis-section median">
+                        <div class="analysis-title">🟡 체온 예측치가 중간이었을 때</div>
+                        <div class="data-row">
+                            <span class="data-label">시간:</span>
+                            <span class="data-value">${median.time}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">체온 예측치:</span>
+                            <span class="data-value">${median.coreTemp}°C</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">피부온:</span>
+                            <span class="data-value">${median.skinTemp.toFixed(1)}°C</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">대기온:</span>
+                            <span class="data-value">${median.ambientTemp.toFixed(1)}°C</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">심박수:</span>
+                            <span class="data-value">${median.heartRate} bpm</span>
+                        </div>
+                    </div>
+                    
+                    <div class="analysis-section lowest">
+                        <div class="analysis-title">🔵 체온 예측치가 가장 낮았을 때</div>
+                        <div class="data-row">
+                            <span class="data-label">시간:</span>
+                            <span class="data-value">${lowest.time}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">체온 예측치:</span>
+                            <span class="data-value">${lowest.coreTemp}°C</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">피부온:</span>
+                            <span class="data-value">${lowest.skinTemp.toFixed(1)}°C</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">대기온:</span>
+                            <span class="data-value">${lowest.ambientTemp.toFixed(1)}°C</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">심박수:</span>
+                            <span class="data-value">${lowest.heartRate} bpm</span>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: #e5e7eb; border-radius: 8px;">
+                        <strong>분석 요약:</strong><br>
+                        총 ${analyzedData.length}개 데이터 포인트 분석<br>
+                        체온 예측치 범위: ${lowest.coreTemp}°C ~ ${highest.coreTemp}°C<br>
+                        평균 체온 예측치: ${(analyzedData.reduce((sum, d) => sum + d.coreTemp, 0) / analyzedData.length).toFixed(1)}°C
+                    </div>
+                `;
+                
+                statusDiv.textContent = '분석 완료!';
+                statusDiv.style.background = '#d1fae5';
+                statusDiv.style.color = '#065f46';
+                
+            } catch (error) {
+                statusDiv.textContent = '오류 발생: ' + error.message;
+                statusDiv.style.background = '#fee2e2';
+                statusDiv.style.color = '#991b1b';
+                console.error('Error:', error);
+            }
+        }
+        
+        // Auto-analyze on load
+        window.addEventListener('load', () => {
+            setTimeout(analyzeTemperature, 1000);
+        });
+    </script>
+</body>
+</html>

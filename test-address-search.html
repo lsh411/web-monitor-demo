@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주소 검색 테스트</title>
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=76614caefbdbf2a0cc21c70f2f43abd9&libraries=services"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        #map {
+            width: 800px;
+            height: 400px;
+            border: 2px solid #ccc;
+            margin: 20px 0;
+        }
+        input {
+            width: 500px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        .location-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>카카오맵 주소 검색 및 좌표 확인</h1>
+    
+    <div>
+        <input type="text" id="addressInput" placeholder="주소를 입력하세요" value="서울 송파구 마천동 7">
+        <button onclick="searchAddress()">주소 검색</button>
+    </div>
+    
+    <div style="margin: 20px 0;">
+        <h3>빠른 검색:</h3>
+        <button class="location-btn" onclick="searchSpecific('서울 송파구 마천동 7')">마천동 7</button>
+        <button class="location-btn" onclick="searchSpecific('서울 송파구 마천동 세븐일레븐')">마천동 세븐일레븐</button>
+        <button class="location-btn" onclick="searchSpecific('서울 송파구 거마로 122')">거마로 122 (마천파크자이)</button>
+        <button class="location-btn" onclick="searchSpecific('서울 송파구 성내천로 319')">성내천로 319</button>
+    </div>
+    
+    <div id="map"></div>
+    <div id="result">검색 결과가 여기에 표시됩니다...</div>
+    
+    <script>
+        let map;
+        let geocoder;
+        let marker;
+        
+        // 지도 초기화
+        function initMap() {
+            const mapContainer = document.getElementById('map');
+            const mapOption = {
+                center: new kakao.maps.LatLng(37.497117, 127.152393), // 마천동 중심
+                level: 3
+            };
+            
+            map = new kakao.maps.Map(mapContainer, mapOption);
+            geocoder = new kakao.maps.services.Geocoder();
+            
+            // 클릭 이벤트 추가
+            kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
+                const latlng = mouseEvent.latLng;
+                
+                // 마커 위치 이동
+                if (!marker) {
+                    marker = new kakao.maps.Marker({
+                        position: latlng,
+                        map: map
+                    });
+                } else {
+                    marker.setPosition(latlng);
+                }
+                
+                // 좌표를 주소로 변환
+                geocoder.coord2Address(latlng.getLng(), latlng.getLat(), function(result, status) {
+                    if (status === kakao.maps.services.Status.OK) {
+                        const addr = result[0].address;
+                        displayResult({
+                            address: addr.address_name,
+                            road_address: result[0].road_address ? result[0].road_address.address_name : '도로명 주소 없음',
+                            lat: latlng.getLat(),
+                            lng: latlng.getLng(),
+                            method: '지도 클릭'
+                        });
+                    }
+                });
+            });
+        }
+        
+        // 주소 검색
+        function searchAddress() {
+            const address = document.getElementById('addressInput').value;
+            if (!address) {
+                alert('주소를 입력해주세요');
+                return;
+            }
+            
+            geocoder.addressSearch(address, function(result, status) {
+                if (status === kakao.maps.services.Status.OK) {
+                    const coords = new kakao.maps.LatLng(result[0].y, result[0].x);
+                    
+                    // 마커 표시
+                    if (!marker) {
+                        marker = new kakao.maps.Marker({
+                            map: map,
+                            position: coords
+                        });
+                    } else {
+                        marker.setPosition(coords);
+                    }
+                    
+                    // 지도 중심 이동
+                    map.setCenter(coords);
+                    
+                    // 결과 표시
+                    displayResult({
+                        address: result[0].address_name,
+                        road_address: result[0].road_address_name || '도로명 주소 없음',
+                        lat: result[0].y,
+                        lng: result[0].x,
+                        method: '주소 검색',
+                        full_result: result[0]
+                    });
+                } else {
+                    // 키워드로 검색 시도
+                    const places = new kakao.maps.services.Places();
+                    places.keywordSearch(address, function(result, status) {
+                        if (status === kakao.maps.services.Status.OK) {
+                            const place = result[0];
+                            const coords = new kakao.maps.LatLng(place.y, place.x);
+                            
+                            // 마커 표시
+                            if (!marker) {
+                                marker = new kakao.maps.Marker({
+                                    map: map,
+                                    position: coords
+                                });
+                            } else {
+                                marker.setPosition(coords);
+                            }
+                            
+                            // 지도 중심 이동
+                            map.setCenter(coords);
+                            
+                            // 결과 표시
+                            displayResult({
+                                place_name: place.place_name,
+                                address: place.address_name,
+                                road_address: place.road_address_name || '도로명 주소 없음',
+                                lat: place.y,
+                                lng: place.x,
+                                category: place.category_name,
+                                phone: place.phone,
+                                method: '장소 검색',
+                                full_result: place
+                            });
+                        } else {
+                            alert('검색 결과가 없습니다.');
+                        }
+                    });
+                }
+            });
+        }
+        
+        // 특정 주소 검색
+        function searchSpecific(address) {
+            document.getElementById('addressInput').value = address;
+            searchAddress();
+        }
+        
+        // 결과 표시
+        function displayResult(data) {
+            let html = '<h3>검색 결과</h3>';
+            html += '<p><strong>검색 방법:</strong> ' + data.method + '</p>';
+            
+            if (data.place_name) {
+                html += '<p><strong>장소명:</strong> ' + data.place_name + '</p>';
+            }
+            if (data.address) {
+                html += '<p><strong>지번 주소:</strong> ' + data.address + '</p>';
+            }
+            if (data.road_address) {
+                html += '<p><strong>도로명 주소:</strong> ' + data.road_address + '</p>';
+            }
+            if (data.category) {
+                html += '<p><strong>카테고리:</strong> ' + data.category + '</p>';
+            }
+            if (data.phone) {
+                html += '<p><strong>전화번호:</strong> ' + data.phone + '</p>';
+            }
+            
+            html += '<p><strong>위도 (Latitude):</strong> ' + data.lat + '</p>';
+            html += '<p><strong>경도 (Longitude):</strong> ' + data.lng + '</p>';
+            
+            html += '<hr>';
+            html += '<p><strong>코드에 사용할 좌표:</strong></p>';
+            html += '<pre style="background: white; padding: 10px; border: 1px solid #ccc;">';
+            html += 'lat: ' + data.lat + ',\n';
+            html += 'lng: ' + data.lng;
+            html += '</pre>';
+            
+            if (data.full_result) {
+                html += '<details>';
+                html += '<summary>전체 결과 보기</summary>';
+                html += '<pre>' + JSON.stringify(data.full_result, null, 2) + '</pre>';
+                html += '</details>';
+            }
+            
+            document.getElementById('result').innerHTML = html;
+        }
+        
+        // 페이지 로드 시 초기화
+        window.onload = function() {
+            if (window.kakao && window.kakao.maps) {
+                initMap();
+            } else {
+                alert('카카오맵 API 로드 실패');
+            }
+        };
+    </script>
+</body>
+</html>

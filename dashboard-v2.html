@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>헬로온 대시보드</title>
+  <link rel="stylesheet" href="style.css?v=1.0.0">
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=76614caefbdbf2a0cc21c70f2f43abd9"></script>
+
+  <!-- 외출 상세 모달 스타일 (outing-report.html에서 재활용) -->
+  <style>
+    /* 상세 모달 */
+    .day-detail-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .day-detail-modal.active {
+      display: flex;
+    }
+    .day-detail-content {
+      background: #FFFFFF;
+      border-radius: 12px;
+      padding: 20px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 70vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .day-detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #E5E7EB;
+    }
+    .day-detail-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #111827;
+    }
+    .day-detail-close {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: #F3F4F6;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .day-detail-close:hover {
+      background: #E5E7EB;
+    }
+    .day-detail-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .day-detail-item {
+      background: #F9FAFB;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .detail-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .detail-header:hover {
+      background: #F3F4F6;
+    }
+    .detail-profile {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .detail-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .detail-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #111827;
+    }
+    .detail-meta {
+      font-size: 12px;
+      color: #6B7280;
+      margin-top: 2px;
+    }
+    .detail-time {
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .detail-time-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: #2A6AA6;
+    }
+    .detail-time-label {
+      font-size: 11px;
+      color: #9CA3AF;
+    }
+    .detail-expand-icon {
+      font-size: 10px;
+      color: #9CA3AF;
+      margin-left: 4px;
+      transition: transform 0.2s;
+    }
+    /* 위치 이력 섹션 */
+    .detail-locations {
+      border-top: 1px solid #E5E7EB;
+      background: #fff;
+    }
+    .locations-header {
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #6B7280;
+      background: #F3F4F6;
+    }
+    .locations-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .location-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid #F3F4F6;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .location-item:hover {
+      background: #F9FAFB;
+    }
+    .location-item:last-of-type {
+      border-bottom: none;
+    }
+    .location-time {
+      font-size: 14px;
+      font-weight: 600;
+      color: #111827;
+      width: 50px;
+    }
+    .location-distance {
+      font-size: 12px;
+      color: #6B7280;
+      margin-left: 12px;
+      white-space: nowrap;
+    }
+    .location-address {
+      flex: 1;
+      font-size: 13px;
+      color: #374151;
+      margin-left: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .location-accuracy {
+      font-size: 11px;
+      color: #9CA3AF;
+      margin-left: 8px;
+      white-space: nowrap;
+    }
+    .location-item-empty {
+      padding: 20px;
+      text-align: center;
+      color: #9CA3AF;
+      font-size: 13px;
+    }
+    /* 지도 컨테이너 */
+    .location-map-container {
+      height: 200px;
+      margin: 0 12px 12px 12px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #E5E7EB;
+    }
+    /* 요약 정보 */
+    .outing-report-summary {
+      padding: 12px 16px;
+      background: #EFF6FF;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .outing-summary-text {
+      font-size: 14px;
+      color: #1E40AF;
+      font-weight: 500;
+    }
+    .outing-summary-none {
+      background: #F3F4F6;
+    }
+    .outing-summary-none .outing-summary-text {
+      color: #6B7280;
+    }
+  </style>
+
+  <!-- 로그인 체크 -->
+  <script>
+    // 로그인되지 않았으면 로그인 페이지로 리다이렉트
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+      window.location.href = 'index.html';
+    }
+
+    // silvercare2 사용자가 아니면 적절한 페이지로 리다이렉트
+    const userType = localStorage.getItem('userType');
+    if (userType === 'admin') {
+      window.location.href = 'dashboard.html';
+    } else if (userType === 'silvercare') {
+      window.location.href = 'dashboard-poc.html';
+    }
+  </script>
+</head>
+<body>
+  <div class="main-bg">
+    <header class="main-header">
+      <div class="logo-nav">
+        <img src="assets/hello-on_logotype.png" alt="헬로온 로고" class="hello-logo" />
+        <nav class="gnb">
+          <button class="gnb-btn active" data-page="dashboard.html" onclick="navigateTo('dashboard.html')"><span class="icon dashboard"></span>대시보드</button>
+          <button class="gnb-btn" data-page="record.html" onclick="navigateTo('record.html')"><span class="icon record"></span>관리기록</button>
+          <button class="gnb-btn" data-page="outing-report.html" onclick="navigateTo('outing-report.html')"><span class="icon record"></span>외출리포트</button>
+          <button class="gnb-btn" data-page="attendance-report.html" onclick="navigateTo('attendance-report.html')"><span class="icon record"></span>출퇴근</button>
+          <button class="gnb-btn" data-page="ai-report.html" onclick="navigateTo('ai-report.html')"><span class="icon record"></span>AI리포트</button>
+        </nav>
+      </div>
+      <div class="header-actions">
+        <button class="settings-btn" title="인원 관리">
+          <span class="icon settings"></span>
+        </button>
+        <!-- <button class="alarm-btn"><span class="icon alarm"></span></button> -->
+        <div class="user-menu">
+          <span class="user-name" id="user-display-name">admin</span>
+          <button class="logout-btn" onclick="logout()">로그아웃</button>
+        </div>
+      </div>
+    </header>
+    <main class="dashboard-main" id="main-content">
+      <section class="dashboard-status-bar">
+        <span class="dashboard-title">스마트 요양원 대시보드</span>
+        <span class="dashboard-desc">시설의 전체 현황을 한눈에 볼 수 있는 페이지 입니다. 필요사항을 보기 쉽게 변경/추가할 수 있습니다.</span>
+        <span class="dashboard-date">5월 8일 목요일</span>
+      </section>
+      <section class="alert-section hidden">
+        <div class="alert-card">
+          <img src="assets/status_01.png" class="alert-profile">
+          <span class="alert-name">김영수</span>
+          <img src="assets/caution_icon.png" class="alert-icon">
+          <span class="alert-title">높은 심박수 감지</span>
+          <span class="alert-desc">심박수가 107bpm 이상 입니다.<br>도움이 필요하신지 확인이 필요합니다.</span>
+          <button class="alert-btn">담당자 호출</button>
+        </div>
+        <div class="alert-card">
+          <img src="assets/status_02.png" class="alert-profile">
+          <span class="alert-name">김순자</span>
+          <img src="assets/caution_icon.png" class="alert-icon">
+          <span class="alert-title">낙상 감지</span>
+          <span class="alert-desc">넘어짐이 스마트 위치로 확인 되었습니다.<br>도움이 필요하신지 확인이 필요합니다.</span>
+          <button class="alert-btn">담당자 호출</button>
+        </div>
+      </section>
+      <section class="dashboard-content">
+        <!-- AI 일일 리포트 -->
+        <div class="ai-daily-report">
+          <div class="ai-report-header">
+            <div class="ai-report-title">
+              <span class="report-icon">📄</span>
+              <span class="report-date" id="ai-report-date">2025.12.12 (목) 일일 리포트</span>
+            </div>
+            <!-- <div class="ai-report-actions">
+              <button class="btn btn-sm btn-outline" onclick="printReport()">🖨️ PDF</button>
+              <button class="btn btn-sm btn-outline" onclick="sendReport()">✉️ 전송</button>
+            </div> -->
+          </div>
+
+          <div class="ai-summary-box">
+            <div class="ai-summary-label">🤖 AI 요약 (오늘의 특이사항)</div>
+            <div class="ai-summary-content" id="ai-summary-text">
+              <span class="loading">AI 요약 생성 중...</span>
+            </div>
+          </div>
+
+          <!-- 상세 섹션: 이벤트 / 건강현황 / 외출현황 / 배터리 -->
+          <div class="ai-detail-sections">
+            <!-- 이벤트 로그 -->
+            <div class="ai-detail-section" id="section-events">
+              <div class="ai-detail-header">
+                <span class="ai-detail-icon">⚠️</span>
+                <span class="ai-detail-title">오늘의 이벤트</span>
+                <span class="ai-detail-count" id="events-count">0건</span>
+              </div>
+              <div class="ai-detail-content" id="events-content">
+                <div class="ai-detail-empty">오늘 발생한 이벤트가 없습니다.</div>
+              </div>
+            </div>
+
+            <!-- 건강 현황 -->
+            <div class="ai-detail-section" id="section-health">
+              <div class="ai-detail-header">
+                <span class="ai-detail-icon">💚</span>
+                <span class="ai-detail-title">건강 현황</span>
+                <span class="ai-detail-count" id="health-count">-</span>
+              </div>
+              <div class="ai-detail-content ai-detail-content-no-scroll" id="health-content">
+                <div class="ai-detail-empty">건강 데이터를 불러오는 중...</div>
+              </div>
+            </div>
+
+            <!-- 외출 현황 -->
+            <div class="ai-detail-section" id="section-outing">
+              <div class="ai-detail-header">
+                <span class="ai-detail-icon">🚶</span>
+                <span class="ai-detail-title">외출 현황</span>
+                <span class="ai-detail-count" id="outing-count">0명</span>
+              </div>
+              <div class="ai-detail-content" id="outing-content">
+                <div class="ai-detail-empty">오늘 외출 기록이 없습니다.</div>
+              </div>
+            </div>
+
+            <!-- 배터리 경고 -->
+            <div class="ai-detail-section" id="section-battery">
+              <div class="ai-detail-header">
+                <span class="ai-detail-icon">🔋</span>
+                <span class="ai-detail-title">배터리 경고</span>
+                <span class="ai-detail-count" id="battery-count">0명</span>
+              </div>
+              <div class="ai-detail-content" id="battery-content">
+                <div class="ai-detail-empty">배터리 부족 워치가 없습니다.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="resident-status-card">
+          <div class="resident-header">
+            <span class="card-title">입소인 상태 목록</span>
+            <div class="resident-header-right">
+              <span class="last-refresh">0초 전 refresh </span>
+            </div>
+          </div>
+          <div class="resident-table-wrapper">
+            <table class="resident-table">
+              <thead>
+                <tr>
+                  <th>이름</th>
+                  <th>나이</th>
+                  <th>상태</th>
+                  <th>위치</th>
+                  <th>외출</th>
+                  <th>심박수</th>
+                  <th>걸음수</th>
+                  <th>워치상태</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="8" style="text-align: center; padding: 40px; color: #6B7280;">데이터 로딩 중...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<!-- Inmate detail modal -->
+<div id="inmate-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <button id="inmate-modal-close" class="modal-close">✕</button>
+    <h2 class="modal-title">입소 인원 상세</h2>
+    <button class="modal-edit-btn" onclick="alert('편집 기능은 아직 지원되지 않습니다.')">편집</button>
+    <div class="modal-table-wrapper">
+      <table class="modal-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>프로필</th>
+            <th>성함</th>
+            <th>나이</th>
+            <th>호실</th>
+            <th>입소일</th>
+            <th>특이사항</th>
+            <th>보호자</th>
+            <th>연락처</th>
+          </tr>
+        </thead>
+        <tbody id="inmate-modal-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Vacancy detail modal -->
+<div id="vacancy-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <button id="vacancy-modal-close" class="modal-close">✕</button>
+    <h2 class="modal-title">공실 상세</h2>
+    <button class="modal-edit-btn" onclick="alert('편집 기능은 아직 지원되지 않습니다.')">편집</button>
+    <div class="modal-table-wrapper">
+      <table class="modal-table">
+        <thead>
+          <tr>
+            <th>호실</th>
+            <th>침대 1</th>
+            <th>침대 2</th>
+            <th>침대 3</th>
+            <th>침대 4</th>
+            <th>침대 5</th>
+          </tr>
+        </thead>
+        <tbody id="vacancy-modal-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Call‑alert modal -->
+<div id="call-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <button id="call-modal-close" class="modal-close">✕</button>
+    <h2 class="modal-title">담당자 호출</h2>
+    <p id="call-modal-message" class="call-message"></p>
+    <button id="call-phone-btn" class="call-phone-btn">관리인에게 전화하기</button>
+  </div>
+</div>
+
+<!-- Outing Report Modal (outing-report.html 스타일 재활용) -->
+<div class="day-detail-modal" id="outing-report-modal">
+  <div class="day-detail-content">
+    <div class="day-detail-header">
+      <span class="day-detail-title" id="outing-report-title">외출 내역</span>
+      <button class="day-detail-close" id="outing-report-modal-close">✕</button>
+    </div>
+    <div class="outing-report-summary" id="outing-report-summary">
+      <!-- 동적 생성: 요약 정보 -->
+    </div>
+    <div class="day-detail-list" id="outing-report-list">
+      <!-- 동적 생성: 외출 항목 -->
+    </div>
+  </div>
+</div>
+
+<!-- Status History Modal -->
+<div id="status-history-modal" class="modal-overlay hidden">
+  <div class="modal-content status-history-modal">
+    <button id="status-history-modal-close" class="modal-close">✕</button>
+    <h2 class="modal-title">상태 히스토리</h2>
+    <div class="status-history-header">
+      <h3 id="status-history-name">피보호자</h3>
+      <p id="status-history-period">지난 24시간</p>
+    </div>
+    
+    <!-- Events Section -->
+    <div id="status-history-events" class="status-history-section hidden">
+      <h4 class="section-title">⚠️ 이벤트</h4>
+      <div id="status-events-list" class="status-events-list">
+        <!-- 이벤트가 여기에 동적으로 추가됨 -->
+      </div>
+    </div>
+    
+    <!-- Status Timeline -->
+    <div class="status-history-section">
+      <h4 class="section-title">📊 상태 변화</h4>
+      <div id="status-timeline" class="status-timeline">
+        <!-- 상태 히스토리가 여기에 동적으로 추가됨 -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Temperature History Modal -->
+<div id="temperatureModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="temperatureModalTitle">체온 히스토리</h2>
+      <span class="modal-close" onclick="closeTemperatureModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="chart-controls">
+        <div class="time-range-selector">
+          <button class="range-btn active" data-range="24h">24시간</button>
+        </div>
+        <div class="temperature-stats">
+          <div class="stat-item">
+            <span class="stat-label">피부온 평균</span>
+            <span id="tempSkinAvg" class="stat-value">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">대기온 평균</span>
+            <span id="tempAmbientAvg" class="stat-value">--</span>
+          </div>
+        </div>
+      </div>
+      <div class="chart-legend">
+        <div class="legend-item">
+          <span class="legend-color" style="background: #3B82F6;"></span>
+          <span>피부온</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color" style="background: #10B981;"></span>
+          <span>대기온</span>
+        </div>
+      </div>
+      <canvas id="temperatureChart" width="800" height="400"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Heart Rate History Modal -->
+<div id="heartRateModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="heartRateModalTitle">심박수 히스토리</h2>
+      <span class="modal-close" onclick="closeHeartRateModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="chart-controls">
+        <div class="time-range-selector">
+          <button class="range-btn active" data-range="24h">24시간</button>
+          <!-- <button class="range-btn" data-range="12h">12시간</button>
+          <button class="range-btn" data-range="6h">6시간</button> -->
+        </div>
+        <div class="heart-rate-stats">
+          <div class="stat-item">
+            <span class="stat-label">평균</span>
+            <span id="hrAvg" class="stat-value">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">최고</span>
+            <span id="hrMax" class="stat-value">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">최저</span>
+            <span id="hrMin" class="stat-value">--</span>
+          </div>
+        </div>
+      </div>
+      <canvas id="heartRateChart" width="800" height="240"></canvas>
+      <div id="heartRateInsights" class="heart-rate-insights">
+        <!-- 심박수 인사이트가 여기에 표시됨 -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Steps History Modal -->
+<div id="stepsModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="stepsModalTitle">걸음수 히스토리</h2>
+      <span class="modal-close" onclick="closeStepsModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="chart-controls">
+        <div class="time-range-selector">
+          <button class="range-btn active" data-range="7d">7일</button>
+        </div>
+        <div class="steps-stats">
+          <div class="stat-item">
+            <span class="stat-label">오늘</span>
+            <span id="stepsToday" class="stat-value">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">7일 평균</span>
+            <span id="stepsAvg" class="stat-value">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">최고 기록</span>
+            <span id="stepsMax" class="stat-value">--</span>
+          </div>
+        </div>
+      </div>
+      <canvas id="stepsChart" width="800" height="280"></canvas>
+      <div id="stepsInsights" class="steps-insights">
+        <!-- 걸음수 인사이트가 여기에 표시됨 -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 인원 관리 모달 -->
+<div id="resident-management-modal" class="modal-overlay hidden">
+  <div class="modal-content resident-management-modal">
+    <button class="modal-close" onclick="closeResidentManagementModal()">✕</button>
+    <h2 class="modal-title">인원 관리</h2>
+
+    <div class="rm-modal-tabs">
+      <button class="rm-modal-tab active" onclick="switchResidentTab('list')">입소자 목록</button>
+      <button class="rm-modal-tab" onclick="switchResidentTab('register')">인원 등록</button>
+      <button class="rm-modal-tab" onclick="switchResidentTab('device')">워치 연결 관리</button>
+    </div>
+
+    <div class="rm-modal-body">
+      <!-- 입소자 목록 탭 -->
+      <div id="rm-tab-list" class="rm-tab-content">
+        <div class="rm-list-header">
+          <div class="rm-list-count">
+            총 <strong id="rm-total-count">26</strong>명 등록 |
+            워치 연결 <strong id="rm-connected-count">24</strong> |
+            미연결 <strong id="rm-disconnected-count" style="color:#DC2626;">2</strong>
+          </div>
+          <div class="rm-list-actions">
+            <button id="rm-toggle-deleted-btn" class="btn btn-outline btn-sm" onclick="toggleDeletedResidents()">삭제된 입소자 보기</button>
+            <button class="btn btn-primary btn-sm" onclick="switchResidentTab('register')">+ 새 입소자 등록</button>
+          </div>
+        </div>
+
+        <table class="rm-data-table">
+          <thead>
+            <tr>
+              <th>입소자</th>
+              <th>성별</th>
+              <th>나이</th>
+              <th>호실</th>
+              <th>워치 연결</th>
+              <th>특이사항</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="rm-resident-list">
+            <tr>
+              <td>
+                <div class="rm-resident-profile">
+                  <div class="rm-resident-avatar" style="background: #FCE7F3;">👵</div>
+                  <div class="rm-resident-name">김순자</div>
+                </div>
+              </td>
+              <td><span class="rm-gender-badge female">여</span></td>
+              <td>84세</td>
+              <td>101호</td>
+              <td><div class="rm-watch-connected"><span>⌚</span> GW-001</div></td>
+              <td><span class="rm-note-text">고혈압, 당뇨</span></td>
+              <td>
+                <div class="rm-action-btns">
+                  <button class="btn btn-secondary btn-sm" onclick="editResident('kim-sonja')">수정</button>
+                  <button class="btn btn-danger btn-sm">삭제</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="rm-resident-profile">
+                  <div class="rm-resident-avatar" style="background: #DBEAFE;">👴</div>
+                  <div class="rm-resident-name">김영수</div>
+                </div>
+              </td>
+              <td><span class="rm-gender-badge male">남</span></td>
+              <td>77세</td>
+              <td>101호</td>
+              <td><div class="rm-watch-connected"><span>⌚</span> GW-002</div></td>
+              <td><span class="rm-note-text">-</span></td>
+              <td>
+                <div class="rm-action-btns">
+                  <button class="btn btn-secondary btn-sm">수정</button>
+                  <button class="btn btn-danger btn-sm">삭제</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="rm-resident-profile">
+                  <div class="rm-resident-avatar" style="background: #FCE7F3;">👵</div>
+                  <div class="rm-resident-name">박영희</div>
+                </div>
+              </td>
+              <td><span class="rm-gender-badge female">여</span></td>
+              <td>79세</td>
+              <td>102호</td>
+              <td><div class="rm-watch-connected"><span>⌚</span> GW-003</div></td>
+              <td><span class="rm-note-text">치매 초기</span></td>
+              <td>
+                <div class="rm-action-btns">
+                  <button class="btn btn-secondary btn-sm">수정</button>
+                  <button class="btn btn-danger btn-sm">삭제</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="rm-resident-profile">
+                  <div class="rm-resident-avatar" style="background: #E5E7EB;">👵</div>
+                  <div class="rm-resident-name">한미숙</div>
+                </div>
+              </td>
+              <td><span class="rm-gender-badge female">여</span></td>
+              <td>75세</td>
+              <td>105호</td>
+              <td><span class="rm-watch-disconnected">미연결</span></td>
+              <td><span class="rm-note-text">관절염</span></td>
+              <td>
+                <div class="rm-action-btns">
+                  <button class="btn btn-secondary btn-sm">수정</button>
+                  <button class="btn btn-danger btn-sm">삭제</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 인원 등록 탭 -->
+      <div id="rm-tab-register" class="rm-tab-content hidden">
+        <div class="rm-form-section">
+          <div class="rm-form-section-title">👤 기본 정보</div>
+          <div class="rm-form-grid">
+            <div class="rm-form-group">
+              <label class="rm-form-label">이름 <span class="required">*</span></label>
+              <input type="text" class="rm-form-input" placeholder="이름을 입력하세요" id="rm-input-name">
+            </div>
+            <div class="rm-form-group">
+              <label class="rm-form-label">나이 <span class="required">*</span></label>
+              <input type="number" class="rm-form-input" placeholder="나이를 입력하세요" id="rm-input-age">
+            </div>
+            <div class="rm-form-group">
+              <label class="rm-form-label">성별 <span class="required">*</span></label>
+              <div class="rm-radio-group">
+                <div class="rm-radio-item">
+                  <input type="radio" id="rm-gender-male" name="rm-gender" value="male">
+                  <label for="rm-gender-male">남성</label>
+                </div>
+                <div class="rm-radio-item">
+                  <input type="radio" id="rm-gender-female" name="rm-gender" value="female">
+                  <label for="rm-gender-female">여성</label>
+                </div>
+              </div>
+            </div>
+            <div class="rm-form-group">
+              <label class="rm-form-label">호실</label>
+              <input type="text" class="rm-form-input" placeholder="예: 101호" id="rm-input-room">
+            </div>
+            <div class="rm-form-group full-width">
+              <label class="rm-form-label">프로필 이미지</label>
+              <div class="rm-profile-selector">
+                <div class="rm-profile-options">
+                  <div class="rm-profile-option selected">👵</div>
+                  <div class="rm-profile-option">👴</div>
+                  <div class="rm-profile-option">👩</div>
+                  <div class="rm-profile-option">👨</div>
+                  <div class="rm-profile-option">🧓</div>
+                  <div class="rm-profile-option">👩‍🦳</div>
+                  <div class="rm-profile-option">👨‍🦳</div>
+                  <div class="rm-profile-option">🧑‍🦳</div>
+                  <div class="rm-profile-option">👧</div>
+                  <div class="rm-profile-option">👦</div>
+                  <div class="rm-profile-option">🧔</div>
+                  <div class="rm-profile-option">👱‍♀️</div>
+                  <div class="rm-profile-option">👱‍♂️</div>
+                  <div class="rm-profile-option">🧕</div>
+                  <div class="rm-profile-option">👳‍♀️</div>
+                  <div class="rm-profile-option">👳‍♂️</div>
+                  <div class="rm-profile-option">🧑</div>
+                  <div class="rm-profile-option">👶</div>
+                  <div class="rm-profile-option">🧒</div>
+                  <div class="rm-profile-option rm-profile-upload-option" title="직접 업로드">+</div>
+                </div>
+              </div>
+            </div>
+            <div class="rm-form-group full-width">
+              <label class="rm-form-label">배경 색상</label>
+              <div class="rm-color-selector">
+                <div class="rm-color-options">
+                  <div class="rm-color-option selected" data-color="#E5E7EB" style="background: #E5E7EB;"></div>
+                  <div class="rm-color-option" data-color="#FEE2E2" style="background: #FEE2E2;"></div>
+                  <div class="rm-color-option" data-color="#FECACA" style="background: #FECACA;"></div>
+                  <div class="rm-color-option" data-color="#FEF3C7" style="background: #FEF3C7;"></div>
+                  <div class="rm-color-option" data-color="#FDE68A" style="background: #FDE68A;"></div>
+                  <div class="rm-color-option" data-color="#D1FAE5" style="background: #D1FAE5;"></div>
+                  <div class="rm-color-option" data-color="#A7F3D0" style="background: #A7F3D0;"></div>
+                  <div class="rm-color-option" data-color="#DBEAFE" style="background: #DBEAFE;"></div>
+                  <div class="rm-color-option" data-color="#BFDBFE" style="background: #BFDBFE;"></div>
+                  <div class="rm-color-option" data-color="#E0E7FF" style="background: #E0E7FF;"></div>
+                  <div class="rm-color-option" data-color="#C7D2FE" style="background: #C7D2FE;"></div>
+                  <div class="rm-color-option" data-color="#FCE7F3" style="background: #FCE7F3;"></div>
+                  <div class="rm-color-option" data-color="#FBCFE8" style="background: #FBCFE8;"></div>
+                  <div class="rm-color-option" data-color="#F3E8FF" style="background: #F3E8FF;"></div>
+                  <div class="rm-color-option" data-color="#DDD6FE" style="background: #DDD6FE;"></div>
+                  <div class="rm-color-option" data-color="#CCFBF1" style="background: #CCFBF1;"></div>
+                  <div class="rm-color-option" data-color="#99F6E4" style="background: #99F6E4;"></div>
+                  <div class="rm-color-option" data-color="#FED7AA" style="background: #FED7AA;"></div>
+                  <div class="rm-color-option" data-color="#FDBA74" style="background: #FDBA74;"></div>
+                  <div class="rm-color-option" data-color="#F5F5F4" style="background: #F5F5F4;"></div>
+                </div>
+                <div class="rm-profile-preview">
+                  <span style="font-size: 12px; color: #6B7280; margin-right: 12px;">미리보기:</span>
+                  <div class="rm-preview-avatar" id="rm-profile-preview">👵</div>
+                </div>
+              </div>
+            </div>
+            <div class="rm-form-group full-width">
+              <label class="rm-form-label">특이사항</label>
+              <textarea class="rm-form-input rm-form-textarea" placeholder="건강 상태, 주의사항 등을 입력하세요" id="rm-input-notes"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="rm-form-actions">
+          <button class="btn btn-secondary" onclick="switchResidentTab('list')">취소</button>
+          <button class="btn btn-primary" onclick="registerResident()">입소자 등록</button>
+        </div>
+      </div>
+
+      <!-- 워치 연결 관리 탭 -->
+      <div id="rm-tab-device" class="rm-tab-content hidden">
+        <div class="rm-watch-register-form">
+          <div class="rm-form-section-title">➕ 새 워치 등록</div>
+          <div class="rm-watch-form-grid">
+            <div class="rm-form-group">
+              <label class="rm-form-label">워치 ID <span class="required">*</span></label>
+              <input type="text" class="rm-form-input" placeholder="예: GW-010" id="rm-watch-id">
+            </div>
+            <div class="rm-form-group">
+              <label class="rm-form-label">워치 이름</label>
+              <input type="text" class="rm-form-input" placeholder="Galaxy Watch 5" id="rm-watch-name">
+            </div>
+            <button class="btn btn-primary" onclick="registerWatch()">등록</button>
+          </div>
+        </div>
+
+        <div class="rm-list-header">
+          <div class="rm-list-count">
+            등록된 워치 <strong>30대</strong> | 연결됨 <strong>24대</strong> | 미연결 <strong style="color:#DC2626;">6대</strong>
+          </div>
+        </div>
+
+        <div class="rm-device-list">
+          <div class="rm-device-card connected">
+            <div class="rm-device-info">
+              <div class="rm-device-icon">⌚</div>
+              <div>
+                <div class="rm-device-name">Galaxy Watch 5</div>
+                <div class="rm-device-id">GW-001</div>
+                <div class="rm-device-status">
+                  <span class="rm-device-status-dot"></span>
+                  온라인 | 배터리 85%
+                </div>
+              </div>
+            </div>
+            <div class="rm-device-mapping">
+              <div class="rm-mapped-resident">
+                <div class="rm-mapped-avatar" style="background: #FCE7F3;">👵</div>
+                <span class="rm-mapped-name">김순자</span>
+              </div>
+              <button class="btn btn-secondary btn-sm">수정</button>
+              <button class="btn btn-danger btn-sm">연결 해제</button>
+            </div>
+          </div>
+
+          <div class="rm-device-card connected">
+            <div class="rm-device-info">
+              <div class="rm-device-icon">⌚</div>
+              <div>
+                <div class="rm-device-name">Galaxy Watch 5</div>
+                <div class="rm-device-id">GW-002</div>
+                <div class="rm-device-status">
+                  <span class="rm-device-status-dot"></span>
+                  온라인 | 배터리 72%
+                </div>
+              </div>
+            </div>
+            <div class="rm-device-mapping">
+              <div class="rm-mapped-resident">
+                <div class="rm-mapped-avatar" style="background: #DBEAFE;">👴</div>
+                <span class="rm-mapped-name">김영수</span>
+              </div>
+              <button class="btn btn-secondary btn-sm">수정</button>
+              <button class="btn btn-danger btn-sm">연결 해제</button>
+            </div>
+          </div>
+
+          <div class="rm-device-card">
+            <div class="rm-device-info">
+              <div class="rm-device-icon" style="opacity:0.5;">⌚</div>
+              <div>
+                <div class="rm-device-name">Galaxy Watch 5</div>
+                <div class="rm-device-id">GW-010</div>
+                <div class="rm-device-status">
+                  <span class="rm-device-status-dot offline"></span>
+                  오프라인
+                </div>
+              </div>
+            </div>
+            <div class="rm-device-mapping">
+              <select class="rm-mapping-select">
+                <option value="">입소자 선택...</option>
+                <option value="han">한미숙 (105호)</option>
+                <option value="kim">김태호 (107호)</option>
+              </select>
+              <button class="btn btn-primary btn-sm">연결</button>
+              <button class="btn btn-secondary btn-sm">수정</button>
+              <button class="btn btn-danger btn-sm">삭제</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- API Configuration -->
+<script src="config.js?v=2.0.0"></script>
+<script>
+// 사용자 이름 표시
+document.addEventListener('DOMContentLoaded', function() {
+    const username = localStorage.getItem('username');
+    const userDisplayElement = document.getElementById('user-display-name');
+    if (username && userDisplayElement) {
+        userDisplayElement.textContent = username;
+    }
+});
+
+// 로그아웃 함수
+function logout() {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('username');
+    localStorage.removeItem('userType');
+    localStorage.removeItem('watcherUserId');
+    window.location.href = 'index.html';
+}
+
+// 데모 모드를 유지하면서 페이지 이동
+function navigateTo(page) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isDemoMode = urlParams.get('demo') === 'true';
+
+    // userType에 따라 대시보드 페이지 분기
+    if (page === 'dashboard.html') {
+        const userType = localStorage.getItem('userType');
+        if (userType === 'silvercare') {
+            page = 'dashboard-poc.html';
+        } else if (userType === 'silvercare2') {
+            page = 'dashboard-v2.html';
+        }
+    }
+
+    if (isDemoMode) {
+        window.location.href = page + '?demo=true';
+    } else {
+        window.location.href = page;
+    }
+}
+</script>
+
+<!-- 데모 모드 컨트롤러를 먼저 로드 (URL에 ?demo=true가 있을 때만) -->
+<script>
+if (new URLSearchParams(window.location.search).get('demo') === 'true') {
+    document.write('<script src="demo-controller.js?v=1.0.0"><\/script>');
+}
+</script>
+
+<script src="script.js?v=2.0.0"></script>
+</body>
+</html>

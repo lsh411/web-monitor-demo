@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Demo Verification</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+        .log { background: #f0f0f0; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Demo Mode Verification</h1>
+    <div id="results"></div>
+    
+    <script src="config.js"></script>
+    <script src="demo-controller.js"></script>
+    <script src="script.js"></script>
+    
+    <script>
+        const results = document.getElementById('results');
+        
+        async function verify() {
+            // 1. Check demo controller exists
+            results.innerHTML += '<div class="log">1. Demo Controller: ' + 
+                (window.demoController ? '<span class="success">✓ Loaded</span>' : '<span class="error">✗ Not loaded</span>') + '</div>';
+            
+            // 2. Check fetchMappings
+            results.innerHTML += '<div class="log">2. Testing fetchMappings...</div>';
+            try {
+                const mappings = await window.fetchMappings();
+                const count = mappings ? mappings.length : 0;
+                results.innerHTML += '<div class="log">   → Returned ' + count + ' residents ' + 
+                    (count === 26 ? '<span class="success">✓ Correct</span>' : '<span class="error">✗ Should be 26</span>') + '</div>';
+                
+                // Show first 3 residents
+                if (mappings && mappings.length > 0) {
+                    results.innerHTML += '<div class="log">   → First 3 residents:</div>';
+                    for (let i = 0; i < Math.min(3, mappings.length); i++) {
+                        results.innerHTML += '<div class="log">      • ' + mappings[i].userName + ' (' + mappings[i].age + '세)</div>';
+                    }
+                }
+            } catch (e) {
+                results.innerHTML += '<div class="log error">   → Error: ' + e.message + '</div>';
+            }
+            
+            // 3. Check fetchEvents
+            results.innerHTML += '<div class="log">3. Testing fetchEvents...</div>';
+            try {
+                const events = await window.fetchEvents();
+                const count = events ? events.length : 0;
+                results.innerHTML += '<div class="log">   → Returned ' + count + ' events ' + 
+                    (count > 0 ? '<span class="success">✓</span>' : '<span class="error">✗ No events</span>') + '</div>';
+            } catch (e) {
+                results.innerHTML += '<div class="log error">   → Error: ' + e.message + '</div>';
+            }
+            
+            // 4. Check bio data for first resident
+            results.innerHTML += '<div class="log">4. Testing fetchLatestBioData...</div>';
+            try {
+                const mappings = await window.fetchMappings();
+                if (mappings && mappings.length > 0) {
+                    const bioData = await window.fetchLatestBioData(mappings[0].wardedUserId);
+                    results.innerHTML += '<div class="log">   → Bio data for ' + mappings[0].userName + ': ' + 
+                        (bioData ? '<span class="success">✓ Retrieved</span>' : '<span class="error">✗ No data</span>') + '</div>';
+                    if (bioData && bioData.heartBeat && bioData.heartBeat.length > 0) {
+                        results.innerHTML += '<div class="log">      • Heart rate: ' + bioData.heartBeat[0].heartBeat + ' bpm</div>';
+                    }
+                }
+            } catch (e) {
+                results.innerHTML += '<div class="log error">   → Error: ' + e.message + '</div>';
+            }
+            
+            // 5. Summary
+            results.innerHTML += '<div class="log"><h3>Summary</h3></div>';
+            const mappings = await window.fetchMappings();
+            const residentCount = mappings ? mappings.length : 0;
+            if (residentCount === 26) {
+                results.innerHTML += '<div class="log success">✓ Demo mode is working correctly with 26 residents!</div>';
+            } else {
+                results.innerHTML += '<div class="log error">✗ Demo mode has ' + residentCount + ' residents instead of 26</div>';
+            }
+        }
+        
+        // Run verification
+        setTimeout(verify, 500);
+    </script>
+</body>
+</html>
