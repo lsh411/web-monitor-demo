@@ -1,0 +1,18 @@
+# Backup files
+*.local_backup
+*.backup
+*.backup_*
+*.old
+backup_*/
+
+# IDE
+.idea/
+
+# Local config
+*.local
+
+# Current backup
+script.js.current_backup
+
+# Claude settings
+.claude/settings.local.json

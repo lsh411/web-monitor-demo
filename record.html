@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>헬로온 관리기록</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=1.0.0">
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script src="config.js"></script>
+  <script src="config.js?v=1.0.1"></script>
   <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=76614caefbdbf2a0cc21c70f2f43abd9"></script>
   
   <!-- 로그인 체크 -->
@@ -23,14 +26,17 @@
       <div class="logo-nav">
         <img src="assets/hello-on_logotype.png" alt="헬로온 로고" class="hello-logo" />
         <nav class="gnb">
-          <button class="gnb-btn" data-page="dashboard.html" onclick="window.location.href='dashboard.html'"><span class="icon dashboard"></span>대시보드</button>
+          <button class="gnb-btn" data-page="dashboard.html" onclick="navigateTo('dashboard.html')"><span class="icon dashboard"></span>대시보드</button>
           <button class="gnb-btn active" data-page="record.html"><span class="icon record"></span>관리기록</button>
-          <button class="gnb-btn" data-page="status.html"><span class="icon status"></span>전체상태</button>
-          <button class="gnb-btn" data-page="guardian.html"><span class="icon guardian"></span>보호자</button>
-          <button class="gnb-btn" data-page="disease.html"><span class="icon disease"></span>유병확률</button>
+          <button class="gnb-btn" data-page="outing-report.html" onclick="navigateTo('outing-report.html')"><span class="icon record"></span>외출리포트</button>
+          <button class="gnb-btn" data-page="attendance-report.html" onclick="navigateTo('attendance-report.html')"><span class="icon record"></span>출퇴근</button>
+          <button class="gnb-btn" data-page="ai-report.html" onclick="navigateTo('ai-report.html')"><span class="icon record"></span>AI리포트</button>
         </nav>
       </div>
       <div class="header-actions">
+        <button class="settings-btn" title="인원 관리">
+          <span class="icon settings"></span>
+        </button>
         <!-- <button class="alarm-btn"><span class="icon alarm"></span></button> -->
         <div class="user-menu">
           <span class="user-name" id="user-display-name">admin</span>
@@ -48,19 +54,17 @@
         <aside class="record-sidebar">
           <h3 class="sidebar-title"><span class="toggle-icon"></span>위험 신호</h3>
           <ul class="sidebar-menu">
-            <li class="sidebar-item active" data-type="unconfirmed">미확인 위험 신호 <span class="sub-count">3</span></li>
-            <li class="sidebar-item" data-type="confirmed">확인된 위험 신호 <span class="sub-count">1</span></li>
-            <li class="sidebar-item" data-type="resolved">해결 완료된 신호 <span class="sub-count">2</span></li>
+            <li class="sidebar-item active" data-type="unconfirmed">미확인 위험 신호 <span class="sub-count"></span></li>
+            <li class="sidebar-item" data-type="confirmed">확인된 위험 신호 <span class="sub-count"></span></li>
+            <li class="sidebar-item has-subtabs" data-type="resolved">
+              <div class="sidebar-item-header">해결 완료된 신호 <span class="sub-count"></span></div>
+              <ul class="sidebar-subtabs">
+                <li class="subtab-item" data-subtype="resolved_action">조치완료 <span class="sub-count"></span></li>
+                <li class="subtab-item" data-subtype="resolved_noissue">이슈없음 <span class="sub-count"></span></li>
+              </ul>
+            </li>
           </ul>
 
-          <h3 class="sidebar-title disabled">수면시간 부족</h3>
-          <h3 class="sidebar-title disabled">영양 부족</h3>
-          <h3 class="sidebar-title disabled">운동 부족</h3>
-
-          <div class="sidebar-separator"></div>
-
-          <h3 class="sidebar-title disabled">입소인 기록</h3>
-          <h3 class="sidebar-title disabled">기록 보관</h3>
         </aside>
 
         <div class="record-panel">
@@ -68,25 +72,6 @@
           <div class="record-list-detail">
             <section class="record-list-pane">
               <div class="record-list-box">
-                <div class="record-list-header">
-                  <input type="checkbox" id="select-all" class="select-all-checkbox" />
-
-                  <div class="list-action-group">
-                    <button id="bulk-action-btn" class="list-action-btn">
-                      <span class="triangle-icon"></span>
-                    </button>
-                    <div id="bulk-action-menu" class="bulk-menu hidden">
-                      <button data-action="select-all">전체 선택</button>
-                      <button data-action="mark-read">읽음</button>
-                      <button data-action="mark-unread">읽지않음</button>
-                    </div>
-
-                    <button id="refresh-btn" class="list-action-btn">
-                      <span class="refresh-icon"></span>
-                    </button>
-                  </div>
-                </div>
-
                 <section class="record-list-body" id="record-list-body">
                   <!-- Dynamic rows injected by script.js -->
                 </section>
@@ -95,8 +80,7 @@
 
             <section class="record-detail-pane">
               <div class="record-detail-header">
-                <button class="detail-back-btn"><</button>
-                <span class="detail-time">2025.5.7 WED PM2:43</span>
+                <span class="detail-time"></span>
               </div>
               <h4 class="detail-title"></h4>
               <div class="detail-body"></div>
@@ -177,6 +161,184 @@
     <div id="map-container" style="width: 100%; height: 300px; border-radius: 8px; overflow: hidden;"></div>
   </div>
 </div>
+
+<!-- 입소자 관리 모달 -->
+<div id="resident-management-modal" class="modal-overlay hidden">
+  <div class="modal-content resident-management-modal">
+    <button class="modal-close" onclick="closeResidentManagementModal()">✕</button>
+    <h2 class="modal-title">인원 관리</h2>
+
+    <div class="rm-modal-tabs">
+      <button class="rm-modal-tab active" onclick="switchResidentTab('list')">입소자 목록</button>
+      <button class="rm-modal-tab" onclick="switchResidentTab('register')">인원 등록</button>
+      <button class="rm-modal-tab" onclick="switchResidentTab('device')">워치 연결 관리</button>
+    </div>
+
+    <div class="rm-modal-body">
+      <!-- 입소자 목록 탭 -->
+      <div id="rm-tab-list" class="rm-tab-content">
+        <div class="rm-list-header">
+          <div class="rm-list-count">
+            총 <strong id="rm-total-count">26</strong>명 등록 |
+            워치 연결 <strong id="rm-connected-count">24</strong> |
+            미연결 <strong id="rm-disconnected-count" style="color:#DC2626;">2</strong>
+          </div>
+          <div class="rm-list-actions">
+            <button id="rm-toggle-deleted-btn" class="btn btn-outline btn-sm" onclick="toggleDeletedResidents()">삭제된 입소자 보기</button>
+            <button class="btn btn-primary btn-sm" onclick="switchResidentTab('register')">+ 새 입소자 등록</button>
+          </div>
+        </div>
+
+        <table class="rm-data-table">
+          <thead>
+            <tr>
+              <th>입소자</th>
+              <th>성별</th>
+              <th>나이</th>
+              <th>호실</th>
+              <th>워치 연결</th>
+              <th>특이사항</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="rm-resident-list">
+            <!-- 동적으로 로드 -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 인원 등록 탭 -->
+      <div id="rm-tab-register" class="rm-tab-content hidden">
+        <div class="rm-form-section">
+          <div class="rm-form-section-title">👤 기본 정보</div>
+          <div class="rm-form-grid">
+            <div class="rm-form-group">
+              <label class="rm-form-label">이름 <span class="required">*</span></label>
+              <input type="text" class="rm-form-input" placeholder="이름을 입력하세요" id="rm-input-name">
+            </div>
+            <div class="rm-form-group">
+              <label class="rm-form-label">나이 <span class="required">*</span></label>
+              <input type="number" class="rm-form-input" placeholder="나이를 입력하세요" id="rm-input-age">
+            </div>
+            <div class="rm-form-group">
+              <label class="rm-form-label">성별 <span class="required">*</span></label>
+              <div class="rm-radio-group">
+                <div class="rm-radio-item">
+                  <input type="radio" id="rm-gender-male" name="rm-gender" value="male">
+                  <label for="rm-gender-male">남성</label>
+                </div>
+                <div class="rm-radio-item">
+                  <input type="radio" id="rm-gender-female" name="rm-gender" value="female">
+                  <label for="rm-gender-female">여성</label>
+                </div>
+              </div>
+            </div>
+            <div class="rm-form-group">
+              <label class="rm-form-label">호실</label>
+              <input type="text" class="rm-form-input" placeholder="예: 101호" id="rm-input-room">
+            </div>
+            <div class="rm-form-group full-width">
+              <label class="rm-form-label">프로필 이미지</label>
+              <div class="rm-profile-selector">
+                <div class="rm-profile-options">
+                  <div class="rm-profile-option selected">👵</div>
+                  <div class="rm-profile-option">👴</div>
+                  <div class="rm-profile-option">👩</div>
+                  <div class="rm-profile-option">👨</div>
+                  <div class="rm-profile-option">🧓</div>
+                  <div class="rm-profile-option">👩‍🦳</div>
+                  <div class="rm-profile-option">👨‍🦳</div>
+                  <div class="rm-profile-option">🧑‍🦳</div>
+                  <div class="rm-profile-option">👧</div>
+                  <div class="rm-profile-option">👦</div>
+                  <div class="rm-profile-option">🧔</div>
+                  <div class="rm-profile-option">👱‍♀️</div>
+                  <div class="rm-profile-option">👱‍♂️</div>
+                  <div class="rm-profile-option">🧕</div>
+                  <div class="rm-profile-option">👳‍♀️</div>
+                  <div class="rm-profile-option">👳‍♂️</div>
+                  <div class="rm-profile-option">🧑</div>
+                  <div class="rm-profile-option">👶</div>
+                  <div class="rm-profile-option">🧒</div>
+                  <div class="rm-profile-option rm-profile-upload-option" title="직접 업로드">+</div>
+                </div>
+              </div>
+            </div>
+            <div class="rm-form-group full-width">
+              <label class="rm-form-label">배경 색상</label>
+              <div class="rm-color-selector">
+                <div class="rm-color-options">
+                  <div class="rm-color-option selected" data-color="#E5E7EB" style="background: #E5E7EB;"></div>
+                  <div class="rm-color-option" data-color="#FEE2E2" style="background: #FEE2E2;"></div>
+                  <div class="rm-color-option" data-color="#FECACA" style="background: #FECACA;"></div>
+                  <div class="rm-color-option" data-color="#FEF3C7" style="background: #FEF3C7;"></div>
+                  <div class="rm-color-option" data-color="#FDE68A" style="background: #FDE68A;"></div>
+                  <div class="rm-color-option" data-color="#D1FAE5" style="background: #D1FAE5;"></div>
+                  <div class="rm-color-option" data-color="#A7F3D0" style="background: #A7F3D0;"></div>
+                  <div class="rm-color-option" data-color="#DBEAFE" style="background: #DBEAFE;"></div>
+                  <div class="rm-color-option" data-color="#BFDBFE" style="background: #BFDBFE;"></div>
+                  <div class="rm-color-option" data-color="#E0E7FF" style="background: #E0E7FF;"></div>
+                  <div class="rm-color-option" data-color="#C7D2FE" style="background: #C7D2FE;"></div>
+                  <div class="rm-color-option" data-color="#FCE7F3" style="background: #FCE7F3;"></div>
+                  <div class="rm-color-option" data-color="#FBCFE8" style="background: #FBCFE8;"></div>
+                  <div class="rm-color-option" data-color="#F3E8FF" style="background: #F3E8FF;"></div>
+                  <div class="rm-color-option" data-color="#DDD6FE" style="background: #DDD6FE;"></div>
+                  <div class="rm-color-option" data-color="#CCFBF1" style="background: #CCFBF1;"></div>
+                  <div class="rm-color-option" data-color="#99F6E4" style="background: #99F6E4;"></div>
+                  <div class="rm-color-option" data-color="#FED7AA" style="background: #FED7AA;"></div>
+                  <div class="rm-color-option" data-color="#FDBA74" style="background: #FDBA74;"></div>
+                  <div class="rm-color-option" data-color="#F5F5F4" style="background: #F5F5F4;"></div>
+                </div>
+                <div class="rm-profile-preview">
+                  <span style="font-size: 12px; color: #6B7280; margin-right: 12px;">미리보기:</span>
+                  <div class="rm-preview-avatar" id="rm-profile-preview">👵</div>
+                </div>
+              </div>
+            </div>
+            <div class="rm-form-group full-width">
+              <label class="rm-form-label">특이사항</label>
+              <textarea class="rm-form-input rm-form-textarea" placeholder="건강 상태, 주의사항 등을 입력하세요" id="rm-input-notes"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="rm-form-actions">
+          <button class="btn btn-secondary" onclick="switchResidentTab('list')">취소</button>
+          <button class="btn btn-primary" onclick="registerResident()">입소자 등록</button>
+        </div>
+      </div>
+
+      <!-- 워치 연결 관리 탭 -->
+      <div id="rm-tab-device" class="rm-tab-content hidden">
+        <div class="rm-watch-register-form">
+          <div class="rm-form-section-title">➕ 새 워치 등록</div>
+          <div class="rm-watch-form-grid">
+            <div class="rm-form-group">
+              <label class="rm-form-label">워치 ID <span class="required">*</span></label>
+              <input type="text" class="rm-form-input" placeholder="예: GW-010" id="rm-watch-id">
+            </div>
+            <div class="rm-form-group">
+              <label class="rm-form-label">워치 이름</label>
+              <input type="text" class="rm-form-input" placeholder="Galaxy Watch 5" id="rm-watch-name">
+            </div>
+            <button class="btn btn-primary" onclick="registerWatch()">등록</button>
+          </div>
+        </div>
+
+        <div class="rm-list-header">
+          <div class="rm-list-count">
+            등록된 워치 <strong id="rm-device-total">0</strong>대 | 연결됨 <strong id="rm-device-connected">0</strong>대 | 미연결 <strong id="rm-device-disconnected" style="color:#DC2626;">0</strong>대
+          </div>
+        </div>
+
+        <div class="rm-device-list" id="rm-device-list">
+          <!-- 동적으로 로드 -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   // 사용자 이름 표시
   document.addEventListener('DOMContentLoaded', function() {
@@ -196,11 +358,41 @@
       window.location.href = 'index.html';
   }
   
+  // 데모 모드를 유지하면서 페이지 이동
+  function navigateTo(page) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isDemoMode = urlParams.get('demo') === 'true';
+
+      // userType에 따라 대시보드 페이지 분기
+      if (page === 'dashboard.html') {
+          const userType = localStorage.getItem('userType');
+          if (userType === 'silvercare') {
+              page = 'dashboard-poc.html';
+          } else if (userType === 'silvercare2') {
+              page = 'dashboard-v2.html';
+          }
+      }
+
+      if (isDemoMode) {
+          window.location.href = page + '?demo=true';
+      } else {
+          window.location.href = page;
+      }
+  }
+  
   document.addEventListener("DOMContentLoaded", function() {
     // Record initialization is handled in script.js
     console.log('Record page loaded');
   });
 </script>
-<script src="script.js"></script>
+
+<!-- 데모 모드 컨트롤러를 먼저 로드 (URL에 ?demo=true가 있을 때만) -->
+<script>
+if (new URLSearchParams(window.location.search).get('demo') === 'true') {
+    document.write('<script src="demo-controller.js?v=1.0.0"><\/script>');
+}
+</script>
+
+<script src="script.js?v=1.0.0"></script>
 </body>
 </html>

@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>헬로온 출퇴근 리포트</title>
+  <link rel="stylesheet" href="style.css?v=1.0.0">
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    /* 출퇴근 리포트 전용 스타일 */
+    .attendance-report-main {
+      max-width: 100%;
+      padding: 10px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* 통합 헤더 */
+    .attendance-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #FFFFFF;
+      border-radius: 12px;
+      padding: 12px 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .month-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .month-nav-btn {
+      width: 32px;
+      height: 32px;
+      border: 1px solid #E5E7EB;
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      color: #6B7280;
+    }
+
+    .month-nav-btn:hover {
+      background: #F3F4F6;
+      border-color: #D1D5DB;
+      color: #374151;
+    }
+
+    .month-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #111827;
+      min-width: 120px;
+      text-align: center;
+    }
+
+    .header-divider {
+      width: 1px;
+      height: 24px;
+      background: #E5E7EB;
+    }
+
+    .filter-select {
+      padding: 6px 12px;
+      border: 1px solid #E5E7EB;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: 'Pretendard', sans-serif;
+      background: #fff;
+      min-width: 130px;
+      cursor: pointer;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: #2A6AA6;
+    }
+
+    .filter-btn {
+      padding: 6px 12px;
+      border: 1px solid #E5E7EB;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: 'Pretendard', sans-serif;
+      background: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover {
+      background: #F3F4F6;
+      border-color: #D1D5DB;
+    }
+
+    /* 요약 카드 */
+    .attendance-summary-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .summary-card {
+      background: #FFFFFF;
+      border-radius: 12px;
+      padding: 20px 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .summary-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .summary-icon.blue { background: #EFF6FF; }
+    .summary-icon.green { background: #ECFDF5; }
+    .summary-icon.purple { background: #F5F3FF; }
+    .summary-icon.orange { background: #FFF7ED; }
+
+    .summary-info {
+      flex: 1;
+    }
+
+    .summary-label {
+      font-size: 13px;
+      color: #6B7280;
+      margin-bottom: 4px;
+    }
+
+    .summary-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .summary-sub {
+      font-size: 12px;
+      color: #9CA3AF;
+      margin-top: 2px;
+    }
+
+    /* 컨텐츠 컨테이너 */
+    .attendance-content {
+      background: #FFFFFF;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      min-height: 500px;
+    }
+
+    /* 캘린더 스타일 */
+    .calendar-legend {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #6B7280;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .legend-dot.clock-in { background: #10B981; }
+    .legend-dot.clock-out { background: #3B82F6; }
+    .legend-dot.absent { background: #EF4444; }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+      background: #E5E7EB;
+      border: 1px solid #E5E7EB;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .calendar-weekday {
+      background: #F9FAFB;
+      padding: 10px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: #6B7280;
+    }
+
+    .calendar-weekday.sunday { color: #EF4444; }
+    .calendar-weekday.saturday { color: #3B82F6; }
+
+    .calendar-day {
+      background: #FFFFFF;
+      min-height: 90px;
+      padding: 6px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .calendar-day:hover {
+      background: #F9FAFB;
+    }
+
+    .calendar-day.other-month {
+      background: #F9FAFB;
+    }
+
+    .calendar-day.other-month .day-number {
+      color: #D1D5DB;
+    }
+
+    .calendar-day.today {
+      background: #EFF6FF;
+    }
+
+    .calendar-day.today .day-number {
+      background: #3B82F6;
+      color: white;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .day-number {
+      font-size: 13px;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 4px;
+    }
+
+    .calendar-day.sunday .day-number { color: #EF4444; }
+    .calendar-day.saturday .day-number { color: #3B82F6; }
+
+    .day-events {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .day-attendance-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      padding: 2px 4px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .day-attendance-item.clock-in {
+      background: #ECFDF5;
+    }
+
+    .day-attendance-item.clock-in:hover {
+      background: #D1FAE5;
+    }
+
+    .day-attendance-item.clock-out {
+      background: #EFF6FF;
+    }
+
+    .day-attendance-item.clock-out:hover {
+      background: #DBEAFE;
+    }
+
+    .day-attendance-item.absent {
+      background: #FEF2F2;
+    }
+
+    .day-attendance-item.absent:hover {
+      background: #FEE2E2;
+    }
+
+    .day-attendance-name {
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 50px;
+    }
+
+    .day-attendance-item.clock-in .day-attendance-name {
+      color: #047857;
+    }
+
+    .day-attendance-item.clock-out .day-attendance-name {
+      color: #1D4ED8;
+    }
+
+    .day-attendance-item.absent .day-attendance-name {
+      color: #DC2626;
+    }
+
+    .day-attendance-time {
+      font-size: 9px;
+      color: #6B7280;
+      white-space: nowrap;
+    }
+
+    /* 상세 모달 */
+    .day-detail-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .day-detail-modal.active {
+      display: flex;
+    }
+
+    .day-detail-content {
+      background: #FFFFFF;
+      border-radius: 12px;
+      padding: 20px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 70vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+
+    .day-detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #E5E7EB;
+    }
+
+    .day-detail-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .day-detail-close {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: #F3F4F6;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .day-detail-close:hover {
+      background: #E5E7EB;
+    }
+
+    .day-detail-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .day-detail-item {
+      background: #F9FAFB;
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .day-detail-item.clock-in {
+      border-left: 3px solid #10B981;
+    }
+
+    .day-detail-item.clock-out {
+      border-left: 3px solid #3B82F6;
+    }
+
+    .day-detail-item.absent {
+      border-left: 3px solid #EF4444;
+    }
+
+    .detail-profile {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      background: #E5E7EB;
+    }
+
+    .detail-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .detail-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .detail-times {
+      font-size: 12px;
+      color: #6B7280;
+      margin-top: 4px;
+    }
+
+    .detail-duration {
+      font-size: 11px;
+      color: #9CA3AF;
+      margin-top: 2px;
+    }
+
+    .detail-status {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .detail-status.present {
+      background: #ECFDF5;
+      color: #047857;
+    }
+
+    .detail-status.clock-out {
+      background: #EFF6FF;
+      color: #1D4ED8;
+    }
+
+    .detail-status.absent {
+      background: #FEF2F2;
+      color: #DC2626;
+    }
+
+    /* 모바일 반응형 */
+    @media (max-width: 768px) {
+      .attendance-report-main {
+        padding: 10px 16px;
+      }
+
+      .attendance-header {
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .header-divider {
+        display: none;
+      }
+
+      .filter-select {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .attendance-summary-cards {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .summary-card {
+        padding: 14px 16px;
+      }
+
+      .summary-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+      }
+
+      .summary-value {
+        font-size: 1.125rem;
+      }
+
+      .calendar-day {
+        min-height: 60px;
+        padding: 4px;
+      }
+
+      .day-number {
+        font-size: 11px;
+      }
+
+      .day-attendance-item {
+        font-size: 9px;
+      }
+    }
+
+    /* 인쇄 스타일 */
+    @media print {
+      .main-header,
+      .filter-btn,
+      .no-print {
+        display: none !important;
+      }
+
+      .main-bg {
+        background: white;
+      }
+
+      .attendance-report-main {
+        padding: 0;
+        gap: 6px;
+      }
+
+      .attendance-header,
+      .attendance-summary-cards,
+      .summary-card,
+      .attendance-content {
+        box-shadow: none;
+        border: 1px solid #E5E7EB;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="main-bg">
+    <header class="main-header">
+      <div class="logo-nav">
+        <img src="assets/hello-on_logotype.png" alt="헬로온 로고" class="hello-logo" />
+        <nav class="gnb">
+          <button class="gnb-btn" data-page="dashboard.html" onclick="navigateTo('dashboard.html')"><span class="icon dashboard"></span>대시보드</button>
+          <button class="gnb-btn" data-page="record.html" onclick="navigateTo('record.html')"><span class="icon record"></span>관리기록</button>
+          <button class="gnb-btn" data-page="outing-report.html" onclick="navigateTo('outing-report.html')"><span class="icon record"></span>외출리포트</button>
+          <button class="gnb-btn active" data-page="attendance-report.html" onclick="navigateTo('attendance-report.html')"><span class="icon record"></span>출퇴근</button>
+          <button class="gnb-btn" data-page="ai-report.html" onclick="navigateTo('ai-report.html')"><span class="icon record"></span>AI리포트</button>
+        </nav>
+      </div>
+      <div class="header-actions">
+        <button class="settings-btn" title="인원 관리">
+          <span class="icon settings"></span>
+        </button>
+        <div class="user-menu">
+          <span class="user-name" id="user-display-name">silvercare2</span>
+          <button class="logout-btn" onclick="logout()">로그아웃</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="attendance-report-main">
+      <!-- 통합 헤더 -->
+      <section class="attendance-header">
+        <div class="month-nav">
+          <button class="month-nav-btn" onclick="changeMonth(-1)">◀</button>
+          <span class="month-title" id="month-title">2025년 12월</span>
+          <button class="month-nav-btn" onclick="changeMonth(1)">▶</button>
+        </div>
+        <span class="header-divider"></span>
+        <select id="filter-resident" class="filter-select" onchange="filterByResident()">
+          <option value="">전체 입소자</option>
+          <!-- 동적 생성 -->
+        </select>
+        <button class="filter-btn no-print" onclick="printReport()">🖨️ 인쇄</button>
+      </section>
+
+      <!-- 요약 카드 -->
+      <section class="attendance-summary-cards">
+        <div class="summary-card">
+          <div class="summary-icon blue">👥</div>
+          <div class="summary-info">
+            <div class="summary-label">전체 입소자</div>
+            <div class="summary-value" id="total-residents">-</div>
+            <div class="summary-sub">등록된 입소자 수</div>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon green">✅</div>
+          <div class="summary-info">
+            <div class="summary-label">출근일</div>
+            <div class="summary-value" id="present-days">-</div>
+            <div class="summary-sub" id="present-rate">출근율 -</div>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon purple">⏱️</div>
+          <div class="summary-info">
+            <div class="summary-label">평균 체류시간</div>
+            <div class="summary-value" id="avg-duration">-</div>
+            <div class="summary-sub">출근일 기준</div>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon orange">📅</div>
+          <div class="summary-info">
+            <div class="summary-label">이번 달 기록</div>
+            <div class="summary-value" id="total-records">-</div>
+            <div class="summary-sub" id="total-records-sub">출퇴근 이벤트</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 컨텐츠 -->
+      <section class="attendance-content">
+        <div class="calendar-legend">
+          <div class="legend-item">
+            <span class="legend-dot clock-in"></span>
+            <span>출근</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot clock-out"></span>
+            <span>퇴근</span>
+          </div>
+        </div>
+        <div class="calendar-grid" id="calendar-grid">
+          <!-- 동적 생성 -->
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 날짜 상세 모달 -->
+  <div class="day-detail-modal" id="day-detail-modal">
+    <div class="day-detail-content">
+      <div class="day-detail-header">
+        <span class="day-detail-title" id="detail-title">12월 3일 (화) 출퇴근 현황</span>
+        <button class="day-detail-close" onclick="closeDayDetail()">✕</button>
+      </div>
+      <div class="day-detail-list" id="detail-list">
+        <!-- 동적 생성 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 인원 관리 모달 -->
+  <div id="resident-management-modal" class="modal-overlay hidden">
+    <div class="modal-content resident-management-modal">
+      <button class="modal-close" onclick="closeResidentManagementModal()">✕</button>
+      <h2 class="modal-title">인원 관리</h2>
+
+      <div class="rm-modal-tabs">
+        <button class="rm-modal-tab active" onclick="switchResidentTab('list')">입소자 목록</button>
+        <button class="rm-modal-tab" onclick="switchResidentTab('register')">인원 등록</button>
+        <button class="rm-modal-tab" onclick="switchResidentTab('device')">워치 연결 관리</button>
+      </div>
+
+      <div class="rm-modal-body">
+        <!-- 입소자 목록 탭 -->
+        <div id="rm-tab-list" class="rm-tab-content">
+          <div class="rm-list-header">
+            <div class="rm-list-count">
+              총 <strong id="rm-total-count">0</strong>명 등록 |
+              워치 연결 <strong id="rm-connected-count">0</strong> |
+              미연결 <strong id="rm-disconnected-count" style="color:#DC2626;">0</strong>
+            </div>
+            <div class="rm-list-actions">
+              <label class="rm-toggle-deleted">
+                <input type="checkbox" id="rm-show-deleted" onchange="toggleShowDeletedResidents()">
+                <span>삭제된 입소자 표시</span>
+              </label>
+              <button class="btn btn-primary btn-sm" onclick="switchResidentTab('register')">+ 새 입소자 등록</button>
+            </div>
+          </div>
+
+          <table class="rm-data-table">
+            <thead>
+              <tr>
+                <th>입소자</th>
+                <th>성별</th>
+                <th>나이</th>
+                <th>호실</th>
+                <th>워치 연결</th>
+                <th>특이사항</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="rm-resident-list">
+              <!-- 동적 생성 -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 인원 등록 탭 -->
+        <div id="rm-tab-register" class="rm-tab-content hidden">
+          <div class="rm-form-section">
+            <div class="rm-form-section-title">👤 기본 정보</div>
+            <div class="rm-form-grid">
+              <div class="rm-form-group">
+                <label class="rm-form-label">이름 <span class="required">*</span></label>
+                <input type="text" class="rm-form-input" placeholder="이름을 입력하세요" id="rm-input-name">
+              </div>
+              <div class="rm-form-group">
+                <label class="rm-form-label">나이 <span class="required">*</span></label>
+                <input type="number" class="rm-form-input" placeholder="나이를 입력하세요" id="rm-input-age">
+              </div>
+              <div class="rm-form-group">
+                <label class="rm-form-label">성별 <span class="required">*</span></label>
+                <div class="rm-radio-group">
+                  <div class="rm-radio-item">
+                    <input type="radio" id="rm-gender-male" name="rm-gender" value="male">
+                    <label for="rm-gender-male">남성</label>
+                  </div>
+                  <div class="rm-radio-item">
+                    <input type="radio" id="rm-gender-female" name="rm-gender" value="female">
+                    <label for="rm-gender-female">여성</label>
+                  </div>
+                </div>
+              </div>
+              <div class="rm-form-group">
+                <label class="rm-form-label">호실</label>
+                <input type="text" class="rm-form-input" placeholder="예: 101호" id="rm-input-room">
+              </div>
+              <div class="rm-form-group full-width">
+                <label class="rm-form-label">프로필 이미지</label>
+                <div class="rm-profile-selector">
+                  <div class="rm-profile-options">
+                    <div class="rm-profile-option selected">👵</div>
+                    <div class="rm-profile-option">👴</div>
+                    <div class="rm-profile-option">👩</div>
+                    <div class="rm-profile-option">👨</div>
+                    <div class="rm-profile-option">🧓</div>
+                    <div class="rm-profile-option">👩‍🦳</div>
+                    <div class="rm-profile-option">👨‍🦳</div>
+                    <div class="rm-profile-option">🧑‍🦳</div>
+                    <div class="rm-profile-option">👧</div>
+                    <div class="rm-profile-option">👦</div>
+                    <div class="rm-profile-option">🧔</div>
+                    <div class="rm-profile-option">👱‍♀️</div>
+                    <div class="rm-profile-option">👱‍♂️</div>
+                    <div class="rm-profile-option">🧕</div>
+                    <div class="rm-profile-option">👳‍♀️</div>
+                    <div class="rm-profile-option">👳‍♂️</div>
+                    <div class="rm-profile-option">🧑</div>
+                    <div class="rm-profile-option">👶</div>
+                    <div class="rm-profile-option">🧒</div>
+                    <div class="rm-profile-option rm-profile-upload-option" title="직접 업로드">+</div>
+                  </div>
+                </div>
+              </div>
+              <div class="rm-form-group full-width">
+                <label class="rm-form-label">배경 색상</label>
+                <div class="rm-color-selector">
+                  <div class="rm-color-options">
+                    <div class="rm-color-option selected" data-color="#E5E7EB" style="background: #E5E7EB;"></div>
+                    <div class="rm-color-option" data-color="#FEE2E2" style="background: #FEE2E2;"></div>
+                    <div class="rm-color-option" data-color="#FECACA" style="background: #FECACA;"></div>
+                    <div class="rm-color-option" data-color="#FEF3C7" style="background: #FEF3C7;"></div>
+                    <div class="rm-color-option" data-color="#FDE68A" style="background: #FDE68A;"></div>
+                    <div class="rm-color-option" data-color="#D1FAE5" style="background: #D1FAE5;"></div>
+                    <div class="rm-color-option" data-color="#A7F3D0" style="background: #A7F3D0;"></div>
+                    <div class="rm-color-option" data-color="#DBEAFE" style="background: #DBEAFE;"></div>
+                    <div class="rm-color-option" data-color="#BFDBFE" style="background: #BFDBFE;"></div>
+                    <div class="rm-color-option" data-color="#E0E7FF" style="background: #E0E7FF;"></div>
+                    <div class="rm-color-option" data-color="#C7D2FE" style="background: #C7D2FE;"></div>
+                    <div class="rm-color-option" data-color="#FCE7F3" style="background: #FCE7F3;"></div>
+                    <div class="rm-color-option" data-color="#FBCFE8" style="background: #FBCFE8;"></div>
+                    <div class="rm-color-option" data-color="#F3E8FF" style="background: #F3E8FF;"></div>
+                    <div class="rm-color-option" data-color="#DDD6FE" style="background: #DDD6FE;"></div>
+                    <div class="rm-color-option" data-color="#CCFBF1" style="background: #CCFBF1;"></div>
+                    <div class="rm-color-option" data-color="#99F6E4" style="background: #99F6E4;"></div>
+                    <div class="rm-color-option" data-color="#FED7AA" style="background: #FED7AA;"></div>
+                    <div class="rm-color-option" data-color="#FDBA74" style="background: #FDBA74;"></div>
+                    <div class="rm-color-option" data-color="#F5F5F4" style="background: #F5F5F4;"></div>
+                  </div>
+                  <div class="rm-profile-preview">
+                    <span style="font-size: 12px; color: #6B7280; margin-right: 12px;">미리보기:</span>
+                    <div class="rm-preview-avatar" id="rm-profile-preview">👵</div>
+                  </div>
+                </div>
+              </div>
+              <div class="rm-form-group full-width">
+                <label class="rm-form-label">특이사항</label>
+                <textarea class="rm-form-input rm-form-textarea" placeholder="건강 상태, 주의사항 등을 입력하세요" id="rm-input-notes"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="rm-form-actions">
+            <button class="btn btn-secondary" onclick="switchResidentTab('list')">취소</button>
+            <button class="btn btn-primary" onclick="registerResident()">입소자 등록</button>
+          </div>
+        </div>
+
+        <!-- 워치 연결 관리 탭 -->
+        <div id="rm-tab-device" class="rm-tab-content hidden">
+          <div class="rm-watch-register-form">
+            <div class="rm-form-section-title">➕ 새 워치 등록</div>
+            <div class="rm-watch-form-grid">
+              <div class="rm-form-group">
+                <label class="rm-form-label">워치 ID <span class="required">*</span></label>
+                <input type="text" class="rm-form-input" placeholder="예: GW-010" id="rm-watch-id">
+              </div>
+              <div class="rm-form-group">
+                <label class="rm-form-label">워치 이름</label>
+                <input type="text" class="rm-form-input" placeholder="Galaxy Watch 5" id="rm-watch-name">
+              </div>
+              <button class="btn btn-primary" onclick="registerWatch()">등록</button>
+            </div>
+          </div>
+
+          <div class="rm-list-header">
+            <div class="rm-list-count">
+              등록된 워치 <strong id="rm-watch-total">0</strong>대 | 연결됨 <strong id="rm-watch-connected">0</strong>대 | 미연결 <strong id="rm-watch-disconnected" style="color:#DC2626;">0</strong>대
+            </div>
+          </div>
+
+          <div class="rm-device-list" id="rm-device-list">
+            <!-- 동적 생성 -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 외부 스크립트 로드 -->
+  <script src="config.js?v=1.0.1"></script>
+  <script src="script.js?v=1.0.0"></script>
+  <script src="attendance-report.js?v=1.0.2"></script>
+</body>
+</html>

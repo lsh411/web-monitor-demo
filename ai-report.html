@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>헬로온 AI 리포트</title>
+  <link rel="stylesheet" href="style.css?v=1.0.0">
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    /* AI 리포트 전용 스타일 */
+    .ai-report-main {
+      max-width: 100%;
+      padding: 10px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* 통합 헤더 */
+    .ai-report-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #FFFFFF;
+      border-radius: 12px;
+      padding: 12px 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .month-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .month-nav-btn {
+      width: 32px;
+      height: 32px;
+      border: 1px solid #E5E7EB;
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      color: #6B7280;
+    }
+
+    .month-nav-btn:hover {
+      background: #F3F4F6;
+      border-color: #D1D5DB;
+      color: #374151;
+    }
+
+    .month-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #111827;
+      min-width: 120px;
+      text-align: center;
+    }
+
+    .header-divider {
+      width: 1px;
+      height: 24px;
+      background: #E5E7EB;
+    }
+
+    .filter-select {
+      padding: 6px 12px;
+      border: 1px solid #E5E7EB;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: 'Pretendard', sans-serif;
+      background: #fff;
+      min-width: 150px;
+      cursor: pointer;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: #2A6AA6;
+    }
+
+    .generate-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: 'Pretendard', sans-serif;
+      background: linear-gradient(135deg, #6366F1, #8B5CF6);
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .generate-btn:hover {
+      background: linear-gradient(135deg, #4F46E5, #7C3AED);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .generate-btn:disabled {
+      background: #D1D5DB;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .print-btn {
+      padding: 6px 12px;
+      border: 1px solid #E5E7EB;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: 'Pretendard', sans-serif;
+      background: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-left: auto;
+    }
+
+    .print-btn:hover {
+      background: #F3F4F6;
+    }
+
+    /* AI 리포트 카드 */
+    .ai-report-card {
+      background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 50%, #F0FDFA 100%);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border: 1px solid #BAE6FD;
+    }
+
+    .ai-report-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #0369A1;
+      margin-bottom: 16px;
+    }
+
+    .ai-report-title .ai-icon {
+      font-size: 1.4rem;
+    }
+
+    .ai-report-content {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      line-height: 1.8;
+      color: #374151;
+      font-size: 15px;
+      white-space: pre-wrap;
+    }
+
+    .ai-report-content.loading {
+      text-align: center;
+      color: #6B7280;
+      padding: 40px;
+    }
+
+    .ai-report-content .loading-spinner {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 3px solid #E5E7EB;
+      border-top-color: #6366F1;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* 프로필 카드 */
+    .resident-profile-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .resident-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+
+    .resident-info h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #111827;
+      margin: 0 0 4px 0;
+    }
+
+    .resident-info .resident-meta {
+      font-size: 14px;
+      color: #6B7280;
+    }
+
+    /* 통계 카드 그리드 */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .stats-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .stats-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .stats-card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .stats-card-icon.health { background: #FEE2E2; }
+    .stats-card-icon.activity { background: #DCFCE7; }
+    .stats-card-icon.attendance { background: #DBEAFE; }
+    .stats-card-icon.outing { background: #FEF3C7; }
+    .stats-card-icon.event { background: #F3E8FF; }
+
+    .stats-card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .stats-card-body {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .stats-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #F3F4F6;
+      gap: 12px;
+    }
+
+    .stats-row:last-child {
+      border-bottom: none;
+    }
+
+    .stats-label {
+      font-size: 14px;
+      color: #6B7280;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .stats-value {
+      font-size: 15px;
+      font-weight: 600;
+      color: #111827;
+      text-align: right;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 180px;
+    }
+
+    .stats-value.highlight {
+      color: #059669;
+    }
+
+    .stats-value.warning {
+      color: #DC2626;
+    }
+
+    .stats-value.info {
+      color: #2563EB;
+    }
+
+    /* 선택 안내 */
+    .select-prompt {
+      background: #F9FAFB;
+      border: 2px dashed #D1D5DB;
+      border-radius: 16px;
+      padding: 60px 40px;
+      text-align: center;
+      color: #6B7280;
+    }
+
+    .select-prompt-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .select-prompt-text {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .select-prompt-sub {
+      font-size: 14px;
+    }
+
+    /* 반응형 */
+    @media (max-width: 768px) {
+      .ai-report-main {
+        padding: 10px 16px;
+      }
+
+      .ai-report-header {
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* 인쇄 스타일 */
+    @media print {
+      .main-header, .ai-report-header, .no-print {
+        display: none !important;
+      }
+
+      .ai-report-main {
+        padding: 0;
+      }
+
+      .ai-report-card, .stats-card {
+        box-shadow: none;
+        border: 1px solid #E5E7EB;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="main-bg">
+    <header class="main-header">
+      <div class="logo-nav">
+        <img src="assets/hello-on_logotype.png" alt="헬로온 로고" class="hello-logo" />
+        <nav class="gnb">
+          <button class="gnb-btn" data-page="dashboard.html" onclick="navigateTo('dashboard.html')"><span class="icon dashboard"></span>대시보드</button>
+          <button class="gnb-btn" data-page="record.html" onclick="navigateTo('record.html')"><span class="icon record"></span>관리기록</button>
+          <button class="gnb-btn" data-page="outing-report.html" onclick="navigateTo('outing-report.html')"><span class="icon record"></span>외출리포트</button>
+          <button class="gnb-btn" data-page="attendance-report.html" onclick="navigateTo('attendance-report.html')"><span class="icon record"></span>출퇴근</button>
+          <button class="gnb-btn active" data-page="ai-report.html" onclick="navigateTo('ai-report.html')"><span class="icon record"></span>AI리포트</button>
+        </nav>
+      </div>
+      <div class="header-actions">
+        <button class="settings-btn" title="인원 관리">
+          <span class="icon settings"></span>
+        </button>
+        <div class="user-menu">
+          <span class="user-name" id="user-display-name">silvercare2</span>
+          <button class="logout-btn" onclick="logout()">로그아웃</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="ai-report-main">
+      <!-- 필터 헤더 -->
+      <section class="ai-report-header">
+        <div class="month-nav">
+          <button class="month-nav-btn" onclick="changeMonth(-1)">◀</button>
+          <span class="month-title" id="month-title">2025년 12월</span>
+          <button class="month-nav-btn" onclick="changeMonth(1)">▶</button>
+        </div>
+        <span class="header-divider"></span>
+        <select id="filter-resident" class="filter-select" onchange="onResidentChange()">
+          <option value="">입소자 선택</option>
+          <option value="demo001">김영수 (101호)</option>
+          <option value="demo002">박순자 (102호)</option>
+          <option value="demo003">이경숙 (103호)</option>
+          <option value="demo004">최영자 (104호)</option>
+          <option value="demo005">김정석 (105호)</option>
+        </select>
+        <button class="generate-btn" id="generate-btn" onclick="generateReport()" disabled>
+          <span>✨</span> AI 리포트 생성
+        </button>
+        <button class="print-btn no-print" onclick="window.print()">🖨️ 인쇄</button>
+      </section>
+
+      <!-- 입소자 선택 안내 (초기 상태) -->
+      <section class="select-prompt" id="select-prompt">
+        <div class="select-prompt-icon">📊</div>
+        <div class="select-prompt-text">입소자를 선택해주세요</div>
+        <div class="select-prompt-sub">1달간의 건강 데이터를 AI가 분석하여 종합 리포트를 생성합니다</div>
+      </section>
+
+      <!-- 리포트 컨텐츠 (입소자 선택 후) -->
+      <div id="report-content" style="display: none;">
+        <!-- 입소자 프로필 -->
+        <section class="resident-profile-card">
+          <div class="resident-avatar" id="resident-avatar" style="background: #DBEAFE;">👴</div>
+          <div class="resident-info">
+            <h2 id="resident-name">김영수</h2>
+            <div class="resident-meta"><span id="resident-age">77세</span> · <span id="resident-room">101호</span> · <span id="report-period">2025년 12월</span></div>
+          </div>
+        </section>
+
+        <!-- AI 종합 리포트 -->
+        <section class="ai-report-card">
+          <div class="ai-report-title">
+            <span class="ai-icon">🤖</span>
+            <span>AI 종합 분석 리포트</span>
+          </div>
+          <div class="ai-report-content" id="ai-report-text">
+<strong>📋 건강 상태 종합 평가</strong>
+김영수님은 이번 달 전반적으로 안정적인 건강 상태를 유지하고 계십니다. 심박수와 체온 모두 정상 범위 내에서 유지되고 있으며, 규칙적인 활동 패턴을 보이고 있습니다.
+
+<strong>⚠️ 주의가 필요한 건강 지표</strong>
+• 12월 15일 체온이 37.8°C로 일시적으로 상승한 기록이 있습니다.
+• 심박수가 간헐적으로 90bpm을 초과하는 경우가 있어 주의가 필요합니다.
+
+<strong>🚶 활동량 및 생활 패턴 분석</strong>
+일평균 3,245보를 걸으시며, 오전 10시~11시에 가장 활발한 활동을 보이십니다. 외출 횟수는 월 4회로 적절한 수준이며, 주로 병원 방문과 산책을 하셨습니다.
+
+<strong>💡 케어 권장사항</strong>
+1. 오후 시간대 활동량이 적으니, 가벼운 산책을 권장합니다.
+2. 체온 변화에 주의를 기울여 주시고, 37.5°C 이상 시 담당자에게 알려주세요.
+3. 수분 섭취량을 늘려 주시면 전반적인 건강 유지에 도움이 됩니다.
+
+<strong>🔍 다음 달 관찰 포인트</strong>
+심박수 변동 패턴을 지속적으로 모니터링하고, 체온 상승 시 조기 대응이 필요합니다.
+          </div>
+        </section>
+
+        <!-- 상세 통계 카드들 -->
+        <section class="stats-grid">
+          <!-- 심박 지표 -->
+          <div class="stats-card">
+            <div class="stats-card-header">
+              <div class="stats-card-icon health">❤️</div>
+              <div class="stats-card-title">심박 지표</div>
+            </div>
+            <div class="stats-card-body">
+              <div class="stats-row">
+                <span class="stats-label">심박수 (평균)</span>
+                <span class="stats-value">72 bpm</span>
+              </div>
+              <div class="stats-row">
+                <span class="stats-label">심박수 (범위)</span>
+                <span class="stats-value">58~95 bpm</span>
+              </div>
+              <div class="stats-row">
+                <span class="stats-label">저심박 발생 (40bpm 미만)</span>
+                <span class="stats-value highlight">0회</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 활동량 -->
+          <div class="stats-card">
+            <div class="stats-card-header">
+              <div class="stats-card-icon activity">🚶</div>
+              <div class="stats-card-title">활동량</div>
+            </div>
+            <div class="stats-card-body">
+              <div class="stats-row">
+                <span class="stats-label">총 걸음수</span>
+                <span class="stats-value">97,350 보</span>
+              </div>
+              <div class="stats-row">
+                <span class="stats-label">일평균 걸음수</span>
+                <span class="stats-value">3,245 보</span>
+              </div>
+              <div class="stats-row">
+                <span class="stats-label">최다 걸음일</span>
+                <span class="stats-value info">12/8 (5,120보)</span>
+              </div>
+              <div class="stats-row">
+                <span class="stats-label">최소 걸음일</span>
+                <span class="stats-value">12/22 (1,230보)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 출퇴근 -->
+          <div class="stats-card">
+            <div class="stats-card-header">
+              <div class="stats-card-icon attendance">📅</div>
+              <div class="stats-card-title">출퇴근 현황</div>
+            </div>
+            <div class="stats-card-body">
+              <div class="stats-row">
+                <span class="stats-label">출근일</span>
+                <span class="stats-value">22일 / 23일</span>
+              </div>
+              <div class="stats-row">
+                <span class="stats-label">출근율</span>
+                <span class="stats-value highlight">95.7%</span>
+              </div>
+              <div class="stats-row">
+                <span class="stats-label">평균 체류시간</span>
+                <span class="stats-value">7시간 23분</span>
+              </div>
+              <div class="stats-row">
+                <span class="stats-label">평균 출근시간</span>
+                <span class="stats-value">09:12</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 외출 현황 -->
+          <div class="stats-card">
+            <div class="stats-card-header">
+              <div class="stats-card-icon outing">🚗</div>
+              <div class="stats-card-title">외출 현황</div>
+            </div>
+            <div class="stats-card-body">
+              <div class="stats-row">
+                <span class="stats-label">총 외출 횟수</span>
+                <span class="stats-value">4회</span>
+              </div>
+              <div class="stats-row">
+                <span class="stats-label">총 외출 시간</span>
+                <span class="stats-value">8시간 45분</span>
+              </div>
+              <div class="stats-row">
+                <span class="stats-label">주요 방문지</span>
+                <span class="stats-value info">병원, 편의점</span>
+              </div>
+              <div class="stats-row">
+                <span class="stats-label">최장 외출</span>
+                <span class="stats-value">12/10 (3시간)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 이벤트 -->
+          <div class="stats-card">
+            <div class="stats-card-header">
+              <div class="stats-card-icon event">🚨</div>
+              <div class="stats-card-title">이벤트 발생</div>
+            </div>
+            <div class="stats-card-body">
+              <div class="stats-row">
+                <span class="stats-label">낙상 감지</span>
+                <span class="stats-value highlight">0회</span>
+              </div>
+              <div class="stats-row">
+                <span class="stats-label">저심박 알림</span>
+                <span class="stats-value highlight">0회</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- 인원 관리 모달 (공통) -->
+  <div id="resident-management-modal" class="modal-overlay hidden">
+    <div class="modal-content resident-management-modal">
+      <button class="modal-close" onclick="closeResidentManagementModal()">✕</button>
+      <h2 class="modal-title">인원 관리</h2>
+      <div class="rm-modal-tabs">
+        <button class="rm-modal-tab active" onclick="switchResidentTab('list')">입소자 목록</button>
+        <button class="rm-modal-tab" onclick="switchResidentTab('register')">인원 등록</button>
+        <button class="rm-modal-tab" onclick="switchResidentTab('device')">워치 연결 관리</button>
+      </div>
+      <div class="rm-modal-body">
+        <div id="rm-tab-list" class="rm-tab-content">
+          <div class="rm-list-header">
+            <div class="rm-list-count">
+              총 <strong id="rm-total-count">0</strong>명 등록 |
+              워치 연결 <strong id="rm-connected-count">0</strong> |
+              미연결 <strong id="rm-disconnected-count" style="color:#DC2626;">0</strong>
+            </div>
+          </div>
+          <table class="rm-data-table">
+            <thead>
+              <tr>
+                <th>입소자</th>
+                <th>성별</th>
+                <th>나이</th>
+                <th>호실</th>
+                <th>워치 연결</th>
+                <th>특이사항</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="rm-resident-list"></tbody>
+          </table>
+        </div>
+        <div id="rm-tab-register" class="rm-tab-content hidden"></div>
+        <div id="rm-tab-device" class="rm-tab-content hidden"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 스크립트 -->
+  <script src="config.js?v=1.0.1"></script>
+  <script src="script.js?v=1.0.0"></script>
+  <script src="ai-report.js?v=1.0.0"></script>
+</body>
+</html>
